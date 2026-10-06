@@ -10,3 +10,5 @@ calibration/
 *.md
 !README.md
 .git/
+site/
+.github/

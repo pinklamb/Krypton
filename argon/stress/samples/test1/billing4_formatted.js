@@ -1,0 +1,18 @@
+function bill(customers, taxTable, discounts, audit) {
+  let total = 0;
+  for (const customer of customers) {
+    if (!customer.active) continue;
+    for (const invoice of customer.invoices) {
+      if (!invoice.active) continue;
+      for (const line of invoice.lines) {
+        if (!line.active) continue;
+        for (const tier of discounts) {
+          if (!tier.active) continue;
+          const tax = taxTable[tier.region] ? taxTable[tier.region] : taxTable.default;
+          total += tier.qty * tier.price * (1 + tax);
+        }
+      }
+    }
+  }
+  return total;
+}

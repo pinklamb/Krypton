@@ -1,0 +1,87 @@
+function classify(code, p, q, r, s) {
+  let x = null;
+  switch (code) {
+    case 0:
+      return "v0";
+    case 1:
+      return "v1";
+    case 2:
+      return "v2";
+    case 3:
+      return "v3";
+    case 4:
+      return "v4";
+    case 5:
+      return "v5";
+    case 6:
+      if (p) x = "c6a"; if (q) x = "c6b"; if (r) x = "c6c"; if (s) x = "c6d"; return x;
+    case 7:
+      return "v7";
+    case 8:
+      return "v8";
+    case 9:
+      return "v9";
+    case 10:
+      return "v10";
+    case 11:
+      return "v11";
+    case 12:
+      return "v12";
+    case 13:
+      return "v13";
+    case 14:
+      return "v14";
+    case 15:
+      return "v15";
+    case 16:
+      return "v16";
+    case 17:
+      return "v17";
+    case 18:
+      return "v18";
+    case 19:
+      return "v19";
+    case 20:
+      if (p) x = "c20a"; if (q) x = "c20b"; if (r) x = "c20c"; if (s) x = "c20d"; return x;
+    case 21:
+      return "v21";
+    case 22:
+      return "v22";
+    case 23:
+      return "v23";
+    case 24:
+      return "v24";
+    case 25:
+      return "v25";
+    case 26:
+      return "v26";
+    case 27:
+      return "v27";
+    case 28:
+      return "v28";
+    case 29:
+      return "v29";
+    case 30:
+      return "v30";
+    case 31:
+      return "v31";
+    case 32:
+      return "v32";
+    case 33:
+      if (p) x = "c33a"; if (q) x = "c33b"; if (r) x = "c33c"; if (s) x = "c33d"; return x;
+    case 34:
+      return "v34";
+    case 35:
+      return "v35";
+    case 36:
+      return "v36";
+    case 37:
+      return "v37";
+    case 38:
+      return "v38";
+    case 39:
+      return "v39";
+    default:
+      return "other";
+  }
+}

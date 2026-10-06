@@ -1,0 +1,12 @@
+{
+  "_note": "USD per million tokens. Public list prices as reported by third-party comparison pages in mid-2026 (see tools/demo_cost.py); not verified against vendor price sheets. Edit before relying on them.",
+  "models": [
+    {"name": "Claude Opus 4.6", "input": 5.00, "output": 25.00},
+    {"name": "Claude Sonnet 4.6", "input": 3.00, "output": 15.00},
+    {"name": "Claude Haiku 4.5", "input": 1.00, "output": 5.00},
+    {"name": "Gemini 2.5 Pro", "input": 1.25, "output": 10.00},
+    {"name": "Gemini 2.5 Flash", "input": 0.30, "output": 2.50},
+    {"name": "GPT-5.5", "input": 5.00, "output": 30.00},
+    {"name": "GPT-5", "input": 1.25, "output": 10.00}
+  ]
+}

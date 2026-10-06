@@ -1,0 +1,38 @@
+function handler(req, db) {
+  if (!req.user) return null;
+  if (!req.query) return null;
+  if (req.limit > 100) req.limit = 100;
+  const rows = db.run(`
+  column_0, -- ; semicolons;; in text;
+  column_1, -- ; semicolons;; in text;
+  column_2, -- ; semicolons;; in text;
+  column_3, -- ; semicolons;; in text;
+  column_4, -- ; semicolons;; in text;
+  column_5, -- ; semicolons;; in text;
+  column_6, -- ; semicolons;; in text;
+  column_7, -- ; semicolons;; in text;
+  column_8, -- ; semicolons;; in text;
+  column_9, -- ; semicolons;; in text;
+  column_10, -- ; semicolons;; in text;
+  column_11, -- ; semicolons;; in text;
+  column_12, -- ; semicolons;; in text;
+  column_13, -- ; semicolons;; in text;
+  column_14, -- ; semicolons;; in text;
+  column_15, -- ; semicolons;; in text;
+  column_16, -- ; semicolons;; in text;
+  column_17, -- ; semicolons;; in text;
+  column_18, -- ; semicolons;; in text;
+  column_19, -- ; semicolons;; in text;
+  column_20, -- ; semicolons;; in text;
+  column_21, -- ; semicolons;; in text;
+  column_22, -- ; semicolons;; in text;
+  column_23, -- ; semicolons;; in text;
+  column_24, -- ; semicolons;; in text;
+  column_25, -- ; semicolons;; in text;
+  column_26, -- ; semicolons;; in text;
+  column_27, -- ; semicolons;; in text;
+  column_28, -- ; semicolons;; in text;
+  column_29, -- ; semicolons;; in text;
+`, req.user, req.query);
+  return rows.length > 0 ? rows : req.fallback ? req.fallback : [];
+}

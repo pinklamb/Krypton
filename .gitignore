@@ -1,0 +1,15 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# pytest
+.pytest_cache/
+pytest-cache-files-*/
+
+# npm installs (ESLint parity reference)
+node_modules/
+
+# generated audit page (rebuild: python -m tools.build_docs)
+argon/docs/argon_audit.html
+argon/docs/stress_test_findings.html
+argon/docs/.stress_cache.pkl

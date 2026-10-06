@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Design tokens ── */
+:root {
+  --bg:           #0f1117;
+  --surface:      #181c27;
+  --surface-2:    #1f2435;
+  --border:       rgba(255,255,255,0.07);
+  --border-focus: rgba(255,255,255,0.22);
+
+  --text:         #eef0f5;
+  --text-2:       #8890a8;
+  --text-3:       #555e74;
+
+  --accent:       #6c8fff;
+  --accent-dim:   rgba(108,143,255,0.12);
+
+  --safe:         #2ecc71;
+  --safe-dim:     rgba(46,204,113,0.12);
+  --moderate:     #f0b429;
+  --moderate-dim: rgba(240,180,41,0.12);
+  --caution:      #e07e25;
+  --caution-dim:  rgba(224,126,37,0.12);
+  --danger:       #e05252;
+  --danger-dim:   rgba(224,82,82,0.12);
+
+  --radius:       12px;
+  --radius-sm:    8px;
+  --panel-width:  360px;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; }
+
+/* Thin scrollbar for dark theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-2) transparent;
+}

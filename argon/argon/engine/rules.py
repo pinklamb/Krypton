@@ -37,6 +37,25 @@ def check_semantic_path_rule(finding: FileFinding, cfg: EngineConfig) -> bool:
     return finding.logic_complexity_rating > cfg.active_threshold
 
 
+def overhead_points(trivial: int, total: int, cfg: EngineConfig) -> float:
+    """Structural Overhead Tax: purity points for a file dense in trivial wrappers.
+
+    Zero for files under wrapper_min_functions functions or at most wrapper_free_density
+    wrappers; then linear up to wrapper_tax_max_points for a file made only of wrappers.
+    """
+    if total < cfg.wrapper_min_functions:
+        return 0.0
+    density = trivial / total
+    if density <= cfg.wrapper_free_density:
+        return 0.0
+    return min(cfg.wrapper_tax_max_points, cfg.wrapper_tax_max_points * (density - cfg.wrapper_free_density) / (1 - cfg.wrapper_free_density))
+
+
+def check_coupling_rule(finding: FileFinding, cfg: EngineConfig) -> bool:
+    """A file wired to more than coupling_weight_threshold others and big enough to matter."""
+    return finding.coupling_weight > cfg.coupling_weight_threshold and finding.effective_lines >= cfg.coupling_min_lines
+
+
 @dataclass(frozen=True)
 class Fragmentation:
     """Whether the fragmentation rule fired, and the files in the group that triggered it."""
@@ -114,11 +133,17 @@ def compute_purity_score(findings: list[FileFinding], fragmentation: bool, cfg: 
     total = sum(weights)
     flag_ratio = sum(w for w, finding in zip(weights, findings) if finding.flagged) / total
     threshold = cfg.active_threshold
-    overshoot = sum(w * overshoot_points(finding, threshold) for w, finding in zip(weights, findings)) / total
-    score = 100 - FLAG_RATIO_POINTS * flag_ratio - overshoot
+    overshoot = _weighted_mean(findings, weights, lambda finding: overshoot_points(finding, threshold))
+    overhead = _weighted_mean(findings, weights, lambda finding: finding.overhead_tax)
+    score = 100 - FLAG_RATIO_POINTS * flag_ratio - overshoot - overhead
     if fragmentation:
         score -= cfg.fragmentation_flat_penalty
     return round_half_up(max(0.0, min(100.0, score)))
+
+
+def _weighted_mean(findings: list[FileFinding], weights: list[int], points) -> float:
+    """Mean of points(finding) weighted by effective altered lines."""
+    return sum(w * points(finding) for w, finding in zip(weights, findings)) / sum(weights)
 
 
 def round_half_up(value: float) -> int:

@@ -37,6 +37,14 @@ class EngineConfig(BaseModel):
     fragmentation_avg_import_threshold: float = 4
     fragmentation_min_files: int = 3
     fragmentation_flat_penalty: int = 25
+    coupling_weight_threshold: int = 12  # distinct files depended on + depending on this one
+    coupling_min_lines: int = 40  # effective lines; a tiny barrel file is not a hot spot
+    wrapper_max_branches: int = 1  # a named function with at most this many decisions ...
+    wrapper_max_lines: int = 4  # ... and at most this many effective lines counts as a trivial wrapper
+    wrapper_min_functions: int = 6  # smaller files are never taxed
+    wrapper_free_density: float = 0.6  # share of trivial wrappers a file may have for free (about p90 of human code)
+    wrapper_tax_max_points: float = 15  # purity points a file made only of wrappers loses
+    namespace_min_files: int = 2  # files assigning `Name.x = ...` before Name counts as a shared global
     purity_score_fail_threshold: int = 40  # §4.5
     # review fixes
     effective_line_width: int = 40  # A4, Oct 2026 amendment (was 100)
@@ -45,6 +53,7 @@ class EngineConfig(BaseModel):
     max_line_chars: int = 5000  # a longer line (minified code, one-line data) is not parsed: range() is quadratic on it
     max_children: int = 50_000  # one node with more children is generated data: materializing them costs ~2 KB each
     score_cap: int = 1_000_000  # B3
+    volatility_window_commits: int = 200  # --order-by-volatility reads this many recent commits
     count_optional_calls: bool = False  # A2
     control_flow_booleans: bool = True  # A7; parity runs turn it off (§12.3)
     vendored_path_globs: tuple[str, ...] = (

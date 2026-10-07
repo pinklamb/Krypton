@@ -85,6 +85,8 @@ class AstMetrics:
     module: FunctionStats  # module-level code as one pseudo-function
     async_boundary_count: int
     js_specifiers: tuple[str, ...]
+    namespace_defs: frozenset[tuple[str, str]]  # JS/TS `Namespace.member = ...` at top level
+    namespace_refs: frozenset[tuple[str, str]]  # JS/TS `Namespace.member` reads
     python_imports: tuple[PythonImport, ...]
     line_weights: LineWeights
 
@@ -179,6 +181,8 @@ class _Walk:
             module=_stats(module, module.unowned),
             async_boundary_count=len(self.collectors.async_receivers) + self.collectors.async_sites,
             js_specifiers=tuple(self.collectors.js_specifiers),
+            namespace_defs=frozenset(self.collectors.ns_defs),
+            namespace_refs=frozenset(self.collectors.ns_refs),
             python_imports=tuple(self.collectors.py_imports),
             line_weights=weights,
         )

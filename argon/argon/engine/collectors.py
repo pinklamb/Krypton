@@ -33,6 +33,8 @@ class Collectors:
         self.async_sites = 0
         self.js_specifiers: list[str] = []
         self.py_imports: list[PythonImport] = []
+        self.ns_defs: set[tuple[str, str]] = set()  # (namespace, member) assigned at top level: `Racer.world = ...`
+        self.ns_refs: set[tuple[str, str]] = set()  # (namespace, member) read anywhere: `Racer.world`
         self.comment_spans: list[Span] = []
         self.statement_starts: Counter[int] = Counter()  # 0-based line -> statements (A4)
         shared = {"return_statement": self._output, "comment": self._comment}
@@ -53,7 +55,8 @@ class Collectors:
                 "yield_expression": self._output,
                 "call_expression": self._js_call,
                 "new_expression": self._js_constructor,
-                "assignment_expression": self._js_onmessage,
+                "assignment_expression": self._js_assignment,
+                "member_expression": self._js_member,
                 "import_statement": self._js_import,
                 "export_statement": self._js_import,
             }
@@ -92,6 +95,17 @@ class Collectors:
     def _js_constructor(self, node: SgNode, flags: int, frame: Frame) -> None:
         """Count `new WebSocket(...)`-style async constructors, one per site."""
         self.async_sites += node_text(node.field("constructor")) in self.cfg.async_constructors
+
+    def _js_assignment(self, node: SgNode, flags: int, frame: Frame) -> None:
+        """An `x.onmessage = ...` handler, and a top-level `Namespace.member = ...` definition."""
+        self._js_onmessage(node, flags, frame)
+        left = node.field("left")
+        if frame.kind == "module" and left is not None and left.kind() == "member_expression":
+            self.ns_defs.update(_namespace_member(left))
+
+    def _js_member(self, node: SgNode, flags: int, frame: Frame) -> None:
+        """Record `Namespace.member` reads; engine/coupling.py keeps the ones that match a shared global."""
+        self.ns_refs.update(_namespace_member(node))
 
     def _js_onmessage(self, node: SgNode, flags: int, frame: Frame) -> None:
         """Count `x.onmessage = ...` handlers, deduplicated by receiver."""
@@ -199,3 +213,12 @@ def _span(node: SgNode) -> Span:
     """The node's (start line, start column, end line, end column), 0-based."""
     span = node.range()
     return (span.start.line, span.start.column, span.end.line, span.end.column)
+
+
+def _namespace_member(node: SgNode) -> set[tuple[str, str]]:
+    """{(object, property)} when a member expression is `identifier.property`, else empty."""
+    owner, member = node.field("object"), node.field("property")
+    if owner is None or member is None or owner.kind() != "identifier":
+        return set()
+    return {(owner.text(), member.text())}
+

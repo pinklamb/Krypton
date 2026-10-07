@@ -7,6 +7,7 @@ from argon.schemas import EngineResult, FileFinding
 
 RULE_NAMES = {
     "concentration_rule": "Concentration Rule",
+    "coupling_hotspot": "Coupling Hotspot",
     "semantic_path_logic": "Semantic Path Logic",
     "unparseable": "Unparseable",
     "oversize": "Oversize",
@@ -49,6 +50,8 @@ def _issue(finding: FileFinding, cfg: EngineConfig, function_name: str) -> str:
     if reason == "semantic_path_logic":
         rating = round(finding.logic_complexity_rating)
         return f"Logic complexity {rating} (threshold {cfg.active_threshold:g}) in `{function_name}()`"
+    if reason == "coupling_hotspot":
+        return f"Coupled to {finding.coupling_weight} other files (threshold {cfg.coupling_weight_threshold}); split its wiring"
     if reason == "unparseable":
         return f"{finding.error_coverage:.0%} of the file could not be parsed"
     return f"over the size limits ({cfg.max_file_bytes:,} bytes, a line over {cfg.max_line_chars:,} characters, or a node with over {cfg.max_children:,} children), not parsed"

@@ -15,9 +15,10 @@ FlagReason = Literal[
     "semantic_path_logic",  # master §4.2
     "unparseable",  # §5.2, fail closed (C2)
     "oversize",  # §10.1, fail closed (C4)
+    "coupling_hotspot",  # file wired to many others (imports or shared globals)
 ]
 # When several reasons apply, flag_reason takes the first in this order.
-FLAG_PRIORITY: tuple[FlagReason, ...] = ("oversize", "unparseable", "concentration_rule", "semantic_path_logic")
+FLAG_PRIORITY: tuple[FlagReason, ...] = ("oversize", "unparseable", "concentration_rule", "semantic_path_logic", "coupling_hotspot")
 
 
 class FunctionFinding(BaseModel):
@@ -62,6 +63,10 @@ class FileFinding(BaseModel):
     parse_error: bool
     error_coverage: float  # 0.0-1.0 share of characters inside ERROR / MISSING
     functions: list[FunctionFinding]
+    trivial_wrapper_count: int = 0  # named functions with <= 1 branch and <= 4 effective lines
+    overhead_tax: float = 0.0  # purity points this file's wrapper density costs (0 below the free share)
+    coupling_weight: int = 0  # files this one depends on + files depending on it
+    change_frequency: Optional[float] = None  # 0.0 stable .. 1.0 volatile; None = not measured
 
 
 class SkippedFile(BaseModel):

@@ -57,6 +57,15 @@ argon src --json
 
 Prints the full result: `purity_score`, `check_conclusion`, and one finding per file with `logic_complexity_rating`, `flagged`, `flag_reason`, `nesting_score`, `max_depth`, `effective_lines` and a `functions` list. Pipe it into a hook or CI step.
 
+### Order files for prompt caching
+
+```bash
+argon src --order-by-volatility        # JSON manifest, most stable file first, from git history
+argon src --order-by-volatility --volatility counts.json   # or supply {"path": change_count}
+```
+
+If your tool re-sends the codebase every turn, put files in this order so the stable ones form a shared prefix a provider can cache. It is a hint from history, not a guarantee, and it does not change any score.
+
 ### Pre-commit or CI
 
 ```bash
@@ -75,6 +84,10 @@ argon . --base origin/main --top 0 || { echo "Argon: structure check failed"; ex
 | Purity Score | 0 to 100 for the whole run. Below 40 fails |
 
 A flagged file means "an agent will spend extra tokens reading this and is more likely to break it". The fix is almost always splitting a large function by job, not deleting logic.
+
+A **coupling hotspot** is a file wired to more than 12 other files (imports it makes, imports of it, and for JS/TS, members it reads from a shared global like `Racer.world`). It is flagged so wiring gets split (events, smaller interfaces) instead of piling into a few core files. Tune it with `coupling_weight_threshold` in `--config`.
+
+The **Structural Overhead Tax** lowers the purity score (it never flags a file) when over 60% of a file's functions are trivial wrappers: at most 1 decision and 4 effective lines. The point is to discourage splitting code into many tiny functions just to stay under the branch limit.
 
 Files over 1 MB, with a line over 5,000 characters, or with one node holding over 50,000 children (generated data) are flagged `oversize` and not parsed. Minified bundles land here; add them to your ignore file.
 

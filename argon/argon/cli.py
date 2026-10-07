@@ -16,11 +16,12 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from argon import report
+from argon import history, report
 from argon.calibration import calibrated_module, calibration_csv, calibration_report, fit_thresholds, read_csv
 from argon.engine.config import EngineConfig
 from argon.engine.languages import SUPPORTED_EXTENSIONS
 from argon.engine.run import run_local
+from argon.engine.volatility import change_frequency, manifest
 
 EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = 0, 1, 2
 CALIBRATED_MODULE = Path(__file__).parent / "engine" / "calibrated.py"
@@ -43,12 +44,16 @@ def main(argv: list[str] | None = None) -> int:
         if args.fit_thresholds:
             return _fit_thresholds(*args.fit_thresholds)
         files, altered, cfg = _scan_inputs(args)
+        frequency = _change_frequency(args, files, cfg)
     except UsageError as error:
         print(f"error: {error}", file=sys.stderr)
         return EXIT_USAGE
     sources = {name: path.read_bytes() for name, path in files.items()}
-    result = run_local(sources, altered, cfg)
-    if args.json:
+    result = run_local(sources, altered, cfg, frequency)
+    if args.order_by_volatility:
+        sizes = {name: len(data.decode("utf-8", errors="replace")) for name, data in sources.items()}
+        print(json.dumps(manifest(result.findings, sizes), indent=2))
+    elif args.json:
         print(result.model_dump_json(indent=2))
     else:
         _print_report(result, args.top)
@@ -72,6 +77,20 @@ def _scan_inputs(args) -> tuple[dict[str, Path], dict[str, set[int]] | None, Eng
     return files, altered, cfg
 
 
+def _change_frequency(args, files: dict[str, Path], cfg: EngineConfig) -> dict[str, float] | None:
+    """Per-file change frequency when --order-by-volatility or --volatility is given, else None."""
+    if not (args.order_by_volatility or args.volatility):
+        return None
+    try:
+        if args.volatility:
+            return change_frequency(history.load_counts(args.volatility), files)
+        root = _scan_root(args.paths)
+        counts = history.commit_counts(root, cfg.volatility_window_commits)
+        return change_frequency(counts, files, history.uncommitted(root))
+    except history.HistoryError as error:
+        raise UsageError(str(error)) from error
+
+
 def _parser() -> argparse.ArgumentParser:
     """The argparse definition of every flag (spec §11)."""
     parser = argparse.ArgumentParser(prog="python -m argon.cli", description="Argon structural review, locally.")
@@ -80,6 +99,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--base", metavar="REF", help="score only files and lines changed since REF")
     parser.add_argument("--config", type=Path, metavar="FILE.toml", help="override any EngineConfig field")
     parser.add_argument("--json", action="store_true", help="print EngineResult as JSON, nothing else")
+    parser.add_argument("--order-by-volatility", action="store_true", help="print a JSON manifest of files, most stable first (git history), instead of the report")
+    parser.add_argument("--volatility", type=Path, metavar="FILE.json", help="path -> change count, used instead of git history")
     parser.add_argument("--calibrate", action="store_true", help="add the calibration report")
     parser.add_argument("--calibrate-out", type=Path, metavar="FILE.csv", help="one row per function")
     parser.add_argument(

@@ -6,19 +6,23 @@ so the Phase 1 worker can call it unchanged.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from argon.engine.ast_counters import AstMetrics, FunctionStats, TooWide, analyze_tree
 from argon.engine.config import DEFAULT_CONFIG, EngineConfig, matches_any
+from argon.engine.coupling import coupling_weights, namespace_edges
 from argon.engine.imports import resolve_imports
 from argon.engine.languages import decode_source, language_for, parse_source
 from argon.engine.lines import LineWeights, non_blank_weights, physical_lines
 from argon.engine.rules import (
     check_concentration_rule,
+    check_coupling_rule,
     check_fragmentation_rule,
     check_semantic_path_rule,
     compute_purity_score,
     determine_check_conclusion,
+    overhead_points,
     rating_master,
     rating_nesting,
 )
@@ -52,29 +56,26 @@ def run_local(
     files: dict[str, bytes],
     altered: dict[str, set[int]] | None = None,
     cfg: EngineConfig = DEFAULT_CONFIG,
+    change_frequency: Mapping[str, float] | None = None,
 ) -> EngineResult:
-    """altered maps a path to its altered line numbers; None means every line is altered."""
+    """altered maps a path to its altered line numbers; None means every line is altered.
+
+    change_frequency (path -> 0.0..1.0, see engine/volatility.py) is recorded on each finding
+    and never affects a score.
+    """
     skipped, markers, analyzed = [], [], {}
     for filename in sorted(files):
         skip = should_skip_file(filename, cfg)
         if skip is not None:
             skipped.append(skip)
             continue
-        source = files[filename]
-        text = decode_source(source)
+        text = decode_source(files[filename])
         if _has_generated_marker(text, cfg):
             markers.append(filename)
         lines = None if altered is None else frozenset(altered.get(filename, ()))
-        analyzed[filename] = _analyze_file(filename, source, text, lines, cfg)
+        analyzed[filename] = _analyze_file(filename, files[filename], text, lines, cfg)
 
-    scanned = frozenset(analyzed)
-    edges = set()
-    findings = []
-    for filename, item in analyzed.items():
-        targets = _imports_of(filename, item.metrics, scanned, cfg)
-        edges.update((filename, target) for target in targets)
-        findings.append(item.finding.model_copy(update={"relative_import_count": len(targets)}))
-
+    findings, edges = _link_files(analyzed, change_frequency, cfg)
     fragmentation = check_fragmentation_rule(findings, edges, cfg)
     score = compute_purity_score(findings, fragmentation.triggered, cfg)
     result = EngineResult(
@@ -94,10 +95,48 @@ def run_local(
     return result.model_copy(update={"summary_markdown": build_summary_markdown(result, cfg, worst)})
 
 
+def _link_files(
+    analyzed: dict[str, _Analyzed], change_frequency: Mapping[str, float] | None, cfg: EngineConfig
+) -> tuple[list[FileFinding], set[tuple[str, str]]]:
+    """Cross-file facts: import counts, change frequency, coupling weights; and the import edges."""
+    scanned = frozenset(analyzed)
+    edges: set[tuple[str, str]] = set()
+    findings = []
+    for filename, item in analyzed.items():
+        targets = _imports_of(filename, item.metrics, scanned, cfg)
+        edges.update((filename, target) for target in targets)
+        update = {"relative_import_count": len(targets)}
+        if change_frequency is not None:
+            update["change_frequency"] = change_frequency.get(filename)
+        findings.append(item.finding.model_copy(update=update))
+    return _with_coupling(findings, edges, analyzed, cfg), edges
+
+
 def _has_generated_marker(text: str, cfg: EngineConfig) -> bool:
     """A generated marker in the first 5 lines (reported, never a skip: A3)."""
     head = "\n".join(text.split("\n", MARKER_LINES)[:MARKER_LINES])
     return any(marker in head for marker in cfg.generated_markers)
+
+
+def _with_coupling(
+    findings: list[FileFinding], import_edges: set[tuple[str, str]], analyzed: dict[str, _Analyzed], cfg: EngineConfig
+) -> list[FileFinding]:
+    """Record each file's coupling weight and flag hot spots that no other rule already flagged."""
+    live = {name: item.metrics for name, item in analyzed.items() if item.metrics is not None}
+    shared = namespace_edges(
+        {name: m.namespace_defs for name, m in live.items()},
+        {name: m.namespace_refs for name, m in live.items()},
+        cfg.namespace_min_files,
+    )
+    weights = coupling_weights([finding.filename for finding in findings], import_edges, shared)
+    return [_flag_coupling(finding.model_copy(update={"coupling_weight": weights[finding.filename]}), cfg) for finding in findings]
+
+
+def _flag_coupling(finding: FileFinding, cfg: EngineConfig) -> FileFinding:
+    """Coupling hot spot is the lowest-priority reason: it never replaces another flag."""
+    if finding.flagged or not check_coupling_rule(finding, cfg):
+        return finding
+    return finding.model_copy(update={"flagged": True, "flag_reason": "coupling_hotspot"})
 
 
 def _imports_of(filename: str, metrics: AstMetrics | None, scanned: frozenset[str], cfg: EngineConfig) -> set[str]:
@@ -143,8 +182,15 @@ def _analyze_file(
         parse_error=parsed.has_error,
         error_coverage=parsed.error_coverage,
         functions=functions,
+        **_wrapper_fields(functions, cfg),
     )
     return _Analyzed(_with_flags(finding, cfg), metrics, worst.name)
+
+
+def _wrapper_fields(functions: list[FunctionFinding], cfg: EngineConfig) -> dict:
+    """trivial_wrapper_count and overhead_tax for a file's named functions."""
+    trivial = sum(f.branches <= cfg.wrapper_max_branches and f.effective_lines <= cfg.wrapper_max_lines for f in functions)
+    return {"trivial_wrapper_count": trivial, "overhead_tax": overhead_points(trivial, len(functions), cfg)}
 
 
 def _longest_line(text: str) -> int:

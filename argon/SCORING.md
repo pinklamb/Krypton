@@ -195,4 +195,49 @@ These override the MVP specification PDF. The PDF itself hasn't been edited.
 | §9.4 per-function lines | a function's lines are its physical lines minus nested named functions' lines | a function owns the **characters** of its span minus nested named functions; a line shared by several functions is split by their share of its code characters | Whole-line attribution gave an outer function 0 lines and every one of 50 siblings on a line the full line. |
 | §10.1 / C4 oversize | only `max_file_bytes` (1,000,000) | also `max_line_chars` (5,000): any longer line is flagged `oversize` and not parsed | ast-grep's `range()` slows with the column, so one long line was quadratic in time, and a wide node needs hundreds of MB. |
 | §10.1 / C4 oversize | also `max_line_chars` | also `max_children` (50,000): a node with more children is flagged `oversize` during the walk, probed with `child(n)` so no wrappers are built | One-element-per-line arrays passed the line guard and needed ~600 MB, because `children()` makes a Python wrapper per child. |
+| §11 CLI / §3.2 schema | no change-frequency data | `FileFinding.change_frequency` (0.0 stable to 1.0 volatile, `None` = not measured) and `--order-by-volatility` / `--volatility FILE.json`; see *Volatility index* below | Modularity only helps a prompt cache when stable files come first. The index never changes a score. |
+| §10.2 flag rules | concentration, semantic path | also `coupling_hotspot` (lowest priority, never replaces another flag): coupling weight over `coupling_weight_threshold` (12) and at least `coupling_min_lines` (40) effective lines; see *Coupling hot spots* below | Version B of the racing-game audit passed 100/100 while `world.js` and `config.js` were touched by every feature. |
+| §10.3 purity score | flag ratio and overshoot only | also subtracts the **Structural Overhead Tax**, weighted by altered lines like overshoot; see below | Version B of the racing-game audit was 56% larger in tokens, partly from many tiny functions. A tax that lowers purity, never a flag. |
 | §10.2 `--base` diff | hunk headers matched anywhere in the diff | hunk bodies are consumed by the counts in each `@@` header; git runs with `core.quotepath=off` and explicit prefixes, trailing tabs and quoted paths are decoded | An added line starting `++ ` read as a file header, and files with spaces or non-ASCII names were silently dropped. |
+
+---
+
+## Volatility index (`engine/volatility.py`)
+
+Not part of the score. It orders files so a tool that builds prompts can put stable files first and keep a long shared prefix for the provider's prompt cache.
+
+- **Source.** `--order-by-volatility` counts the commits touching each scanned file among the last `volatility_window_commits` (default 200) from `git log --name-only`. `--volatility FILE.json` replaces git with `{"path": change_count}`. Reading history is the CLI's job (`argon/history.py`); the engine only receives counts.
+- **Index.** `count / busiest scanned file's count`, rounded to 4 places, so 0.0 is "never changed in the window" and 1.0 is the busiest. A file that is modified, staged or untracked right now is 1.0 regardless of history, because it is in flux by definition. In a repo with no commits yet everything is 1.0.
+- **Manifest.** `--order-by-volatility` prints JSON instead of the report: `files` from most stable to most volatile (ties broken by name), each with `change_frequency`, `flagged` and `tokens_estimate` (characters ÷ 3.5, a rough estimate). Scores and the exit code are unchanged.
+- **What it is not.** History predicts what will change next only roughly, and it helps only workflows that re-send the whole file set each turn. In an append-only agent session edits do not invalidate the cache. Treat the manifest as a hint, not a guarantee of cache hits.
+
+---
+
+## Coupling hot spots (`engine/coupling.py`)
+
+A file's **coupling weight** is the number of distinct scanned files it depends on plus the number of distinct scanned files that depend on it. Two kinds of dependency count, each pair once:
+
+| Edge | Where it comes from |
+|---|---|
+| import | resolved `import`, `require`, dynamic `import()` and Python imports (the same edges the fragmentation rule uses) |
+| shared global *(prototype, JS/TS only)* | a name that at least `namespace_min_files` (2) files assign members on at top level, such as `Racer.world = {...}` and `Racer.player = {...}`. Any file that reads `Racer.world` depends on the file that assigns it. |
+
+A file is flagged `coupling_hotspot` when its weight is **over 12** and it has **at least 40 effective lines**, so a tiny barrel file that re-exports many modules is not flagged. It only applies when no other rule flagged the file, and it counts like any flag in the purity score. `relative_import_count` and the fragmentation rule still use import edges only.
+
+Calibration: on the racing game's final Version B (23 files, no imports at all) the weights were `config.js` 19, `world.js` 18, then 6 or less for everything else, so 12 sits in a wide gap. Version A is one file (weight 0). Raise `coupling_weight_threshold` in a `--config` file if your project is legitimately more connected.
+
+Limits of the shared-global detector: it recognises `Name.member` as a plain identifier plus property, and it cannot tell a real global from a local object that happens to be assigned in two files. It does not see `window.x`, `globalThis.x`, `<script>` order, or HTML files, and it does not exist for Python.
+
+---
+
+## Structural Overhead Tax (`engine/rules.py: overhead_points`)
+
+Lowers a file's purity contribution when most of its named functions are trivial wrappers. It never flags a file.
+
+- **Trivial wrapper:** a named function with at most `wrapper_max_branches` (1) decisions and at most `wrapper_max_lines` (4) effective lines. This is an approximation: it does not check that the body only delegates to another function, so a short getter counts.
+- **Density:** trivial wrappers ÷ named functions in the file. Files with fewer than `wrapper_min_functions` (6) functions are never taxed.
+- **Tax:** 0 up to `wrapper_free_density` (0.6); above that it rises linearly to `wrapper_tax_max_points` (15) at density 1.0. `FileFinding.overhead_tax` holds the points and `trivial_wrapper_count` the count.
+- **Purity:** `100 − 70 × flag_ratio − overshoot − overhead`, where overhead is the file taxes weighted by effective altered lines, like overshoot.
+
+Calibration (1,500 random Python files from site-packages, files with 6 or more functions): the share of files with density above 0.5 / 0.6 / 0.7 was 15.6% / 9.3% / 5.4%. At 0.6 the racing game's Version B still has 3 taxed files (`health.js` 6 of 6 wrappers, `input.js` and `weather.js` 5 of 7) and its purity moves 86 to 85; Version A has none. So roughly 1 in 11 ordinary files would lose some points, up to 15 for a file made only of wrappers. Raise `wrapper_free_density` or lower `wrapper_tax_max_points` in a `--config` file if that is too many for your code.
+

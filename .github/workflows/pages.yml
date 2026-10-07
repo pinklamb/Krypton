@@ -1,12 +1,12 @@
-# Publishes site/ to GitHub Pages on every push to main.
+# Publishes argon/site/ to GitHub Pages on every push to main.
 # One-time setup: repo Settings > Pages > Build and deployment > Source: "GitHub Actions".
-# This file expects the repo root to be this folder (the one holding pyproject.toml).
+# GitHub only reads workflows from the repository root .github/workflows, so this lives here, not in argon/.
 name: Deploy site
 
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    paths: ["argon/site/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -29,6 +29,6 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: argon/site
       - id: deployment
         uses: actions/deploy-pages@v4

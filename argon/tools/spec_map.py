@@ -46,7 +46,7 @@ ROWS = (
     SpecRow("C2", "Error recovery hides code", "built", "engine/languages.py, engine/run.py",
             ("test_c2_fail_closed_above_error_limit", "test_c2_small_errors_are_scored_with_a_warning_flag")),
     SpecRow("C3", "Non-UTF-8 crash", "built", "engine/languages.py", ("test_c3_bad_bytes_do_not_raise",)),
-    SpecRow("C4", "Huge files", "built", "engine/run.py", ("test_c4_oversize_is_flagged_not_parsed",)),
+    SpecRow("C4", "Huge files", "built", "engine/run.py", ("test_c4_oversize_is_reported_not_checked_not_scored",)),
     SpecRow("C5", "Symlink loops", "built", "cli.py", ("test_symlink_leaving_the_root_is_dropped",)),
     SpecRow("D1-D4", "Phase 1 infrastructure (webhook, queue, poster, DB)", "phase1", "not built in the MVP", ()),
 )

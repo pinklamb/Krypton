@@ -10,7 +10,6 @@ RULE_NAMES = {
     "coupling_hotspot": "Coupling Hotspot",
     "semantic_path_logic": "Semantic Path Logic",
     "unparseable": "Unparseable",
-    "oversize": "Oversize",
 }
 
 
@@ -36,6 +35,7 @@ def build_summary_markdown(
     if result.skipped_files:
         skipped = ", ".join(f"{skip.filename} ({skip.reason.replace('_', ' ')})" for skip in result.skipped_files)
         lines += ["", f"Skipped: {skipped}."]
+    lines += _unchecked_section(result.errors)
     if result.ignored_generated_markers:
         marked = ", ".join(result.ignored_generated_markers)
         lines += ["", f"Generated markers ignored (path not in generated_path_globs): {marked}."]
@@ -54,4 +54,11 @@ def _issue(finding: FileFinding, cfg: EngineConfig, function_name: str) -> str:
         return f"Coupled to {finding.coupling_weight} other files (threshold {cfg.coupling_weight_threshold}); split its wiring"
     if reason == "unparseable":
         return f"{finding.error_coverage:.0%} of the file could not be parsed"
-    return f"over the size limits ({cfg.max_file_bytes:,} bytes, a line over {cfg.max_line_chars:,} characters, or a node with over {cfg.max_children:,} children), not parsed"
+    return "not analyzed"
+
+
+def _unchecked_section(errors: dict[str, str]) -> list[str]:
+    """Each error code with its explanation; the score leaves those files out."""
+    if not errors:
+        return []
+    return ["", "**Not checked** (the purity score above does not include these files):", *[f"- `{code}`: {text}" for code, text in errors.items()]]

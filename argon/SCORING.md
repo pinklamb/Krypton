@@ -133,9 +133,8 @@ rating_nesting = score     × effective_lines_altered ÷ outputs_effective
 
 | Order | Flag | When it applies |
 |---|---|---|
-| 1 | **oversize** | the file is over 1 MB and isn't parsed |
-| 2 | **unparseable** | more than 5% of the file sits in syntax-error or missing nodes (C1, C2) |
-| 3 | **concentration** | more than 800 effective lines **and** more than 3 async boundaries |
+| 1 | **unparseable** | more than 5% of the file sits in syntax-error or missing nodes (C1, C2) |
+| 2 | **concentration** | more than 800 effective lines **and** more than 3 async boundaries |
 | 4 | **semantic path** | the file's rating is over the calibrated threshold for the active mode (see below) |
 
 **Fragmentation** is a PR-wide flat −25 penalty. It fires when the largest group of files that import each other has 3 or more files and more than 4 imports per file. Imports are resolved however they're written: relative paths, tsconfig aliases, or Python absolute or relative imports.
@@ -193,11 +192,12 @@ These override the MVP specification PDF. The PDF itself hasn't been edited.
 | §5.1 parsing code | imports `pathlib` | `posixpath` only | §3's rule forbids `pathlib` in `engine/`. |
 | §10.1 thresholds | placeholders at 40 | fitted values in `engine/calibrated.py` | See Calibration above. |
 | §9.4 per-function lines | a function's lines are its physical lines minus nested named functions' lines | a function owns the **characters** of its span minus nested named functions; a line shared by several functions is split by their share of its code characters | Whole-line attribution gave an outer function 0 lines and every one of 50 siblings on a line the full line. |
-| §10.1 / C4 oversize | only `max_file_bytes` (1,000,000) | also `max_line_chars` (5,000): any longer line is flagged `oversize` and not parsed | ast-grep's `range()` slows with the column, so one long line was quadratic in time, and a wide node needs hundreds of MB. |
-| §10.1 / C4 oversize | also `max_line_chars` | also `max_children` (50,000): a node with more children is flagged `oversize` during the walk, probed with `child(n)` so no wrappers are built | One-element-per-line arrays passed the line guard and needed ~600 MB, because `children()` makes a Python wrapper per child. |
+| §10.1 / C4 oversize | only `max_file_bytes` (1,000,000) | also `max_line_chars` (5,000): any longer line is not analyzed (see *Files too large to check*) | ast-grep's `range()` slows with the column, so one long line was quadratic in time, and a wide node needs hundreds of MB. |
+| §10.1 / C4 oversize | also `max_line_chars` | also `max_children` (50,000): a node with more children, found during the walk, makes the file not analyzed (see *Files too large to check*); later narrowed by the sibling walk below, probed with `child(n)` so no wrappers are built | One-element-per-line arrays passed the line guard and needed ~600 MB, because `children()` makes a Python wrapper per child. |
 | §11 CLI / §3.2 schema | no change-frequency data | `FileFinding.change_frequency` (0.0 stable to 1.0 volatile, `None` = not measured) and `--order-by-volatility` / `--volatility FILE.json`; see *Volatility index* below | Modularity only helps a prompt cache when stable files come first. The index never changes a score. |
 | §10.2 flag rules | concentration, semantic path | also `coupling_hotspot` (lowest priority, never replaces another flag): coupling weight over `coupling_weight_threshold` (12) and at least `coupling_min_lines` (40) effective lines; see *Coupling hot spots* below | Version B of the racing-game audit passed 100/100 while `world.js` and `config.js` were touched by every feature. |
 | §10.3 purity score | flag ratio and overshoot only | also subtracts the **Structural Overhead Tax**, weighted by altered lines like overshoot; see below | Version B of the racing-game audit was 56% larger in tokens, partly from many tiny functions. A tax that lowers purity, never a flag. |
+| §10.1 / C4 fail closed | a file over a size limit is flagged `oversize` and scored as a failure | it is not analyzed, not scored, and listed in `EngineResult.errors` as `{code: explanation}`; the purity score is computed without it | A legitimate large file should not drag the score down, and must never pass silently. |
 | §10.2 `--base` diff | hunk headers matched anywhere in the diff | hunk bodies are consumed by the counts in each `@@` header; git runs with `core.quotepath=off` and explicit prefixes, trailing tabs and quoted paths are decoded | An added line starting `++ ` read as a file header, and files with spaces or non-ASCII names were silently dropped. |
 
 ---
@@ -240,4 +240,23 @@ Lowers a file's purity contribution when most of its named functions are trivial
 - **Purity:** `100 − 70 × flag_ratio − overshoot − overhead`, where overhead is the file taxes weighted by effective altered lines, like overshoot.
 
 Calibration (1,500 random Python files from site-packages, files with 6 or more functions): the share of files with density above 0.5 / 0.6 / 0.7 was 15.6% / 9.3% / 5.4%. At 0.6 the racing game's Version B still has 3 taxed files (`health.js` 6 of 6 wrappers, `input.js` and `weather.js` 5 of 7) and its purity moves 86 to 85; Version A has none. So roughly 1 in 11 ordinary files would lose some points, up to 15 for a file made only of wrappers. Raise `wrapper_free_density` or lower `wrapper_tax_max_points` in a `--config` file if that is too many for your code.
+
+---
+
+## Files too large to check
+
+Three limits keep a run fast and bounded. A file that passes one is **not analyzed and not scored**: it is absent from `findings`, and the purity score is computed from the other files. It is never silent. `EngineResult.errors` is a map of error code to a one-sentence explanation, one entry per code, with up to five filenames, the limit passed and the exact setting that fixes it; the report prints the same text as `WARN` lines and in the PR comment.
+
+| Code | Limit (default) | Fix |
+|---|---|---|
+| `E_FILE_TOO_LARGE` | `max_file_bytes` (1,000,000) | raise it to the next whole megabyte above the largest file |
+| `E_LINE_TOO_LONG` | `max_line_chars` (5,000) | raise it, or list minified code in `generated_path_globs` |
+| `E_NODE_TOO_WIDE` | `max_children` (50,000) | raise it; only nodes whose children each need their own depth rule (a `case` body, an `if` or loop body) with that many statements |
+| `E_NOTHING_CHECKED` | (no limit) | present when every file was refused, since a score of 100 then means nothing |
+
+A file over both the byte and the line limit gets both codes. Put the settings in a TOML file and pass it with `--config`. Time and memory grow roughly in a straight line with file size: on Python, about 2 seconds and 55 MB per extra megabyte (a 3 MB file took 5.5 s and 207 MB; 12 MB took 21 s and 728 MB). Unparseable files are different: broken syntax still fails closed and counts against the score.
+
+### Wide nodes are walked one child at a time
+
+A node with more than `lazy_children_threshold` (512) children, such as a long array, object, argument list, class body or statement list, is no longer fetched as a list of child objects. The walk keeps one pending child and steps to each next sibling (`child.next()`), so memory stays flat however wide the node is: on a 300,000-element array the walk allocated about 2 KB, against about 300 MB when the children were fetched together. Depths, the unreachable-code rule after a `return`, and scope handling are identical; it applies only to node kinds whose children all sit at the node's own depth. Nodes that need a per-child depth rule (`switch` cases, `if` and loop bodies, `else`, `except`, comprehensions, boolean control flow) are still read together and keep the `max_children` cap. The per-line effective-line tables still grow with the number of lines (about 160 bytes per line).
 

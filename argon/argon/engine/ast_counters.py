@@ -12,12 +12,12 @@ from dataclasses import dataclass, replace
 from ast_grep_py import SgNode
 
 from argon.engine.branches import BRANCH_CANDIDATE_TYPES, BranchNode, branch_for
-from argon.engine.collectors import MUTED, Collectors, child_flags
+from argon.engine.collectors import BLOCK_KINDS, DEAD, MUTED, TERMINATOR_KINDS, Collectors, child_flag_base, child_flags
 from argon.engine.config import DEFAULT_CONFIG, EngineConfig, matches_any
 from argon.engine.imports import PythonImport, resolve_imports
 from argon.engine.languages import ParsedSource, parse_source
 from argon.engine.lines import LineWeights, physical_lines
-from argon.engine.nesting import child_frames
+from argon.engine.nesting import child_frames, has_uniform_depth
 from argon.engine.scopes import Frame, ScopeTracker, is_scope
 
 __all__ = [
@@ -98,6 +98,20 @@ def analyze_tree(parsed: ParsedSource, cfg: EngineConfig = DEFAULT_CONFIG, filen
     return walk.metrics()
 
 
+@dataclass
+class _Siblings:
+    """The children of a wide node still to visit, held as one pending node (constant memory).
+
+    Visiting a child pushes this back before the child's own descendants, so source order
+    and the DEAD-after-a-terminator rule are the same as with the bulk child list.
+    """
+
+    pending: SgNode  # next child to visit
+    block: bool  # a statement list: a return / throw makes later siblings DEAD
+    inherited: int  # MUTED bit every child gets
+    dead: int  # DEAD bit the next child gets
+
+
 class _Walk:
     """One iterative pass. Stack items are (node, depth, flags); node None ends a scope."""
 
@@ -120,6 +134,8 @@ class _Walk:
             node, depth, flags = self.stack.pop()
             if node is None:
                 self._close_scope(depth)
+            elif isinstance(node, _Siblings):
+                self._next_sibling(node, depth)
             else:
                 self._visit(node, depth, flags)
 
@@ -131,21 +147,55 @@ class _Walk:
 
     def _visit(self, node: SgNode, depth: int, flags: int) -> None:
         """Collect, then open a scope or count a decision, then push the children."""
-        if node.child(self.cfg.max_children) is not None:  # a cheap probe: no wrappers are built
-            raise TooWide
         kind = node.kind()
+        wide = node.child(self.cfg.lazy_children_threshold) is not None  # a cheap probe: builds no wrappers
         self.collectors.observe(node, kind, flags, self.scopes.current)
         if is_scope(node, kind):
+            self._guard_width(node, wide)
             self._open_scope(node, kind, depth, flags)
             return
+        control_flow = self._count_decision(node, kind, depth, flags)
+        if wide and has_uniform_depth(kind, control_flow):
+            self._push_siblings(node, kind, depth, flags)
+            return
+        self._guard_width(node, wide)
+        self._push_children(node, kind, depth, flags, control_flow)
+
+    def _count_decision(self, node: SgNode, kind: str, depth: int, flags: int) -> bool:
+        """Count the node if it is a decision; True when it is a control-flow boolean."""
         branch = _branch(node, kind, depth, flags, self.cfg, self.in_test)
         if branch is not None:
             self._count(branch)
-        control_flow = branch is not None and branch.control_flow
+        return branch is not None and branch.control_flow
+
+    def _push_children(self, node: SgNode, kind: str, depth: int, flags: int, control_flow: bool) -> None:
+        """Queue every child with its depth and flags (bulk fetch, for narrow nodes)."""
         frames = child_frames(node, kind, depth, control_flow)
         frame_flags = child_flags(node, kind, flags, self.in_test)
         for (child, child_depth), child_flag in zip(reversed(frames), reversed(frame_flags)):
             self.stack.append((child, child_depth, child_flag))
+
+    def _guard_width(self, node: SgNode, wide: bool) -> None:
+        """Nodes that need per-child depth rules are still read in bulk, so they keep a cap."""
+        if wide and node.child(self.cfg.max_children) is not None:
+            raise TooWide
+
+    def _push_siblings(self, node: SgNode, kind: str, depth: int, flags: int) -> None:
+        """Queue a wide node's children to be visited one at a time, all at the node's depth."""
+        inherited, dead = child_flag_base(kind, flags, self.in_test)
+        self.stack.append((_Siblings(node.child(0), kind in BLOCK_KINDS, inherited, dead), depth, 0))
+
+    def _next_sibling(self, siblings: _Siblings, depth: int) -> None:
+        """Visit the pending child; the rest of its siblings wait underneath its descendants."""
+        child = siblings.pending
+        following = child.next()
+        flag = siblings.inherited | siblings.dead
+        if siblings.block and child.kind() in TERMINATOR_KINDS:
+            siblings.dead = DEAD
+        if following is not None:
+            siblings.pending = following
+            self.stack.append((siblings, depth, 0))
+        self._visit(child, depth, flag)
 
     def _open_scope(self, node: SgNode, kind: str, depth: int, flags: int) -> None:
         """A function / lambda / class is scored on its own scale, from depth 0."""

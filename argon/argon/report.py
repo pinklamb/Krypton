@@ -23,6 +23,7 @@ def warnings(result: EngineResult) -> list[str]:
         f"WARN {filename}: generated marker ignored; add its path to generated_path_globs to skip it"
         for filename in result.ignored_generated_markers
     ]
+    lines += [f"WARN {code}: {text}" for code, text in result.errors.items()]
     return lines
 
 

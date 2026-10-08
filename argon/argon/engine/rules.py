@@ -9,7 +9,7 @@ from typing import Literal
 from argon.engine.config import EngineConfig
 from argon.schemas import FileFinding
 
-FAIL_CLOSED_REASONS = frozenset({"oversize", "unparseable"})
+FAIL_CLOSED_REASONS = frozenset({"unparseable"})
 MAX_OVERSHOOT_POINTS = 30
 FLAG_RATIO_POINTS = 70
 

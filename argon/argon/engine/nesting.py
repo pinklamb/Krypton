@@ -31,6 +31,11 @@ def child_frames(
     ]
 
 
+def has_uniform_depth(kind: str, control_flow: bool = False) -> bool:
+    """True when every child of this kind of node sits at the node's own depth (arrays, statement lists...)."""
+    return not control_flow and kind not in COMPREHENSION_TYPES and kind not in _NESTED_CHILDREN
+
+
 def _comprehension_frames(node: SgNode, depth: int) -> list[tuple[SgNode, int]]:
     """§7.3: score a comprehension like the loop it stands for.
 

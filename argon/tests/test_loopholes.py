@@ -203,21 +203,24 @@ def test_c3_bad_bytes_do_not_raise():
     assert finding.filename == "legacy.py"
 
 
-def test_c4_oversize_is_flagged_not_parsed():
-    source = b"const x = 1;\n" * 160_000  # ~2 MB
+def test_c4_oversize_is_reported_not_checked_not_scored():
+    source = b"const x = 1;" + bytes([10])
+    source *= 160_000  # ~2 MB
 
-    (finding,) = run_local({"bundle.js": source}).findings
+    result = run_local({"bundle.js": source})
 
-    assert (finding.flag_reason, finding.cyclomatic_branches) == ("oversize", 0)
+    assert result.findings == []
+    assert "E_FILE_TOO_LARGE" in result.errors
+    assert "bundle.js" in result.errors["E_FILE_TOO_LARGE"] and "max_file_bytes = 3000000" in result.errors["E_FILE_TOO_LARGE"]
 
 
-def test_c4_one_very_long_line_is_flagged_not_parsed():
+def test_c4_one_very_long_line_is_reported_not_checked():
     # Issue 7: a minified bundle is small in bytes but makes range() quadratic and nodes huge.
     minified = b"var a=[" + b"1," * 4000 + b"];if(a){a()}\n"
 
-    (finding,) = run_local({"min.js": minified}).findings
+    errors = run_local({"min.js": minified}).errors
 
-    assert (finding.flag_reason, finding.cyclomatic_branches) == ("oversize", 0)
+    assert "max_line_chars = 9000" in errors["E_LINE_TOO_LONG"] and "min.js" in errors["E_LINE_TOO_LONG"]
     assert len(minified) < 20_000
 
 
@@ -243,9 +246,14 @@ def test_a2_optional_calls_switch():
     assert (off.cyclomatic_branches, on.cyclomatic_branches) == (0, 2)
 
 
-def test_c4_node_with_too_many_children_is_flagged_not_walked():
-    source = ("const a = [" + chr(10) + ("1," + chr(10)) * 60_000 + "];" + chr(10)).encode()  # ~180 KB, 60,000 children
+NL = chr(10)
 
-    (finding,) = run_local({"table.js": source}).findings
 
-    assert (finding.flag_reason, finding.cyclomatic_branches) == ("oversize", 0)
+def test_c4_node_needing_per_child_depth_rules_keeps_the_children_cap():
+    # A `case` body is read in bulk (each child's depth depends on the case), so it keeps max_children.
+    source = ("switch (x) { case 1: " + NL + ("a();" + NL) * 60_000 + "}").encode()
+
+    result = run_local({"cases.js": source})
+
+    assert result.findings == []
+    assert "max_children = 100000" in result.errors["E_NODE_TOO_WIDE"] and "cases.js" in result.errors["E_NODE_TOO_WIDE"]

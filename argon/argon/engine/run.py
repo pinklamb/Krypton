@@ -27,6 +27,7 @@ from argon.engine.rules import (
     rating_nesting,
 )
 from argon.engine.summary import build_summary_markdown
+from argon.engine.unchecked import FILE_TOO_LARGE, LINE_TOO_LONG, NODE_TOO_WIDE, Unchecked, build_errors
 from argon.schemas import FLAG_PRIORITY, EngineResult, FileFinding, FunctionFinding, SkippedFile
 
 MARKER_LINES = 5
@@ -63,7 +64,7 @@ def run_local(
     change_frequency (path -> 0.0..1.0, see engine/volatility.py) is recorded on each finding
     and never affects a score.
     """
-    skipped, markers, analyzed = [], [], {}
+    skipped, markers, unchecked, analyzed = [], [], [], {}
     for filename in sorted(files):
         skip = should_skip_file(filename, cfg)
         if skip is not None:
@@ -73,7 +74,11 @@ def run_local(
         if _has_generated_marker(text, cfg):
             markers.append(filename)
         lines = None if altered is None else frozenset(altered.get(filename, ()))
-        analyzed[filename] = _analyze_file(filename, files[filename], text, lines, cfg)
+        item = _analyze_file(filename, files[filename], text, lines, cfg)
+        if isinstance(item, list):
+            unchecked.extend(item)
+        else:
+            analyzed[filename] = item
 
     findings, edges = _link_files(analyzed, change_frequency, cfg)
     fragmentation = check_fragmentation_rule(findings, edges, cfg)
@@ -86,6 +91,7 @@ def run_local(
         flagged_file_count=sum(finding.flagged for finding in findings),
         skipped_file_count=len(skipped),
         skipped_files=skipped,
+        errors=build_errors(unchecked, len(analyzed), cfg),
         ignored_generated_markers=markers,
         fragmentation_flagged=fragmentation.triggered,
         fragmentation_cluster=fragmentation.cluster,
@@ -148,17 +154,19 @@ def _imports_of(filename: str, metrics: AstMetrics | None, scanned: frozenset[st
 
 def _analyze_file(
     filename: str, source: bytes, text: str, altered: frozenset[int] | None, cfg: EngineConfig
-) -> _Analyzed:
-    """Fail closed if oversize / unparseable; else analyze, rate functions and set flags."""
-    if len(source) > cfg.max_file_bytes or _longest_line(text) > cfg.max_line_chars:
-        return _fail_closed(filename, text, altered, cfg, "oversize", error_coverage=0.0)
+) -> _Analyzed | list[Unchecked]:
+    """Not checked if too big (a list of refusals); fail closed if unparseable; else analyze and flag."""
+    longest = _longest_line(text)
+    refused = _size_refusals(filename, len(source), longest, cfg)
+    if refused:
+        return refused
     parsed = parse_source(filename, source)
     if parsed.error_coverage > cfg.max_error_coverage:
         return _fail_closed(filename, text, altered, cfg, "unparseable", parsed.error_coverage)
     try:
         metrics = analyze_tree(parsed, cfg, filename)
     except TooWide:
-        return _fail_closed(filename, text, altered, cfg, "oversize", error_coverage=0.0)
+        return [Unchecked(filename, NODE_TOO_WIDE, len(source), longest)]
     weights = metrics.line_weights
     functions = [_function_finding(stats, weights, altered) for stats in metrics.functions]
     module = _function_finding(metrics.module, weights, altered)
@@ -191,6 +199,12 @@ def _wrapper_fields(functions: list[FunctionFinding], cfg: EngineConfig) -> dict
     """trivial_wrapper_count and overhead_tax for a file's named functions."""
     trivial = sum(f.branches <= cfg.wrapper_max_branches and f.effective_lines <= cfg.wrapper_max_lines for f in functions)
     return {"trivial_wrapper_count": trivial, "overhead_tax": overhead_points(trivial, len(functions), cfg)}
+
+
+def _size_refusals(filename: str, size: int, longest: int, cfg: EngineConfig) -> list[Unchecked]:
+    """Every size limit the file passes, so one config fix covers all of them."""
+    codes = [FILE_TOO_LARGE] * (size > cfg.max_file_bytes) + [LINE_TOO_LONG] * (longest > cfg.max_line_chars)
+    return [Unchecked(filename, code, size, longest) for code in codes]
 
 
 def _longest_line(text: str) -> int:
@@ -250,7 +264,7 @@ def _fail_closed(
     reason: str,
     error_coverage: float,
 ) -> _Analyzed:
-    """C2 / C4: not scored, counted as flagged, weighted by non-blank lines."""
+    """C2: not scored, counted as flagged, weighted by non-blank lines."""
     line_count = len(physical_lines(text))
     weights = non_blank_weights(text, cfg.effective_line_width)
     finding = FileFinding(

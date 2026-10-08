@@ -9,7 +9,7 @@ from ast_grep_py import SgNode
 from argon.engine.config import EngineConfig
 from argon.engine.imports import PythonImport, js_call_specifier, js_declaration_specifier, python_imports
 from argon.engine.lines import Span
-from argon.engine.node_utils import collapsed, node_text
+from argon.engine.node_utils import collapsed, iter_children, node_text
 from argon.engine.scopes import Frame
 
 # Walk flags carried on each stack item.
@@ -144,7 +144,7 @@ class Collectors:
     def _statements(self, node: SgNode, flags: int, frame: Frame) -> None:
         """Each statement in a statement list; `a(); b(); c();` on one line counts 3."""
         value = node.field("value")  # a switch case's `case value:` is not a statement
-        for child in node.named_children():
+        for child in iter_children(node, named=True):
             if child.kind() != "comment" and child != value:
                 self.statement_starts[child.range().start.line] += 1
 
@@ -159,16 +159,21 @@ class Collectors:
             self.comment_spans.append(_span(node))
 
 
-def child_flags(node: SgNode, kind: str, flags: int, in_test: bool) -> list[int]:
-    """Flags for each child: DEAD after a terminator in a block, MUTED inside test asserts."""
+def child_flag_base(kind: str, flags: int, in_test: bool) -> tuple[int, int]:
+    """(inherited MUTED bit, DEAD bit before the first child) for a node's children."""
     inherited = flags & MUTED
     if in_test and kind == "assert_statement":
         inherited |= MUTED
+    return inherited, flags & DEAD
+
+
+def child_flags(node: SgNode, kind: str, flags: int, in_test: bool) -> list[int]:
+    """Flags for each child: DEAD after a terminator in a block, MUTED inside test asserts."""
+    inherited, dead = child_flag_base(kind, flags, in_test)
     children = node.children()
     if kind not in BLOCK_KINDS:
-        return [inherited | (flags & DEAD)] * len(children)
+        return [inherited | dead] * len(children)
     result = []
-    dead = flags & DEAD
     for child in children:
         result.append(inherited | dead)
         if child.kind() in TERMINATOR_KINDS:
@@ -205,8 +210,8 @@ def _is_first_statement(node: SgNode) -> bool:
             return False
     elif parent.kind() != "module":
         return False
-    statements = [child for child in parent.named_children() if child.kind() != "comment"]
-    return bool(statements) and statements[0] == node
+    first = next((child for child in iter_children(parent, named=True) if child.kind() != "comment"), None)
+    return first == node
 
 
 def _span(node: SgNode) -> Span:

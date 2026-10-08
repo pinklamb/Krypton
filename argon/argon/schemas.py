@@ -14,11 +14,10 @@ FlagReason = Literal[
     "concentration_rule",  # master §4.1
     "semantic_path_logic",  # master §4.2
     "unparseable",  # §5.2, fail closed (C2)
-    "oversize",  # §10.1, fail closed (C4)
     "coupling_hotspot",  # file wired to many others (imports or shared globals)
 ]
 # When several reasons apply, flag_reason takes the first in this order.
-FLAG_PRIORITY: tuple[FlagReason, ...] = ("oversize", "unparseable", "concentration_rule", "semantic_path_logic", "coupling_hotspot")
+FLAG_PRIORITY: tuple[FlagReason, ...] = ("unparseable", "concentration_rule", "semantic_path_logic", "coupling_hotspot")
 
 
 class FunctionFinding(BaseModel):
@@ -86,6 +85,7 @@ class EngineResult(BaseModel):
     flagged_file_count: int
     skipped_file_count: int
     skipped_files: list[SkippedFile]
+    errors: dict[str, str] = {}  # error code -> explanation; files too large to check are left out of the score
     ignored_generated_markers: list[str]  # files whose marker was not honored (A3)
     fragmentation_flagged: bool
     fragmentation_cluster: list[str]  # files in the triggering group (§10.2)

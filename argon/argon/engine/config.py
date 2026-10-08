@@ -51,6 +51,7 @@ class EngineConfig(BaseModel):
     max_error_coverage: float = 0.05  # C2
     max_file_bytes: int = 1_000_000  # C4
     max_line_chars: int = 5000  # a longer line (minified code, one-line data) is not parsed: range() is quadratic on it
+    lazy_children_threshold: int = 512  # a node with more children is walked one child at a time (constant memory)
     max_children: int = 50_000  # one node with more children is generated data: materializing them costs ~2 KB each
     score_cap: int = 1_000_000  # B3
     volatility_window_commits: int = 200  # --order-by-volatility reads this many recent commits

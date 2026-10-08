@@ -33,7 +33,7 @@ baseline = working_set_mb()
 started = time.perf_counter()
 result = run_local(files)
 print(json.dumps({"seconds": time.perf_counter() - started, "baseline": baseline, "peak": peak_working_set_mb(),
-                  "reason": result.findings[0].flag_reason, "purity": result.purity_score}))
+                  "reason": result.findings[0].flag_reason if result.findings else next(iter(result.errors), None), "purity": result.purity_score}))
 """
 NODE_CHILD = """
 import sys
@@ -148,13 +148,14 @@ def issue7() -> TestResult:
               f"No. It needs {single['peak'] - single['baseline']:.0f} MB above baseline ({single['peak']:.0f} MB total) and {single['seconds']:.2f} s, with about 241,000 nodes."),
         Check("Can a file under the 1 MB cap still exceed 512 MB?", FINDING if tall["peak"] > RAM_CEILING_MB else PASS,
               f"No longer. The one-line array and the 333,000-term chain are refused by the line-length guard (peaks {array['peak']:.0f} and {chain['peak']:.0f} MB). "
-              f"The one-element-per-line array (990 KB) used to need about 627 MB; a node with more than {CFG.max_children:,} children is now flagged <code>{tall['reason']}</code> during the walk, peaking at {tall['peak']:.0f} MB (the tree itself). "
-              f"Why the walk needs the guard: <code>children()</code> creates a Python wrapper per child (the unguarded one-line array: tree {mechanism[1][1]} MB, wrappers +{mechanism[2][2]} MB, walk +{mechanism[3][2]} MB). The probe is <code>child(n)</code>, which builds none."),
+              f"The one-element-per-line array (990 KB, 330,000 elements) used to need about 627 MB because <code>children()</code> built a Python wrapper for each element. "
+              f"Wide nodes are now walked one child at a time by stepping to each next sibling, so the walk itself allocates about 2 KB however wide the node is; the whole file now peaks at {tall['peak']:.0f} MB (the tree and per-line tables) and is {'scored' if not tall['reason'] else 'reported as ' + str(tall['reason'])}. "
+              f"For comparison, the unguarded one-line array: tree {mechanism[1][1]} MB, wrappers +{mechanism[2][2]} MB, walk +{mechanism[3][2]} MB."),
         Check("Does a big pull request add up?", CAVEAT,
               f"Slowly. Twenty copies of the 22k-line file peak at {pr['peak']:.0f} MB against {single['peak']:.0f} MB for one: about {growth:.0f} MB per extra file. The trees are freed, but each file's findings (1,600 function records here) are kept until the run ends."),
         Check("Is there a guard before the allocation?", PASS,
-              f"Yes, two linear ones in <code>run_local</code>, both fail closed as <code>oversize</code>: <code>max_file_bytes</code> = {CFG.max_file_bytes:,} (spec C4) and <code>max_line_chars</code> = {CFG.max_line_chars:,} (added). The 2.1 MB file was flagged <code>{over['reason']}</code> (peak {over['peak']:.0f} MB) and the one-line files were flagged <code>{one_line['reason']}</code> in {one_line['seconds']:.2f} s. Neither parses first, which is the only way to guard before allocating (a node count is known only after parsing)."),
-        Check("Is the analysis time bounded?", PASS if one_line["reason"] == "oversize" and one_line["seconds"] < 5 else FINDING,
+              f"Yes, two linear ones in <code>run_local</code>, both leave the file out of the score as <code>E_FILE_TOO_LARGE</code> / <code>E_LINE_TOO_LONG</code> in <code>errors</code>: <code>max_file_bytes</code> = {CFG.max_file_bytes:,} (spec C4) and <code>max_line_chars</code> = {CFG.max_line_chars:,} (added). The 2.1 MB file was flagged <code>{over['reason']}</code> (peak {over['peak']:.0f} MB) and the one-line files were flagged <code>{one_line['reason']}</code> in {one_line['seconds']:.2f} s. Neither parses first, which is the only way to guard before allocating (a node count is known only after parsing)."),
+        Check("Is the analysis time bounded?", PASS if one_line["reason"] == "E_LINE_TOO_LONG" and one_line["seconds"] < 5 else FINDING,
               f"For long lines, yes: ast-grep's <code>range()</code> slows with the column of the node (0.1 µs at the start of a 973 KB line, 1.4 ms at the end), so time was quadratic in line length (80,000 ifs took 69 s, the 1 MB case 200 s). Lines over {CFG.max_line_chars:,} characters are now refused before parsing; the 60,000 ifs on one line took {one_line['seconds']:.2f} s (flagged) and the same ifs one per line {per_line['seconds']:.1f} s. Genuinely tall files stay linear."),
         Check("What about a worker that is killed anyway?", CAVEAT,
               "That is the spec's D3, recorded for Phase 1 and not built: a reaper that fails stuck Check Runs, a per-worker memory cap (<code>RLIMIT_AS</code>) and a 120 s limit. The two findings above are the inputs that would hit it, so the reaper matters more than the typical numbers suggest."),

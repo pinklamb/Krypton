@@ -1,4 +1,6 @@
-# Argon
+# [Argon](https://pinklamb.github.io/Argon/)
+
+Docs and site: https://pinklamb.github.io/Argon/
 
 Argon scores how structurally heavy code is: branches, nesting, bloated functions. It works on JavaScript, TypeScript and Python, runs locally with no network, and is built to sit next to a coding agent. It is not a linter. Run your linter too.
 
@@ -89,7 +91,7 @@ A **coupling hotspot** is a file wired to more than 12 other files (imports it m
 
 The **Structural Overhead Tax** lowers the purity score (it never flags a file) when over 60% of a file's functions are trivial wrappers: at most 1 decision and 4 effective lines. The point is to discourage splitting code into many tiny functions just to stay under the branch limit.
 
-Files over 1 MB, with a line over 5,000 characters, or with one node holding over 50,000 children (generated data) are flagged `oversize` and not parsed. Minified bundles land here; add them to your ignore file.
+Files over 1 MB, with a line over 5,000 characters, are **not checked** (huge arrays and statement lists are fine: they are read one child at a time). They are left out of the purity score and listed under `errors` in the JSON, in the warnings and in the PR comment, as `{error code: explanation}` with the setting that fixes it (for example `max_file_bytes = 3000000` in a `--config` TOML file). Minified bundles land here; add them to your ignore file. If every file is refused, the result says so, since a score of 100 would mean nothing.
 
 ## What it scans
 

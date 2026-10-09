@@ -10,6 +10,7 @@ Two kinds of edge, both between scanned files:
 from __future__ import annotations
 
 from collections import Counter
+from itertools import chain
 from collections.abc import Collection, Iterable, Mapping
 
 Member = tuple[str, str]  # (namespace, member), e.g. ("Racer", "world")
@@ -29,9 +30,14 @@ def namespace_edges(
     shared = _shared_namespaces(defs, min_files)
     edges: set[tuple[str, str]] = set()
     for user, members in refs.items():
-        keys = [key for key in members if key[0] in shared]
-        edges.update((user, provider) for key in keys for provider in providers.get(key, ()) if provider != user)
+        edges |= _edges_of(user, members, shared, providers)
     return edges
+
+
+def _edges_of(user: str, members: Collection[Member], shared: set[str], providers: Mapping[Member, set[str]]) -> set[tuple[str, str]]:
+    """(user, provider) for each shared-namespace member the file reads, except itself."""
+    owners = chain.from_iterable(providers.get(key, ()) for key in members if key[0] in shared)
+    return {(user, provider) for provider in owners if provider != user}
 
 
 def _providers(defs: Mapping[str, Collection[Member]]) -> dict[Member, set[str]]:
@@ -55,14 +61,22 @@ def _shared_namespaces(defs: Mapping[str, Collection[Member]], min_files: int) -
 def coupling_weights(files: Iterable[str], *edge_sets: Collection[tuple[str, str]]) -> dict[str, int]:
     """Per file: distinct files it depends on plus distinct files that depend on it."""
     names = set(files)
-    links = _links(names, edge_sets)
+    links = coupling_links(names, edge_sets)
     out, into = Counter(source for source, _ in links), Counter(target for _, target in links)
     return {name: out[name] + into[name] for name in names}
 
 
-def _links(names: set[str], edge_sets: Iterable[Collection[tuple[str, str]]]) -> set[tuple[str, str]]:
+def coupling_links(names: set[str], edge_sets: Iterable[Collection[tuple[str, str]]]) -> set[tuple[str, str]]:
     """Distinct edges between two different scanned files, whichever edge set they came from."""
-    links: set[tuple[str, str]] = set()
-    for edges in edge_sets:
-        links.update(edge for edge in edges if edge[0] != edge[1] and edge[0] in names and edge[1] in names)
-    return links
+    candidates = chain.from_iterable(edge_sets)
+    return {edge for edge in candidates if edge[0] != edge[1] and edge[0] in names and edge[1] in names}
+
+
+def partners(links: Collection[tuple[str, str]]) -> dict[str, set[str]]:
+    """For each file, the files it is linked to in either direction."""
+    result: dict[str, set[str]] = {}
+    for source, target in links:
+        result.setdefault(source, set()).add(target)
+        result.setdefault(target, set()).add(source)
+    return result
+

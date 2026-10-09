@@ -16,3 +16,4 @@ argon/docs/.stress_cache.pkl
 
 # benchmark runs and game builds used in the audit
 ArgonTestCase6/
+.argon/

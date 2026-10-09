@@ -77,6 +77,25 @@ def _function_row(filename: str, function: FunctionFinding) -> str:
     )
 
 
+NEWLINE = chr(10)
+
+
+def refactoring_hints(result: EngineResult, limit: int) -> str:
+    """Where the heaviest functions are heavy and what to try, heaviest first; empty if none."""
+    if not result.hints or limit <= 0:
+        return ""
+    rows = [f"  {key}: {text}" for key, text in list(result.hints.items())[:limit]]
+    return NEWLINE.join([f"Refactoring hints (top {len(rows)}):", *rows])
+
+
+def progress_section(result: EngineResult) -> str:
+    """The --history comparison: purity trend, then each heavy function's movement; empty without a log."""
+    if not result.progress:
+        return ""
+    rows = [f"  {key}: {text}" for key, text in result.progress.items()]
+    return NEWLINE.join(["Progress since the last run:", *rows])
+
+
 def skipped_and_fragmentation(result: EngineResult) -> str:
     """Skipped files with reasons, and the fragmentation group if it fired."""
     lines = [f"Skipped {skip.filename}: {skip.reason.replace('_', ' ')}" for skip in result.skipped_files]

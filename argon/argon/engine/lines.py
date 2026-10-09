@@ -106,13 +106,13 @@ class LineWeights:
         if weight == 0 or (altered is not None and index + 1 not in altered):
             return 0.0
         low = max(start - self.starts[index], 0)
-        inside = sum(1 for char in self.code[index][low : end - self.starts[index]] if not char.isspace())
+        inside = len("".join(self.code[index][low : end - self.starts[index]].split()))
         return weight * inside / self._code_chars(index)
 
     def _code_chars(self, index: int) -> int:
         """Non-space code characters on a 0-based line (cached)."""
         if index not in self.code_chars:
-            self.code_chars[index] = sum(1 for char in self.code[index] if not char.isspace())
+            self.code_chars[index] = len("".join(self.code[index].split()))
         return self.code_chars[index]
 
 

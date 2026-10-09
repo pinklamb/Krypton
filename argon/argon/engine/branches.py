@@ -56,6 +56,7 @@ class BranchNode:
     operator: str | None = None
     depth: int = 0
     control_flow: bool = False  # §7.1: a boolean whose value is discarded
+    end_line: int = 0  # one-based last line of the decision's node, for refactoring hints
 
     @property
     def weight(self) -> int:
@@ -132,7 +133,8 @@ def _branch(
     node: SgNode, operator: str | None = None, control_flow: bool = False
 ) -> BranchNode:
     """A BranchNode at the node's 1-based line; the walk fills in the depth."""
-    return BranchNode(node.kind(), node.range().start.line + 1, operator, 0, control_flow)
+    span = node.range()
+    return BranchNode(node.kind(), span.start.line + 1, operator, 0, control_flow, span.end.line + 1)
 
 
 def _operator(node: SgNode) -> str:

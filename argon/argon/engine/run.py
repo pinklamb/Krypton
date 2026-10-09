@@ -11,7 +11,8 @@ from dataclasses import dataclass
 
 from argon.engine.ast_counters import AstMetrics, FunctionStats, TooWide, analyze_tree
 from argon.engine.config import DEFAULT_CONFIG, EngineConfig, matches_any
-from argon.engine.coupling import coupling_weights, namespace_edges
+from argon.engine.coupling import coupling_links, coupling_weights, namespace_edges, partners
+from argon.engine.hints import Hint, file_hints, function_hints
 from argon.engine.imports import resolve_imports
 from argon.engine.languages import decode_source, language_for, parse_source
 from argon.engine.lines import LineWeights, non_blank_weights, physical_lines
@@ -51,6 +52,7 @@ class _Analyzed:
     finding: FileFinding
     metrics: AstMetrics | None  # None for fail-closed files
     worst_function: str
+    hints: tuple[Hint, ...] = ()  # for heavy functions
 
 
 def run_local(
@@ -80,11 +82,12 @@ def run_local(
         else:
             analyzed[filename] = item
 
-    findings, edges = _link_files(analyzed, change_frequency, cfg)
+    findings, edges, partners = _link_files(analyzed, change_frequency, cfg)
     fragmentation = check_fragmentation_rule(findings, edges, cfg)
     score = compute_purity_score(findings, fragmentation.triggered, cfg)
     result = EngineResult(
         purity_score=score,
+        threshold=cfg.active_threshold,
         check_conclusion=determine_check_conclusion(score, cfg),
         rating_mode=cfg.rating_mode,
         findings=findings,
@@ -92,6 +95,7 @@ def run_local(
         skipped_file_count=len(skipped),
         skipped_files=skipped,
         errors=build_errors(unchecked, len(analyzed), cfg),
+        **_ranked_hints(analyzed, findings, partners),
         ignored_generated_markers=markers,
         fragmentation_flagged=fragmentation.triggered,
         fragmentation_cluster=fragmentation.cluster,
@@ -101,10 +105,20 @@ def run_local(
     return result.model_copy(update={"summary_markdown": build_summary_markdown(result, cfg, worst)})
 
 
+def _ranked_hints(analyzed: dict[str, _Analyzed], findings: list[FileFinding], partners: dict[str, set[str]]) -> dict:
+    """The `hints` and `hint_regions` maps, heaviest hint first."""
+    found = [hint for item in analyzed.values() for hint in item.hints] + file_hints(findings, partners)
+    ranked = sorted(found, key=lambda hint: -hint.rating)
+    return {
+        "hints": {hint.key: hint.text for hint in ranked},
+        "hint_regions": {hint.key: list(hint.region) for hint in ranked if hint.region},
+    }
+
+
 def _link_files(
     analyzed: dict[str, _Analyzed], change_frequency: Mapping[str, float] | None, cfg: EngineConfig
-) -> tuple[list[FileFinding], set[tuple[str, str]]]:
-    """Cross-file facts: import counts, change frequency, coupling weights; and the import edges."""
+) -> tuple[list[FileFinding], set[tuple[str, str]], dict[str, set[str]]]:
+    """Cross-file facts: import counts, change frequency, coupling weights; the import edges and each file's link partners."""
     scanned = frozenset(analyzed)
     edges: set[tuple[str, str]] = set()
     findings = []
@@ -115,7 +129,8 @@ def _link_files(
         if change_frequency is not None:
             update["change_frequency"] = change_frequency.get(filename)
         findings.append(item.finding.model_copy(update=update))
-    return _with_coupling(findings, edges, analyzed, cfg), edges
+    findings, partners = _with_coupling(findings, edges, analyzed, cfg)
+    return findings, edges, partners
 
 
 def _has_generated_marker(text: str, cfg: EngineConfig) -> bool:
@@ -126,7 +141,7 @@ def _has_generated_marker(text: str, cfg: EngineConfig) -> bool:
 
 def _with_coupling(
     findings: list[FileFinding], import_edges: set[tuple[str, str]], analyzed: dict[str, _Analyzed], cfg: EngineConfig
-) -> list[FileFinding]:
+) -> tuple[list[FileFinding], dict[str, set[str]]]:
     """Record each file's coupling weight and flag hot spots that no other rule already flagged."""
     live = {name: item.metrics for name, item in analyzed.items() if item.metrics is not None}
     shared = namespace_edges(
@@ -134,8 +149,10 @@ def _with_coupling(
         {name: m.namespace_refs for name, m in live.items()},
         cfg.namespace_min_files,
     )
-    weights = coupling_weights([finding.filename for finding in findings], import_edges, shared)
-    return [_flag_coupling(finding.model_copy(update={"coupling_weight": weights[finding.filename]}), cfg) for finding in findings]
+    names = [finding.filename for finding in findings]
+    weights = coupling_weights(names, import_edges, shared)
+    flagged = [_flag_coupling(finding.model_copy(update={"coupling_weight": weights[finding.filename]}), cfg) for finding in findings]
+    return flagged, partners(coupling_links(set(names), [import_edges, shared]))
 
 
 def _flag_coupling(finding: FileFinding, cfg: EngineConfig) -> FileFinding:
@@ -192,7 +209,8 @@ def _analyze_file(
         functions=functions,
         **_wrapper_fields(functions, cfg),
     )
-    return _Analyzed(_with_flags(finding, cfg), metrics, worst.name)
+    hints = tuple(function_hints(filename, metrics, rated, cfg))
+    return _Analyzed(_with_flags(finding, cfg), metrics, worst.name, hints)
 
 
 def _wrapper_fields(functions: list[FunctionFinding], cfg: EngineConfig) -> dict:

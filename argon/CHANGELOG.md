@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0
+
+### Hints and progress
+- Refactoring hints: for each heavy or deeply nested function, the deepest decision, the block worth extracting with its share of the weight, and advice chosen by shape (early returns, lookup table, predicate helpers, split into steps). `EngineResult.hints`, the CLI and the PR comment. A hint that names a block also predicts the ratings after extracting it (it matched the real ratings exactly on the test fixture).
+- `--history FILE.jsonl`: logs each run and reports progress since the last one (purity trend, per-function improvement). A function that did not improve gets a reason: not edited, the hinted block untouched, the weight moved to another function, or the block changed without help. Three runs without improvement are called STALLED. The log keeps ratings, names and line hashes only, never source.
+
+### Distance to clean and levels
+- The summary says how many functions are over the threshold and how far over the worst is; each hint leads with its own multiple. `EngineResult.threshold` carries the number in force.
+- `--level relaxed|standard|strict` scales the flag thresholds by 3, 1 and 0.5, so teams can clear the worst offenders first and tighten later. No saved baseline is involved.
+
+### Internal
+- Several helpers were flattened so Argon's own code carries no `nested` flag.
+- 208 tests (183 in 0.3.0).
+
 ## 0.3.0
 
 ### Accuracy

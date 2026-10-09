@@ -32,11 +32,12 @@ Give your agent three rules (paste into `CLAUDE.md`, `AGENTS.md` or your tool's 
 
 ```markdown
 ## Code structure (Argon)
-- After editing source files, run: `argon <the files or folders you changed> --top 10`
+- After editing source files, run: `argon <the files or folders you changed> --top 10 --history .argon/history.jsonl`
 - If a file is flagged, or a function you wrote appears with a `nested` flag, refactor it
   before finishing: early returns, small named helpers, one job per function.
 - Do not satisfy Argon by packing code onto fewer lines or by splitting one function into
   many trivial wrappers; the score counts characters and statements, not just newlines.
+- If a function is marked STALLED, do what its stated reason says before trying anything else.
 - Re-run Argon after refactoring and report the purity score.
 ```
 
@@ -58,6 +59,46 @@ argon src --json
 ```
 
 Prints the full result: `purity_score`, `check_conclusion`, and one finding per file with `logic_complexity_rating`, `flagged`, `flag_reason`, `nesting_score`, `max_depth`, `effective_lines` and a `functions` list. Pipe it into a hook or CI step.
+
+### How far from clean, and how strict
+
+The report ends its file count with how many functions are over the threshold and how far over the worst is (`11 of 267 functions are over the threshold (648); the worst is 5.8x over.`), and every hint starts with its own multiple. `--level` sets the bar:
+
+```bash
+argon src --level relaxed    # thresholds x3: clear the worst offenders first
+argon src                    # standard: the fitted thresholds
+argon src --level strict     # thresholds x0.5
+```
+
+### Refactoring hints
+
+When a function is over the threshold or nested three levels deep, Argon says where and what to try, for example:
+
+```
+Refactoring hints (top 3):
+  m.py:1 tangle: deepest decision at line 5 (depth 4), inside lines 4-8 which hold 79% of this function's decision weight; invert conditions with early returns, or move lines 4-8 into a helper
+```
+
+They appear under the ranking, in the PR comment, and in `--json` under `hints` (`{"file:line function": "text"}`, heaviest first). They are advice only and never change a score.
+
+When a hint names a block it also predicts the ratings after extracting it (`predicted after extracting: this function 20, helper 54 ..., clears the flag`).
+
+### Log progress and see why a score stalled
+
+```bash
+argon src --history .argon/history.jsonl
+```
+
+Each run is appended to the log and compared with the last one:
+
+```
+Progress since the last run:
+  purity: run 4: purity 41 -> 55 -> 55 -> 60; flagged files 5 -> 4
+  src/game.js:update: improved 4840 -> 2100 (57% lower)
+  src/game.js:render: STALLED for 3 runs at 931: the hinted block (lines 14-32 last run) is still intact; the edits were elsewhere in the function
+```
+
+A function that did not improve says why: not edited, the block it was told to extract is untouched, the weight moved to another function, or the block changed without helping. The log keeps ratings, names and line hashes only, never source. Add the file to your agent's rules so every iteration passes `--history`, and cache it in CI.
 
 ### Order files for prompt caching
 

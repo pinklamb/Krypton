@@ -38,4 +38,4 @@ docker run --rm -v "$PWD:/repo" argon .
 
 ## Status
 
-Version 0.3.0. See [`argon/CHANGELOG.md`](argon/CHANGELOG.md).
+Version 0.4.0. See [`argon/CHANGELOG.md`](argon/CHANGELOG.md).

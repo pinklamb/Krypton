@@ -79,12 +79,16 @@ class EngineResult(BaseModel):
     """Everything one run produces: score, conclusion, findings, skips and the summary markdown."""
 
     purity_score: int  # 0-100
+    threshold: float = 0.0  # the flag threshold in force (after --level), for the active rating mode
     check_conclusion: Literal["success", "failure"]
     rating_mode: Literal["master", "nesting"]
     findings: list[FileFinding]
     flagged_file_count: int
     skipped_file_count: int
     skipped_files: list[SkippedFile]
+    hints: dict[str, str] = {}  # "file:line function" (or a file name) -> where it is heavy and what to try
+    hint_regions: dict[str, list[int]] = {}  # hint key -> [first line, last line] of the block it names
+    progress: dict[str, str] = {}  # filled by --history: purity trend and per-function movement
     errors: dict[str, str] = {}  # error code -> explanation; files too large to check are left out of the score
     ignored_generated_markers: list[str]  # files whose marker was not honored (A3)
     fragmentation_flagged: bool

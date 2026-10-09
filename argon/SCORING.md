@@ -2,7 +2,7 @@
 
 This is a plain-language guide to the scoring engine. The *Argon MVP Specification: Local Analysis Engine* is the source of truth, and its section numbers are cited throughout (§6.1 and so on). Loophole IDs such as A7 or B3 refer to its review table in §2.
 
-Every file produces two numbers. On top of them sit per-function ratings, three flag rules and a 0–100 purity score.
+Every file produces two numbers. On top of them sit per-function ratings, four flag rules and a 0–100 purity score.
 
 | Number | What it is | Used by |
 |---|---|---|
@@ -135,7 +135,8 @@ rating_nesting = score     × effective_lines_altered ÷ outputs_effective
 |---|---|---|
 | 1 | **unparseable** | more than 5% of the file sits in syntax-error or missing nodes (C1, C2) |
 | 2 | **concentration** | more than 800 effective lines **and** more than 3 async boundaries |
-| 4 | **semantic path** | the file's rating is over the calibrated threshold for the active mode (see below) |
+| 3 | **semantic path** | the file's rating is over the calibrated threshold for the active mode (see below) |
+| 4 | **coupling hotspot** | the file is wired to more than 12 other files and has at least 40 effective lines (see *Coupling hot spots*) |
 
 **Fragmentation** is a PR-wide flat −25 penalty. It fires when the largest group of files that import each other has 3 or more files and more than 4 imports per file. Imports are resolved however they're written: relative paths, tsconfig aliases, or Python absolute or relative imports.
 
@@ -259,4 +260,63 @@ A file over both the byte and the line limit gets both codes. Put the settings i
 ### Wide nodes are walked one child at a time
 
 A node with more than `lazy_children_threshold` (512) children, such as a long array, object, argument list, class body or statement list, is no longer fetched as a list of child objects. The walk keeps one pending child and steps to each next sibling (`child.next()`), so memory stays flat however wide the node is: on a 300,000-element array the walk allocated about 2 KB, against about 300 MB when the children were fetched together. Depths, the unreachable-code rule after a `return`, and scope handling are identical; it applies only to node kinds whose children all sit at the node's own depth. Nodes that need a per-child depth rule (`switch` cases, `if` and loop bodies, `else`, `except`, comprehensions, boolean control flow) are still read together and keep the `max_children` cap. The per-line effective-line tables still grow with the number of lines (about 160 bytes per line).
+
+---
+
+## Refactoring hints (`engine/hints.py`)
+
+For every function over the flag threshold, or nested three or more levels deep, Argon prints where it is heavy and one piece of advice. `EngineResult.hints` is a map of `"file:line function"` (or a file name) to a sentence, heaviest first; the CLI prints it under the ranking, and the PR comment lists the first five. Hints are pure text. They change no score.
+
+A hint has two parts:
+
+1. **Where.** The deepest decision (its line and depth), and the block worth extracting: at least three lines long, containing at least two decisions, and holding less than 90% of the function's decision weight (a block that is almost the whole function would only move it). A block that contains the deepest decision is preferred; otherwise the heaviest block is named. If nothing qualifies, no lines are suggested.
+2. **What to try,** the first rule that fits:
+
+| Shape | Advice |
+|---|---|
+| nested three or more levels | invert conditions with early returns, or move the block into a helper |
+| eight or more top-level conditions in a row | a lookup table or dispatch map, or split by case group |
+| at least half the decisions are boolean operators | name the conditions as small predicate helpers |
+| long function and no block worth extracting | split it into steps at natural sections |
+| otherwise | move the block into a helper |
+
+File-level hints: a coupling hotspot names up to three of the files it is tied to, and a file taxed for trivial wrappers says how many of its functions are wrappers.
+
+### Predicted effect
+
+When a hint names a block, it ends with a sentence such as `predicted after extracting: this function 20, helper 54 (threshold 648), clears the flag`. It re-uses the rating formulas as if the block became its own top-level function: the parent loses the block's decisions and effective lines and gains one call line, and the helper restarts nesting at depth 0 with the block's decisions re-based. The parent keeps its outputs; the helper is assumed to have one, the worst case. In the one fixture where the extraction was actually done, the prediction matched the real ratings exactly (20 and 54). It is an estimate: it cannot see variables the block shares with its function, which a real helper would need as parameters. `EngineResult.hint_regions` holds the block's `[first line, last line]` for each hint.
+
+---
+
+## Run log and progress (`--history FILE.jsonl`)
+
+With `--history`, Argon appends one JSON line per run (the last 200 are kept) and compares with the previous run. The log is opt-in: nothing is written without the flag. It holds the purity score, the flagged-file count, and for each hinted function its rating, a hash of its lines and the line hashes of the block the hint named. It never stores source text.
+
+`EngineResult.progress` (printed as "Progress since the last run") is a map of sentences:
+
+| Key | Sentence |
+|---|---|
+| `purity` | `run 4: purity 41 -> 55 -> 55 -> 60; flagged files 5 -> 4` (the last six runs) |
+| `file:function` | `improved 9396 -> 3024 (68% lower)` when the rating is at most `improvement_ratio` (0.9) of last run's |
+| | `unchanged` or `worse` otherwise, with the reason below |
+| | `STALLED for 3 runs at 931` after `stall_runs` (3) runs without an improvement |
+| | `newly heavy (rating N)` or `no longer heavy (was N)` |
+
+A function that did not improve gets one reason, the first that fits:
+1. **Not edited:** its text is identical to last run's.
+2. **Block intact:** at least 80% of the block's lines from the last hint are still in the function, so the edits were elsewhere.
+3. **Moved:** at least 60% of those lines now sit in another heavy function in the same file, so the weight moved instead of shrinking.
+4. **Changed:** otherwise, the block was changed but the rating did not drop; use the new hint.
+
+Functions are matched across runs by file and qualified name, not line number. The run is compared with the last logged run whatever scope it used (full or `--base`), so keep one log per workflow.
+
+---
+
+## Distance to clean and strictness levels
+
+Purity moves mostly in steps (a flagged file costs 70 points at once), so two stateless readouts show progress without any saved baseline.
+
+**Distance to clean.** The summary (CLI and PR comment) ends its file count with one line: `11 of 267 functions are over the threshold (648); the worst is 5.8x over.` When nothing is over it says `All N functions are under the threshold (648).` `EngineResult.threshold` holds the number in force. Each hint for a function over the threshold starts with its own multiple (`5.8x over the threshold; deepest decision ...`) and, when it names a block, ends with the predicted ratings after extracting it, so the next step and its effect are both visible.
+
+**Levels.** `--level relaxed|standard|strict` scales both fitted thresholds (`rating_master` and `rating_nesting`) by 3, 1 and 0.5. Everything that uses the threshold follows: flags, the overshoot term of the purity score, hints and the distance line. `standard` is the fitted value and the default. A `--config` file sets the base thresholds; `--level` then scales them. Use `relaxed` as a stepping stone ("clear the worst offenders first") and `strict` to find what would be flagged under a tighter standard.
 

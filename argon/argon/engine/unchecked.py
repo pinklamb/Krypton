@@ -35,7 +35,10 @@ class Unchecked:
 
 def build_errors(items: list[Unchecked], checked: int, cfg: EngineConfig) -> dict[str, str]:
     """{error code: explanation} for every kind of refusal, plus one if nothing was checked."""
-    errors = {code: _explain(code, [i for i in items if i.code == code], cfg) for code in dict.fromkeys(i.code for i in items)}
+    groups: dict[str, list[Unchecked]] = {}
+    for item in items:
+        groups.setdefault(item.code, []).append(item)
+    errors = {code: _explain(code, group, cfg) for code, group in groups.items()}
     if items and not checked:
         errors[NOTHING_CHECKED] = "No file was checked, so a purity score of 100 means nothing."
     return errors

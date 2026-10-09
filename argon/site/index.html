@@ -81,6 +81,9 @@
       <li class="sub"><a href="#nesting">Nesting</a></li>
       <li class="sub"><a href="#lines">Effective lines</a></li>
       <li class="sub"><a href="#ranking">Function ranking</a></li>
+      <li class="sub"><a href="#hints">Refactoring hints</a></li>
+      <li class="sub"><a href="#progress">Progress log</a></li>
+      <li class="sub"><a href="#levels">Strictness levels</a></li>
       <li><a href="#flags">Flags</a></li>
       <li class="sub"><a href="#logic">Logic complexity</a></li>
       <li class="sub"><a href="#concentration">Concentration</a></li>
@@ -128,6 +131,12 @@
       <dd>Weighs a decision by how deeply it is buried. Code that branches inside branches costs more than the same number of flat branches. A function defined inside another is scored on its own, and its parent pays for it.</dd>
       <dt id="lines">Effective lines</dt>
       <dd>Measures size in a way packing cannot hide. Comments and blank lines do not count; long lines and lines with several statements count for more. Squeezing code onto fewer lines does not lower the size.</dd>
+      <dt id="hints">Refactoring hints</dt>
+      <dd>For each heavy or deeply nested function, Argon points at the deepest decision and the block worth pulling out, says how much of the function's weight that block holds, and gives one piece of advice for the function's shape: return early, use a lookup table, name the conditions, or split it into steps. Each names the effect it predicts. Hints never change a score.</dd>
+      <dt id="progress">Progress log</dt>
+      <dd>With a history file Argon records each run and compares it with the last: how the purity score moved, which heavy functions improved, and which have stalled. When a function is stuck it says why, for example that the block it was told to extract is untouched, or that the weight moved into another function instead of shrinking. The log holds numbers and hashes, never source text.</dd>
+      <dt id="levels">Strictness levels</dt>
+      <dd>The report says how many functions are over the limit and how far over the worst one is. <code>--level</code> sets how strict the limit is: <code>relaxed</code> to clear the worst offenders first, <code>standard</code> for the fitted limit, and <code>strict</code> for a tighter one. Nothing is saved between runs, so there is no baseline to reset.</dd>
       <dt id="ranking">Function ranking</dt>
       <dd>Lists the heaviest functions in the run, with their location, so an agent knows exactly what to refactor first. Functions three or more levels deep carry a <code>nested</code> note.</dd>
     </dl>
@@ -178,12 +187,15 @@ docker build -t argon .
 docker run --rm -v "$PWD:/repo" argon .</code></pre>
     <p>To use it with a coding agent, add rules like these to <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your tool's rules file:</p>
     <pre class="cmd"><code>## Code structure (Argon)
-- After editing source files, run: argon &lt;changed files or folders&gt; --top 10
+- After editing source files, run: argon &lt;changed files or folders&gt;
+  --top 10 --history .argon/history.jsonl
 - If a file is flagged, or a function you wrote shows a nested note,
   refactor it before finishing: early returns, small named helpers,
   one job per function.
 - Do not satisfy Argon by packing code onto fewer lines or by splitting
   one function into many trivial wrappers.
+- If a function is marked STALLED, do what its stated reason says
+  before trying anything else.
 - Re-run Argon after refactoring and report the purity score.</code></pre>
     <pre class="cmd"><code>argon . --base origin/main    # score only what this branch changed
 argon src --json              # machine-readable result for hooks and CI</code></pre>

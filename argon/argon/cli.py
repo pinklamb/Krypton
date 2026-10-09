@@ -16,9 +16,9 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from argon import history, report
+from argon import history, progress, report, runlog
 from argon.calibration import calibrated_module, calibration_csv, calibration_report, fit_thresholds, read_csv
-from argon.engine.config import EngineConfig
+from argon.engine.config import LEVELS, EngineConfig, apply_level
 from argon.engine.languages import SUPPORTED_EXTENSIONS
 from argon.engine.run import run_local
 from argon.engine.volatility import change_frequency, manifest
@@ -50,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_USAGE
     sources = {name: path.read_bytes() for name, path in files.items()}
     result = run_local(sources, altered, cfg, frequency)
+    if args.history:
+        result = _log_progress(result, sources, args, cfg)
     if args.order_by_volatility:
         sizes = {name: len(data.decode("utf-8", errors="replace")) for name, data in sources.items()}
         print(json.dumps(manifest(result.findings, sizes), indent=2))
@@ -67,7 +69,7 @@ def _scan_inputs(args) -> tuple[dict[str, Path], dict[str, set[int]] | None, Eng
     if not args.paths:
         raise UsageError("give at least one file or folder to scan")
     root = _scan_root(args.paths)
-    cfg = _load_config(args.config, root)
+    cfg = apply_level(_load_config(args.config, root), args.level)
     files = _collect_files(args.paths, root)
     altered = None
     if args.base:
@@ -75,6 +77,16 @@ def _scan_inputs(args) -> tuple[dict[str, Path], dict[str, set[int]] | None, Eng
     if not files:
         raise UsageError("no supported source files found; expected one of: " + ", ".join(sorted(SUPPORTED_EXTENSIONS)))
     return files, altered, cfg
+
+
+def _log_progress(result, sources: dict[str, bytes], args, cfg: EngineConfig):
+    """Compare with the --history log, append this run, and return the result with `progress` filled in."""
+    texts = {name: data.decode("utf-8", errors="replace") for name, data in sources.items()}
+    runs = runlog.read_runs(args.history)
+    snapshot = runlog.take_snapshot(result, texts, f"{'base:' + args.base if args.base else 'full'}, {args.level}")
+    shown = progress.compare(snapshot, runs, runlog.next_number(runs), cfg)
+    runlog.append_run(args.history, runs, snapshot.record)
+    return result.model_copy(update={"progress": shown})
 
 
 def _change_frequency(args, files: dict[str, Path], cfg: EngineConfig) -> dict[str, float] | None:
@@ -101,6 +113,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--json", action="store_true", help="print EngineResult as JSON, nothing else")
     parser.add_argument("--order-by-volatility", action="store_true", help="print a JSON manifest of files, most stable first (git history), instead of the report")
     parser.add_argument("--volatility", type=Path, metavar="FILE.json", help="path -> change count, used instead of git history")
+    parser.add_argument("--level", choices=list(LEVELS), default="standard", help="how strict the flag threshold is: relaxed (3x), standard, strict (0.5x)")
+    parser.add_argument("--history", type=Path, metavar="FILE.jsonl", help="log this run there and report progress since the last one (the file is created)")
     parser.add_argument("--calibrate", action="store_true", help="add the calibration report")
     parser.add_argument("--calibrate-out", type=Path, metavar="FILE.csv", help="one row per function")
     parser.add_argument(
@@ -120,6 +134,11 @@ def _print_report(result, top: int) -> None:
     sections = [report.file_table(result)]
     if top > 0:
         sections.append(report.function_ranking(result, top))
+    hints = report.refactoring_hints(result, top)
+    if hints:
+        sections.append(hints)
+    if result.progress:
+        sections.append(report.progress_section(result))
     skipped = report.skipped_and_fragmentation(result)
     if skipped:
         sections.append(skipped)

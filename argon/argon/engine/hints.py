@@ -47,19 +47,51 @@ def function_hints(filename: str, metrics: AstMetrics, rows: list[FunctionFindin
 
 def _is_heavy(row: FunctionFinding, cfg: EngineConfig) -> bool:
     """Over the flag threshold, or nested three or more levels deep."""
-    return _rating(row, cfg) > cfg.active_threshold or row.nested
+    return _rating(row, cfg) > cfg.active_threshold or row.nested or _overloaded(row, cfg)
 
 
-def file_hints(findings: Iterable[FileFinding], partners: Mapping[str, Collection[str]]) -> list[Hint]:
-    """Hints about a whole file: coupling partners to cut, and wrappers to merge."""
-    hints = []
-    for finding in findings:
-        if finding.flag_reason == "coupling_hotspot":
-            names = ", ".join(sorted(partners.get(finding.filename, ()))[:PARTNERS_SHOWN])
-            hints.append(Hint(float(finding.coupling_weight), finding.filename, f"tied to {finding.coupling_weight} files, including {names}; cut those dependencies first (events, narrower interfaces)"))
-        elif finding.overhead_tax > 0:
-            hints.append(Hint(finding.overhead_tax, finding.filename, f"{finding.trivial_wrapper_count} of {len(finding.functions)} functions are trivial wrappers; merge them into their callers or give them real work"))
-    return hints
+def _overloaded(row: FunctionFinding, cfg: EngineConfig) -> bool:
+    """At least max_decisions_per_function decisions or max_function_score nesting score."""
+    return row.branches >= cfg.max_decisions_per_function or row.score >= cfg.max_function_score
+
+
+def _lead(row: FunctionFinding, cfg: EngineConfig) -> str:
+    """What makes the function heavy, said first: times over the threshold, and any overload limit passed."""
+    over = _rating(row, cfg) / cfg.active_threshold
+    parts = [f"{over:.1f}x over the threshold"] * (over > 1)
+    parts += [f"{row.branches} decisions (limit {cfg.max_decisions_per_function})"] * (row.branches >= cfg.max_decisions_per_function)
+    parts += [f"nesting score {row.score} (limit {cfg.max_function_score})"] * (row.score >= cfg.max_function_score)
+    return "".join(f"{part}; " for part in parts)
+
+
+def file_hints(findings: Iterable[FileFinding], partners: Mapping[str, Collection[str]], cfg: EngineConfig) -> list[Hint]:
+    """Hints about a whole file: coupling partners to cut, an over-budget file to split, wrappers to merge."""
+    found = [_file_hint(finding, partners, cfg) for finding in findings]
+    return [hint for hint in found if hint]
+
+
+def _file_hint(finding: FileFinding, partners: Mapping[str, Collection[str]], cfg: EngineConfig) -> Hint | None:
+    """The one file-level hint for this file, by its flag, or None."""
+    if finding.flag_reason == "coupling_hotspot":
+        return _coupling_hint(finding, partners)
+    if finding.flag_reason == "file_overload":
+        return _budget_hint(finding, cfg)
+    if finding.overhead_tax > 0:
+        return Hint(finding.overhead_tax, finding.filename, f"{finding.trivial_wrapper_count} of {len(finding.functions)} functions are trivial wrappers; merge them into their callers or give them real work")
+    return None
+
+
+def _coupling_hint(finding: FileFinding, partners: Mapping[str, Collection[str]]) -> Hint:
+    """Name the files this one is most tied to."""
+    names = ", ".join(sorted(partners.get(finding.filename, ()))[:PARTNERS_SHOWN])
+    return Hint(float(finding.coupling_weight), finding.filename, f"tied to {finding.coupling_weight} files, including {names}; cut those dependencies first (events, narrower interfaces)")
+
+
+def _budget_hint(finding: FileFinding, cfg: EngineConfig) -> Hint:
+    """Say the file is over its total budget and where to start splitting."""
+    heaviest = ", ".join(f.name for f in sorted(finding.functions, key=lambda f: -f.score)[:PARTNERS_SHOWN])
+    text = f"total nesting score {finding.nesting_score} is over the file budget of {cfg.max_file_weight}, so moving code between helpers will not lower it; split the file by responsibility, starting with {heaviest}"
+    return Hint(float(finding.nesting_score), finding.filename, text)
 
 
 def _rating(row: FunctionFinding, cfg: EngineConfig) -> float:
@@ -88,9 +120,7 @@ def _hint(
     if region is not None:
         place = "inside" if region.line <= deepest.line <= region.end_line else "and the heaviest block is"
         where += f", {place} lines {region.line}-{region.end_line} which hold {held / total:.0%} of this function's decision weight"
-    over = _rating(row, cfg) / cfg.active_threshold
-    prefix = f"{over:.1f}x over the threshold; " if over > 1 else ""
-    text = f"{prefix}{where}; {_advice(row, own, region)}"
+    text = f"{_lead(row, cfg)}{where}; {_advice(row, own, region)}"
     if region is None:
         return text, None
     inside = [b for b in own if region.line <= b.line <= region.end_line]

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0
+
+### Harder to game
+- **Decision floor:** a file is flagged `function_overload` when any function has at least 30 decisions or a nesting score of 100, whatever its return values or size. Before, giving every branch a different return value divided the rating by up to 41 and hid the function; packing code onto fewer lines cannot hide it either.
+- **File budget:** a file is flagged `file_overload` when its total nesting score is at least 600, so spreading one heavy function across helpers in the same file does not lower it.
+- **Small tangles count as fragmentation:** four or more small files (under 60 effective lines each on average) that import each other more than twice per file now trigger the fragmentation penalty. Four cross-importing small files used to pass; larger files still need the old density (5 imports per file).
+- New hints for both flags. The flags rank below `semantic_path_logic` and above `coupling_hotspot`, and all limits are config settings.
+- Calibrated on 3,000 Python and 3,000 JS/TS library files: the decision floor flags 0.3% of Python and 1.0% of JS/TS functions, the score limit 0.1% and 0.4%, the file budget 0.5% of Python files, and the small-tangle rule none of 151 Python packages.
+
+### Fixed
+- The summary line `N of M functions are over the threshold` left out each file's top-level code, so a file whose worst part was module-level code (such as `app.js` in a real repo, 27.6x over) understated both counts.
+
+### Verification
+- 217 tests (208 in 0.4.0). The radon and ESLint parity corpora pass (0 mismatches): no counting or nesting rule changed.
+
 ## 0.4.0
 
 ### Hints and progress

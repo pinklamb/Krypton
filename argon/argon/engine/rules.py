@@ -7,7 +7,7 @@ from math import floor, log10
 from typing import Literal
 
 from argon.engine.config import EngineConfig
-from argon.schemas import FileFinding
+from argon.schemas import FileFinding, FunctionFinding
 
 FAIL_CLOSED_REASONS = frozenset({"unparseable"})
 MAX_OVERSHOOT_POINTS = 30
@@ -51,6 +51,19 @@ def overhead_points(trivial: int, total: int, cfg: EngineConfig) -> float:
     return min(cfg.wrapper_tax_max_points, cfg.wrapper_tax_max_points * (density - cfg.wrapper_free_density) / (1 - cfg.wrapper_free_density))
 
 
+def check_function_overload(rows: list[FunctionFinding], cfg: EngineConfig) -> bool:
+    """Some function has at least max_decisions_per_function decisions or max_function_score nesting score.
+
+    Independent of outputs and size, so neither distinct return values nor packing lines can hide it.
+    """
+    return any(row.branches >= cfg.max_decisions_per_function or row.score >= cfg.max_function_score for row in rows)
+
+
+def check_file_overload(finding: FileFinding, cfg: EngineConfig) -> bool:
+    """The file's whole nesting score is at least max_file_weight: splitting into helpers does not lower it."""
+    return finding.nesting_score >= cfg.max_file_weight
+
+
 def check_coupling_rule(finding: FileFinding, cfg: EngineConfig) -> bool:
     """A file wired to more than coupling_weight_threshold others and big enough to matter."""
     return finding.coupling_weight > cfg.coupling_weight_threshold and finding.effective_lines >= cfg.coupling_min_lines
@@ -75,11 +88,21 @@ def check_fragmentation_rule(
         return Fragmentation(False, [])
     largest = max(groups, key=lambda group: (len(group), _edge_count(group, internal), sorted(group)))
     edge_count = _edge_count(largest, internal)
-    triggered = (
-        len(largest) >= cfg.fragmentation_min_files
-        and edge_count / len(largest) > cfg.fragmentation_avg_import_threshold
-    )
+    triggered = _dense_group(largest, edge_count, cfg) or _shattered_group(largest, edge_count, findings, cfg)
     return Fragmentation(triggered, sorted(largest) if triggered else [])
+
+
+def _dense_group(group: set[str], edge_count: int, cfg: EngineConfig) -> bool:
+    """Enough files, each importing more than fragmentation_avg_import_threshold others on average."""
+    return len(group) >= cfg.fragmentation_min_files and edge_count / len(group) > cfg.fragmentation_avg_import_threshold
+
+
+def _shattered_group(group: set[str], edge_count: int, findings: list[FileFinding], cfg: EngineConfig) -> bool:
+    """A smaller tangle of tiny files: one file's code cut into pieces that all import each other."""
+    if len(group) < cfg.fragmentation_small_group_files or edge_count / len(group) <= cfg.fragmentation_small_group_imports:
+        return False
+    lines = [finding.effective_lines for finding in findings if finding.filename in group]
+    return sum(lines) / len(lines) < cfg.fragmentation_small_file_lines
 
 
 def _edge_count(group: set[str], edges: set[tuple[str, str]]) -> int:

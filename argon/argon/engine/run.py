@@ -19,6 +19,8 @@ from argon.engine.lines import LineWeights, non_blank_weights, physical_lines
 from argon.engine.rules import (
     check_concentration_rule,
     check_coupling_rule,
+    check_file_overload,
+    check_function_overload,
     check_fragmentation_rule,
     check_semantic_path_rule,
     compute_purity_score,
@@ -95,7 +97,7 @@ def run_local(
         skipped_file_count=len(skipped),
         skipped_files=skipped,
         errors=build_errors(unchecked, len(analyzed), cfg),
-        **_ranked_hints(analyzed, findings, partners),
+        **_ranked_hints(analyzed, findings, partners, cfg),
         ignored_generated_markers=markers,
         fragmentation_flagged=fragmentation.triggered,
         fragmentation_cluster=fragmentation.cluster,
@@ -105,9 +107,9 @@ def run_local(
     return result.model_copy(update={"summary_markdown": build_summary_markdown(result, cfg, worst)})
 
 
-def _ranked_hints(analyzed: dict[str, _Analyzed], findings: list[FileFinding], partners: dict[str, set[str]]) -> dict:
+def _ranked_hints(analyzed: dict[str, _Analyzed], findings: list[FileFinding], partners: dict[str, set[str]], cfg: EngineConfig) -> dict:
     """The `hints` and `hint_regions` maps, heaviest hint first."""
-    found = [hint for item in analyzed.values() for hint in item.hints] + file_hints(findings, partners)
+    found = [hint for item in analyzed.values() for hint in item.hints] + file_hints(findings, partners, cfg)
     ranked = sorted(found, key=lambda hint: -hint.rating)
     return {
         "hints": {hint.key: hint.text for hint in ranked},
@@ -210,7 +212,7 @@ def _analyze_file(
         **_wrapper_fields(functions, cfg),
     )
     hints = tuple(function_hints(filename, metrics, rated, cfg))
-    return _Analyzed(_with_flags(finding, cfg), metrics, worst.name, hints)
+    return _Analyzed(_with_flags(finding, cfg, rated), metrics, worst.name, hints)
 
 
 def _wrapper_fields(functions: list[FunctionFinding], cfg: EngineConfig) -> dict:
@@ -256,13 +258,15 @@ def _active_rating(function: FunctionFinding, cfg: EngineConfig) -> float:
     return function.rating_nesting if cfg.rating_mode == "nesting" else function.rating_master
 
 
-def _with_flags(finding: FileFinding, cfg: EngineConfig) -> FileFinding:
-    """Apply the concentration and semantic-path rules; keep the highest-priority reason."""
-    reasons = set()
-    if check_concentration_rule(finding, cfg):
-        reasons.add("concentration_rule")
-    if check_semantic_path_rule(finding, cfg):
-        reasons.add("semantic_path_logic")
+def _with_flags(finding: FileFinding, cfg: EngineConfig, rows: list[FunctionFinding]) -> FileFinding:
+    """Apply the per-file rules; keep the highest-priority reason."""
+    checks = {
+        "concentration_rule": check_concentration_rule(finding, cfg),
+        "semantic_path_logic": check_semantic_path_rule(finding, cfg),
+        "function_overload": check_function_overload(rows, cfg),
+        "file_overload": check_file_overload(finding, cfg),
+    }
+    reasons = {name for name, hit in checks.items() if hit}
     reason = next((name for name in FLAG_PRIORITY if name in reasons), None)
     return finding.model_copy(update={"flagged": reason is not None, "flag_reason": reason})
 

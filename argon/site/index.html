@@ -88,6 +88,7 @@
       <li class="sub"><a href="#logic">Logic complexity</a></li>
       <li class="sub"><a href="#concentration">Concentration</a></li>
       <li class="sub"><a href="#fragmentation">Fragmentation</a></li>
+      <li class="sub"><a href="#overload">Overload checks</a></li>
       <li class="sub"><a href="#coupling">Coupling hotspot</a></li>
       <li class="sub"><a href="#oversize">Not checked / unparseable</a></li>
       <li><a href="#purity">Purity score</a></li>
@@ -148,7 +149,9 @@
       <dt id="concentration">Concentration</dt>
       <dd>A very large file that also has many asynchronous entry points is flagged as doing too much in one place.</dd>
       <dt id="fragmentation">Fragmentation</dt>
-      <dd>Flags the opposite problem: a group of files that import each other so heavily that the code has been shattered into pieces that cannot be understood alone.</dd>
+      <dd>Flags the opposite problem: a group of files that import each other so heavily that the code has been shattered into pieces that cannot be understood alone. Four or more tiny files that all import each other count.</dd>
+      <dt id="overload">Overload checks</dt>
+      <dd>Rating-based checks can be diluted, for instance by giving every branch a different return value. So Argon also flags a function that makes too many decisions or nests too deeply, and a file whose total weight is over budget, however the code is laid out or split into helpers. These checks count decisions, not lines or return values.</dd>
       <dt id="coupling">Coupling hotspot</dt>
       <dd>Flags a file that is wired to many others, through imports or through a shared global object that many scripts read from, as in browser code without modules. These are the files every feature ends up touching. The shared-global detection is a prototype and only covers JavaScript and TypeScript.</dd>
       <dt id="oversize">Not checked and unparseable</dt>

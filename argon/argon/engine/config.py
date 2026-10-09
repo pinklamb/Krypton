@@ -37,6 +37,12 @@ class EngineConfig(BaseModel):
     fragmentation_avg_import_threshold: float = 4
     fragmentation_min_files: int = 3
     fragmentation_flat_penalty: int = 25
+    max_decisions_per_function: int = 30  # at least this many decisions in one function flags the file, whatever its outputs
+    max_function_score: int = 100  # ... or a nesting score this high (about the top 0.1% to 0.4% of real functions)
+    max_file_weight: int = 600  # a file's total nesting score at or over this flags it (spread across helpers still adds up)
+    fragmentation_small_group_files: int = 4  # a tangle of this many small files ...
+    fragmentation_small_group_imports: float = 2  # ... importing each other more than this per file ...
+    fragmentation_small_file_lines: int = 60  # ... averaging fewer effective lines than this counts as shattered code
     coupling_weight_threshold: int = 12  # distinct files depended on + depending on this one
     coupling_min_lines: int = 40  # effective lines; a tiny barrel file is not a hot spot
     wrapper_max_branches: int = 1  # a named function with at most this many decisions ...

@@ -2,7 +2,7 @@
 
 This is a plain-language guide to the scoring engine. The *Argon MVP Specification: Local Analysis Engine* is the source of truth, and its section numbers are cited throughout (§6.1 and so on). Loophole IDs such as A7 or B3 refer to its review table in §2.
 
-Every file produces two numbers. On top of them sit per-function ratings, four flag rules and a 0–100 purity score.
+Every file produces two numbers. On top of them sit per-function ratings, six flag rules and a 0–100 purity score.
 
 | Number | What it is | Used by |
 |---|---|---|
@@ -136,9 +136,11 @@ rating_nesting = score     × effective_lines_altered ÷ outputs_effective
 | 1 | **unparseable** | more than 5% of the file sits in syntax-error or missing nodes (C1, C2) |
 | 2 | **concentration** | more than 800 effective lines **and** more than 3 async boundaries |
 | 3 | **semantic path** | the file's rating is over the calibrated threshold for the active mode (see below) |
-| 4 | **coupling hotspot** | the file is wired to more than 12 other files and has at least 40 effective lines (see *Coupling hot spots*) |
+| 4 | **function overload** | some function has at least 30 decisions or a nesting score of 100 or more, whatever its rating (see *Hardening against gaming*) |
+| 5 | **file overload** | the file's total nesting score is at least 600 (see *Hardening against gaming*) |
+| 6 | **coupling hotspot** | the file is wired to more than 12 other files and has at least 40 effective lines (see *Coupling hot spots*) |
 
-**Fragmentation** is a PR-wide flat −25 penalty. It fires when the largest group of files that import each other has 3 or more files and more than 4 imports per file. Imports are resolved however they're written: relative paths, tsconfig aliases, or Python absolute or relative imports.
+**Fragmentation** is a PR-wide flat −25 penalty. It fires when the largest group of files that import each other has 3 or more files and more than 4 imports per file, or when it is a small tangle: 4 or more files that import each other more than twice per file and average fewer than 60 effective lines. Imports are resolved however they're written: relative paths, tsconfig aliases, or Python absolute or relative imports.
 
 **Purity score:**
 
@@ -199,6 +201,8 @@ These override the MVP specification PDF. The PDF itself hasn't been edited.
 | §10.2 flag rules | concentration, semantic path | also `coupling_hotspot` (lowest priority, never replaces another flag): coupling weight over `coupling_weight_threshold` (12) and at least `coupling_min_lines` (40) effective lines; see *Coupling hot spots* below | Version B of the racing-game audit passed 100/100 while `world.js` and `config.js` were touched by every feature. |
 | §10.3 purity score | flag ratio and overshoot only | also subtracts the **Structural Overhead Tax**, weighted by altered lines like overshoot; see below | Version B of the racing-game audit was 56% larger in tokens, partly from many tiny functions. A tax that lowers purity, never a flag. |
 | §10.1 / C4 fail closed | a file over a size limit is flagged `oversize` and scored as a failure | it is not analyzed, not scored, and listed in `EngineResult.errors` as `{code: explanation}`; the purity score is computed without it | A legitimate large file should not drag the score down, and must never pass silently. |
+| §10.2 flag rules | rating, concentration, coupling | also `function_overload` (a function with at least `max_decisions_per_function` (30) decisions or `max_function_score` (100) nesting score) and `file_overload` (file nesting score at least `max_file_weight` (600)) | The rating divides by distinct outputs, so giving every branch a different return value hid a function; splitting a function into helpers hid a file. Counts of decisions and weights cannot be diluted that way. |
+| §10.2 fragmentation | 3+ files and more than 4 imports per file | also 4+ files with more than 2 imports per file and under 60 effective lines per file on average | Four tiny files importing each other (3 imports each) passed, though they are one file's code in pieces. |
 | §10.2 `--base` diff | hunk headers matched anywhere in the diff | hunk bodies are consumed by the counts in each `@@` header; git runs with `core.quotepath=off` and explicit prefixes, trailing tabs and quoted paths are decoded | An added line starting `++ ` read as a file header, and files with spaces or non-ASCII names were silently dropped. |
 
 ---
@@ -319,4 +323,22 @@ Purity moves mostly in steps (a flagged file costs 70 points at once), so two st
 **Distance to clean.** The summary (CLI and PR comment) ends its file count with one line: `11 of 267 functions are over the threshold (648); the worst is 5.8x over.` When nothing is over it says `All N functions are under the threshold (648).` `EngineResult.threshold` holds the number in force. Each hint for a function over the threshold starts with its own multiple (`5.8x over the threshold; deepest decision ...`) and, when it names a block, ends with the predicted ratings after extracting it, so the next step and its effect are both visible.
 
 **Levels.** `--level relaxed|standard|strict` scales both fitted thresholds (`rating_master` and `rating_nesting`) by 3, 1 and 0.5. Everything that uses the threshold follows: flags, the overshoot term of the purity score, hints and the distance line. `standard` is the fitted value and the default. A `--config` file sets the base thresholds; `--level` then scales them. Use `relaxed` as a stepping stone ("clear the worst offenders first") and `strict` to find what would be flagged under a tighter standard.
+
+---
+
+## Hardening against gaming
+
+A rating can be lowered without making the code simpler. These checks do not depend on the things that can be manipulated: return values, line packing, and where code is placed within a file.
+
+| Way to lower the score without simplifying | What stops it |
+|---|---|
+| give every branch a different return value (divides the rating by up to the decision count plus one) | **function overload**: a function with `max_decisions_per_function` (30) or more decisions, or a nesting score of `max_function_score` (100) or more, flags the file whatever its rating |
+| pack code onto fewer lines, or hide a nest in a small switch | the same check, which counts decisions and weights, not lines or outputs |
+| split one heavy function into several helpers in the same file | **file overload**: the file's total nesting score is at least `max_file_weight` (600) |
+| cut one file's code into several tiny files that import each other | **fragmentation, small-tangle rule**: `fragmentation_small_group_files` (4) or more files, more than `fragmentation_small_group_imports` (2) imports per file, and fewer than `fragmentation_small_file_lines` (60) effective lines on average |
+| split into many trivial wrappers | the **Structural Overhead Tax** |
+
+Calibration, on 3,000 Python and 3,000 JS/TS library files (about 42,000 and 18,000 functions): the decision floor flags 0.29% of Python functions and 1.0% of JS/TS functions; the score limit 0.10% and 0.39%; the file budget 0.5% of Python files; and the small-tangle rule none of 151 Python packages. So all three act on outliers. A function with 17 distinct-return branches still passes: it is below the floor, and the rating only counts it once it is 18 decisions or more.
+
+What this does not stop: an agent can still keep every function under 30 decisions and every file under the budget, and it can still add behavior elsewhere. These are floors, not proofs of simplicity. Raise or lower any limit in a `--config` file.
 

@@ -1,0 +1,276 @@
+{
+  "mock": true,
+  "model": "claude-sonnet-5-5",
+  "edit_files": {
+    "stable": "sheet_engine.py",
+    "middle": "sheet_engine.py",
+    "volatile": "sheet_engine.py",
+    "volatile2": "sheet_engine.py"
+  },
+  "turns": [
+    {
+      "order": "volatility",
+      "turn": 1,
+      "label": "cold start",
+      "input_tokens": 30,
+      "cache_write": 3779,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095275,
+      "uncached_usd": 0.007638
+    },
+    {
+      "order": "volatility",
+      "turn": 2,
+      "label": "no change",
+      "input_tokens": 30,
+      "cache_write": 0,
+      "cache_read": 3779,
+      "output_tokens": 2,
+      "usd": 0.0008358,
+      "uncached_usd": 0.007638
+    },
+    {
+      "order": "volatility",
+      "turn": 3,
+      "label": "edit volatile",
+      "input_tokens": 30,
+      "cache_write": 3781,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095325,
+      "uncached_usd": 0.007642
+    },
+    {
+      "order": "volatility",
+      "turn": 4,
+      "label": "edit middle",
+      "input_tokens": 30,
+      "cache_write": 3783,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095375,
+      "uncached_usd": 0.007646
+    },
+    {
+      "order": "volatility",
+      "turn": 5,
+      "label": "edit stable",
+      "input_tokens": 30,
+      "cache_write": 3785,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095425,
+      "uncached_usd": 0.00765
+    },
+    {
+      "order": "volatility",
+      "turn": 6,
+      "label": "edit volatile again",
+      "input_tokens": 30,
+      "cache_write": 3787,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095475,
+      "uncached_usd": 0.007654
+    },
+    {
+      "order": "volatility",
+      "turn": 7,
+      "label": "edit 2 volatile",
+      "input_tokens": 30,
+      "cache_write": 3791,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095575,
+      "uncached_usd": 0.007662
+    },
+    {
+      "order": "volatility",
+      "turn": 8,
+      "label": "no change",
+      "input_tokens": 30,
+      "cache_write": 0,
+      "cache_read": 3791,
+      "output_tokens": 2,
+      "usd": 0.0008382000000000001,
+      "uncached_usd": 0.007662
+    },
+    {
+      "order": "alphabetical",
+      "turn": 1,
+      "label": "cold start",
+      "input_tokens": 30,
+      "cache_write": 3779,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095275,
+      "uncached_usd": 0.007638
+    },
+    {
+      "order": "alphabetical",
+      "turn": 2,
+      "label": "no change",
+      "input_tokens": 30,
+      "cache_write": 0,
+      "cache_read": 3779,
+      "output_tokens": 2,
+      "usd": 0.0008358,
+      "uncached_usd": 0.007638
+    },
+    {
+      "order": "alphabetical",
+      "turn": 3,
+      "label": "edit volatile",
+      "input_tokens": 30,
+      "cache_write": 3781,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095325,
+      "uncached_usd": 0.007642
+    },
+    {
+      "order": "alphabetical",
+      "turn": 4,
+      "label": "edit middle",
+      "input_tokens": 30,
+      "cache_write": 3783,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095375,
+      "uncached_usd": 0.007646
+    },
+    {
+      "order": "alphabetical",
+      "turn": 5,
+      "label": "edit stable",
+      "input_tokens": 30,
+      "cache_write": 3785,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095425,
+      "uncached_usd": 0.00765
+    },
+    {
+      "order": "alphabetical",
+      "turn": 6,
+      "label": "edit volatile again",
+      "input_tokens": 30,
+      "cache_write": 3787,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095475,
+      "uncached_usd": 0.007654
+    },
+    {
+      "order": "alphabetical",
+      "turn": 7,
+      "label": "edit 2 volatile",
+      "input_tokens": 30,
+      "cache_write": 3791,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095575,
+      "uncached_usd": 0.007662
+    },
+    {
+      "order": "alphabetical",
+      "turn": 8,
+      "label": "no change",
+      "input_tokens": 30,
+      "cache_write": 0,
+      "cache_read": 3791,
+      "output_tokens": 2,
+      "usd": 0.0008382000000000001,
+      "uncached_usd": 0.007662
+    },
+    {
+      "order": "reverse",
+      "turn": 1,
+      "label": "cold start",
+      "input_tokens": 30,
+      "cache_write": 3779,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095275,
+      "uncached_usd": 0.007638
+    },
+    {
+      "order": "reverse",
+      "turn": 2,
+      "label": "no change",
+      "input_tokens": 30,
+      "cache_write": 0,
+      "cache_read": 3779,
+      "output_tokens": 2,
+      "usd": 0.0008358,
+      "uncached_usd": 0.007638
+    },
+    {
+      "order": "reverse",
+      "turn": 3,
+      "label": "edit volatile",
+      "input_tokens": 30,
+      "cache_write": 3781,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095325,
+      "uncached_usd": 0.007642
+    },
+    {
+      "order": "reverse",
+      "turn": 4,
+      "label": "edit middle",
+      "input_tokens": 30,
+      "cache_write": 3783,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095375,
+      "uncached_usd": 0.007646
+    },
+    {
+      "order": "reverse",
+      "turn": 5,
+      "label": "edit stable",
+      "input_tokens": 30,
+      "cache_write": 3785,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095425,
+      "uncached_usd": 0.00765
+    },
+    {
+      "order": "reverse",
+      "turn": 6,
+      "label": "edit volatile again",
+      "input_tokens": 30,
+      "cache_write": 3787,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095475,
+      "uncached_usd": 0.007654
+    },
+    {
+      "order": "reverse",
+      "turn": 7,
+      "label": "edit 2 volatile",
+      "input_tokens": 30,
+      "cache_write": 3791,
+      "cache_read": 0,
+      "output_tokens": 2,
+      "usd": 0.0095575,
+      "uncached_usd": 0.007662
+    },
+    {
+      "order": "reverse",
+      "turn": 8,
+      "label": "no change",
+      "input_tokens": 30,
+      "cache_write": 0,
+      "cache_read": 3791,
+      "output_tokens": 2,
+      "usd": 0.0008382000000000001,
+      "uncached_usd": 0.007662
+    }
+  ]
+}

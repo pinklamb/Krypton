@@ -40,8 +40,18 @@ def test_tarjan_finds_cycles_and_ignores_chains():
     assert cycles(["a", "b", "c"], two) == [["a", "b"]]
 
 
-def test_fragmentation_first_fires_at_six_cross_importing_files():
+def test_fragmentation_now_fires_at_four_small_cross_importing_files():
     fires = {n: run_local({k: v.encode() for k, v in cases.shattered_files(n).items()}).fragmentation_flagged for n in range(3, 8)}
+
+    assert fires == {3: False, 4: True, 5: True, 6: True, 7: True}
+
+
+def test_large_files_need_the_old_six_file_density_before_fragmentation_fires():
+    padding = chr(10).join(f"x{i} = {i}" for i in range(70)) + chr(10)  # each file gets over 60 effective lines
+    fires = {}
+    for n in range(3, 8):
+        files = {name: (text + padding).encode() for name, text in cases.shattered_files(n).items()}
+        fires[n] = run_local(files).fragmentation_flagged
 
     assert fires == {3: False, 4: False, 5: False, 6: True, 7: True}
 

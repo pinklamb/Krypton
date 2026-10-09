@@ -72,3 +72,12 @@ def test_cli_level_changes_flags_and_rejects_unknown_levels(tmp_path, capsys):
     assert standard["flagged_file_count"] == 1
     with pytest.raises(SystemExit):
         main([str(tmp_path), "--level", "extreme"])
+
+
+def test_distance_line_counts_heavy_top_level_code():
+    # All the weight is outside any named function, so the file's rating is its top-level code.
+    body = "".join(f"if x == {i}:{NL}    x += {i}{NL}" for i in range(30))
+    result = run_local({"m.py": ("x = 0" + NL + body).encode()})
+
+    assert "1 of 1 functions are over the threshold" in result.summary_markdown
+    assert f"{result.findings[0].logic_complexity_rating / result.threshold:.1f}x over" in result.summary_markdown

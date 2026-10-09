@@ -14,10 +14,12 @@ FlagReason = Literal[
     "concentration_rule",  # master §4.1
     "semantic_path_logic",  # master §4.2
     "unparseable",  # §5.2, fail closed (C2)
+    "function_overload",  # a function has too many decisions or too heavy a nesting score
+    "file_overload",  # the file's total nesting score is over budget
     "coupling_hotspot",  # file wired to many others (imports or shared globals)
 ]
 # When several reasons apply, flag_reason takes the first in this order.
-FLAG_PRIORITY: tuple[FlagReason, ...] = ("unparseable", "concentration_rule", "semantic_path_logic", "coupling_hotspot")
+FLAG_PRIORITY: tuple[FlagReason, ...] = ("unparseable", "concentration_rule", "semantic_path_logic", "function_overload", "file_overload", "coupling_hotspot")
 
 
 class FunctionFinding(BaseModel):

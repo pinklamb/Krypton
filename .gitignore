@@ -13,7 +13,4 @@ node_modules/
 argon/docs/argon_audit.html
 argon/docs/stress_test_findings.html
 argon/docs/.stress_cache.pkl
-
-# benchmark runs and game builds used in the audit
-ArgonTestCase6/
-.argon/
+ArgonTestCase6

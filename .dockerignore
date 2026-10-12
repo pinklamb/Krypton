@@ -1,0 +1,6 @@
+# Build context for the dashboard image: send only what the Dockerfile copies (keeps .env, datasets and .git out).
+*
+!dashboard/index.html
+!dashboard/benchmarks.html
+!dashboard/server.py
+!dashboard/auth.py

@@ -13,4 +13,26 @@ node_modules/
 argon/docs/argon_audit.html
 argon/docs/stress_test_findings.html
 argon/docs/.stress_cache.pkl
-ArgonTestCase6
+ArgonTestCase*/
+argon-test-codebase/
+spreadsheet-bench/
+
+# cache/volatility experiment harnesses (not part of the tool)
+argon/tools/synth_repo.py
+argon/tools/cache_replay.py
+
+# secrets and the downloaded benchmark dataset
+.env
+HumanVSAI_CodeDataset.zip
+argon/dashboard.html
+.env.*
+!.env.example
+
+# demo dashboard: screenshots made while designing it, local notes, replay scratch space
+dashboard/previews/
+*.local.md
+cache_live_scratch/
+openrouter_bench_scratch/
+
+# local editor and agent state
+.claude/

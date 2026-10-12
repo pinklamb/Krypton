@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Krypton Benchmark</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one dense column on a dark wine ground, all monospace. Verdicts first, then one section per question, then method and reproduce steps. Krypton is always the rose series. */
+:root {
+  color-scheme: dark;
+  --bg: #0d0708; --surface: #150b0d; --ink: #f3e9e9; --ink2: #c9a9ac; --muted: #a67b80;
+  --grid: #2a1519; --axis: #3a1f24; --ring: rgba(224, 54, 74, .28);
+  --s-argon: #ff6b7d; --s-base: #8a94a6; --s-ctrl: #4fb6a5;
+  --good: #4ade80; --warn: #f0b429; --bad: #ff7b7b; --chip: #241214;
+  --sans: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 13.5px/1.6 var(--sans); padding-inline: max(16px, 4vw); padding-block: 28px 56px; }
+main { max-width: 1080px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
+h1 { font-size: clamp(22px, 3.4vw, 32px); line-height: 1.2; font-weight: 700; letter-spacing: -.02em; margin: 6px 0 10px; text-wrap: balance; }
+h2 { font-size: 15px; font-weight: 700; text-transform: none; margin: 0 0 4px; text-wrap: balance; }
+p { margin: 0; } .lede { color: var(--ink2); max-width: 66ch; }
+.mono, .num { font-family: var(--mono); } .eyebrow { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.chip { font: 400 12px var(--mono); background: var(--chip); color: var(--ink2); padding: 4px 9px; border-radius: 3px; border: 1px solid var(--grid); }
+.verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.verdict { background: var(--surface); border-radius: 4px; padding: 16px; box-shadow: 0 0 0 1px var(--ring); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.verdict .big { font: 700 32px/1 var(--mono); letter-spacing: -.02em; } .verdict .what { color: var(--ink2); font-size: 12.5px; }
+.tag { font: 500 12px var(--mono); display: inline-flex; gap: 6px; align-items: center; } .tag.good { color: var(--good); } .tag.warn { color: var(--warn); } .tag.bad { color: var(--bad); }
+section.panel { background: var(--surface); border-radius: 4px; padding: 20px; box-shadow: 0 0 0 1px var(--ring); display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sub { color: var(--ink2); font-size: 12.5px; max-width: 86ch; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+.two > div { min-width: 0; }
+.two table { min-width: 0; } .two th, .two td { white-space: normal; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.row { display: grid; grid-template-columns: minmax(96px, 150px) 1fr minmax(64px, auto); gap: 10px; align-items: center; padding-block: 3px; }
+.row .lab { font-size: 13px; color: var(--ink2); overflow-wrap: anywhere; }
+.row .track { height: 14px; position: relative; } .row .fill { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0; min-width: 2px; }
+.row .val { font: 500 13px var(--mono); text-align: right; white-space: nowrap; }
+.grp { padding-block: 6px; border-top: 1px solid var(--grid); } .grp:first-of-type { border-top: 0; }
+.grp .gl { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; min-width: 520px; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; } th { font: 500 11px var(--mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+td.num { font-family: var(--mono); } td.best { font-weight: 600; } td .m { color: var(--muted); font-size: 12px; }
+details { font-size: 13px; color: var(--ink2); } summary { cursor: pointer; padding-block: 4px; } summary:focus-visible { outline: 2px solid var(--s-argon); outline-offset: 2px; }
+svg text { font-family: var(--mono); fill: var(--muted); font-size: 11px; } svg .dl { font-weight: 500; font-size: 11.5px; }
+#tip { position: fixed; z-index: 5; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.45 var(--mono); padding: 7px 9px; border-radius: 5px; max-width: 260px; opacity: 0; transition: opacity .08s; white-space: pre-line; }
+.notes { margin: 0; padding-left: 18px; color: var(--ink2); font-size: 12.5px; display: flex; flex-direction: column; gap: 6px; max-width: 78ch; }
+.pending { color: var(--warn); font: 500 12px var(--mono); }
+footer { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+@media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
+.eyebrow::before { content: "> "; }
+h2::before { content: "// "; color: var(--s-argon); font-weight: 500; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; background: var(--grid); border: 1px solid var(--grid); border-radius: 4px; overflow: hidden; }
+.kv div { background: var(--surface); padding: 9px 12px; min-width: 0; } .kv small { display: block; color: var(--muted); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; } .kv b { font-weight: 600; overflow-wrap: anywhere; }
+pre.cmd { margin: 0; padding: 12px 14px; background: #080405; border: 1px solid var(--grid); border-radius: 4px; overflow-x: auto; font: 500 12.5px/1.75 var(--mono); color: var(--ink); }
+pre.cmd .p { color: var(--s-argon); } pre.cmd .c { color: var(--muted); }
+.formulas { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.formulas li { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 6px 16px; padding-block: 8px; border-top: 1px solid var(--grid); font-size: 12.5px; } .formulas li:first-child { border-top: 0; }
+.formulas b { color: var(--ink); font-weight: 600; } .formulas code { color: var(--ink2); font: 500 12.5px var(--mono); overflow-wrap: anywhere; }
+@media (max-width: 700px) { .formulas li { grid-template-columns: 1fr; } }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">Krypton benchmark</div>
+    <h1>Does Krypton help on a real AI-written codebase?</h1>
+    <p class="lede">Tested on <b>garth</b>, an MIT-licensed Garmin client where 163 of the last 225 commits carry an AI co-author trailer. Prompt caching was measured live on OpenAI through OpenRouter; the refactor and the change tasks were done by Sonnet agents, with garth's own 163 tests as the check.</p>
+    <div class="kv" aria-label="Run card">
+      <div><small>Repository</small><b>matin/garth v0.8.0 (MIT)</b></div>
+      <div><small>Code sent</small><b>src/ · 41 files · 3,496 lines · ~24.7K tokens</b></div>
+      <div><small>Cache replay</small><b>12 real commits · 13 turns · 39 function-level edits</b></div>
+      <div><small>Cache model</small><b>openai/gpt-4.1-nano via OpenRouter</b></div>
+      <div><small>Agent model</small><b>Claude Sonnet 5.5 (medium effort)</b></div>
+      <div><small>Check</small><b>garth's own 163 tests · 14 hidden acceptance tests</b></div>
+      <div><small>Repetitions</small><b>one run per arm</b></div>
+      <div><small>History signal</small><b>git log, last 200 commits</b></div>
+    </div>
+  </header>
+
+  <div class="verdicts" id="verdicts"></div>
+
+  <section class="panel" aria-labelledby="h-cache">
+    <div><h2 id="h-cache">1 · Prompt caching: does Krypton's volatility order work?</h2>
+    <p class="sub">The whole <span class="mono">src/</span> (~25K tokens) was sent as one prompt per turn while replaying garth's last 12 real commits. Krypton ordered the files from commit history <i>before</i> the replay, stable files first. OpenAI caches the longest repeated prefix, so edits to files near the end leave most of the prompt cached.</p></div>
+    <div class="legend" id="cacheLegend"></div>
+    <div class="two">
+      <div><div class="eyebrow" style="margin-bottom:6px">Cached share of prompt tokens, commits 1–12 (the cold start can never hit)</div><div id="cacheBars"></div><div class="scroll" style="margin-top:12px"><table id="cacheTable"></table></div></div>
+      <div><div class="eyebrow" style="margin-bottom:6px">Cached share per replayed commit</div><div id="cacheLine"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-ref">
+    <div><h2 id="h-ref">2 · Refactor: what did Krypton change in the code?</h2>
+    <p class="sub">Two agents refactored identical copies of garth under the same rules. One had Krypton in the loop; the control did not, and stopped when it judged the code clean. All 163 tests pass in every copy.</p></div>
+    <div class="scroll"><table id="refTable"></table></div>
+    <p class="sub">The 5 flags Krypton left are hub files (<span class="mono">__init__.py</span>, <span class="mono">http.py</span>, <span class="mono">utils.py</span>, <span class="mono">data/_base.py</span>) flagged for coupling. The agent chose not to split them.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-task">
+    <div><h2 id="h-task">3 · Change tasks: is the refactored code cheaper to modify?</h2>
+    <p class="sub">Fresh agents made the same three changes on the original and on the Krypton-refactored garth, without knowing about Krypton. Every result passed the hidden acceptance tests (14 of 14 per arm) and the full existing suite.</p></div>
+    <div class="legend" id="taskLegend"></div>
+    <div id="taskBars"></div>
+    <details><summary>Show data table</summary><div class="scroll"><table id="taskTable"></table></div></details>
+  </section>
+
+  <section class="panel" aria-labelledby="h-rc">
+    <div><h2 id="h-rc">4 · Does the refactor itself make caching easier?</h2>
+    <p class="sub">The same 39 real function-level edits (from the last 12 commits) were applied to both layouts. Whatever Krypton split, the volatile files stayed put: <span class="mono">version.py</span>, <span class="mono">http.py</span> and <span class="mono">__init__.py</span> are the hubs it left alone.</p></div>
+    <div class="scroll"><table id="rcTable"></table></div>
+    <p class="sub">Result: no difference. Both layouts predict the same cached share under every order. The live check on the original layout (78% and 53%) is within 2 points of the prediction, as in section 1.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-other">
+    <div><h2 id="h-other">5 · Other runs</h2></div>
+    <div class="two">
+      <div><div class="eyebrow" style="margin-bottom:6px">Built from scratch (billing engine, 20 iterations)</div><div class="scroll"><table id="billTable"></table></div></div>
+      <div><div class="eyebrow" style="margin-bottom:6px">AI-written snippets, Krypton hints in the refactor loop (8 samples)</div><div class="scroll"><table id="dataTable"></table></div></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-method">
+    <div><h2 id="h-method">6 · Method and formulas</h2>
+    <p class="sub">Every figure on this page comes from one of these definitions. The volatility index only orders files; it never changes a complexity score.</p></div>
+    <ul class="formulas">
+      <li><b>Volatility index</b><code>commits touching file ÷ commits touching the busiest scanned file (last 200 commits). Uncommitted or new files = 1.0. Files are sent stable first, ties broken by name.</code></li>
+      <li><b>Cached share</b><code>cached_tokens ÷ prompt_tokens, read from the provider's usage fields, replayed commits 1–12 (turn 0 is a cold start and can never hit).</code></li>
+      <li><b>Predicted share</b><code>longest common prefix of two consecutive prompts ÷ prompt length, rounded down to the provider's 128-token steps (cache starts at 1,024 tokens). Matched the live result within about 2 points.</code></li>
+      <li><b>Bill ratio</b><code>1 − (1 − k) · h, where h is the reused share of each request and k is the cached-read price as a fraction of the normal input price.</code></li>
+      <li><b>Per-change saving</b><code>tokens an agent spent on three identical change tasks, original vs refactored: 2,145 fewer of about 40,400 per change (5.3%).</code></li>
+      <li><b>Payback</b><code>one-time refactor cost ÷ per-change saving = 101,398 ÷ 2,145 ≈ 47 change tasks.</code></li>
+    </ul>
+  </section>
+
+  <section class="panel" aria-labelledby="h-repro">
+    <div><h2 id="h-repro">7 · Reproduce</h2>
+    <p class="sub">The command-line tool and Python package are still named <span class="mono">argon</span>. Keys are read from the environment or a git-ignored <span class="mono">.env</span> file; nothing is printed or stored.</p></div>
+<pre class="cmd"><span class="c"># predicted cache share per file order, no API calls</span>
+<span class="p">$</span> python argon/tools/cache_live.py &lt;repo&gt; --subdir src --turns 12 --dry
+
+<span class="c"># live replay against the cache model (spends credit; asks first)</span>
+<span class="p">$</span> python argon/tools/cache_live.py &lt;repo&gt; --subdir src --turns 12 --model openai/gpt-4.1-nano
+
+<span class="c"># the file order Krypton would send, most stable first</span>
+<span class="p">$</span> python -m argon.cli &lt;repo&gt;/src --order-by-volatility</pre>
+  </section>
+
+  <section class="panel" aria-labelledby="h-care">
+    <h2 id="h-care">Limits</h2>
+    <ul class="notes">
+      <li>One repo, one cache model, one run per arm. The caching gap is large enough to trust; the 5% task saving is within the noise seen between runs.</li>
+      <li>The refactor spent 101K tokens, 2.4× the control, and the code is no smaller in tokens (24,720 → 24,622). At about 2.1K saved per task it takes roughly 47 change tasks to recoup that in tokens.</li>
+      <li>Krypton found the heavy code and kept the agent working until the logic flags were gone. The control touched two files and left the 46× outlier alone. A stricter control prompt might close part of that gap.</li>
+      <li>Code in the snippet dataset was never executed, so those refactors are not verified to behave the same.</li>
+      <li>Token counts for agents come from the harness and likely exclude cache reads. Only sections 1 and 4 read provider cache fields; section 1 is live and section 4 is mostly predicted from prefix math.</li>
+    </ul>
+  </section>
+  <footer>Measured runs on garth · prices from OpenRouter · cached share = cached_tokens ÷ prompt_tokens over replayed commits 1–12; dollar figures cover all 13 turns</footer>
+</main>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const DATA = {
+  cache: {
+    turns: [0,1,2,3,4,5,6,7,8,9,10,11,12], changed: [0,1,2,2,1,1,2,2,2,2,2,2,3],
+    series: [
+      { key: 'vol', name: 'Volatility order (Krypton)', color: 'var(--s-argon)', short: 'volatility', actual: [0,86,78,73,73,99,94,73,77,73,77,77,64], pred: 81, share: 79, spend: 0.0148 },
+      { key: 'alpha', name: 'Alphabetical', color: 'var(--s-base)', short: 'alphabetical', actual: [0,49,61,61,61,99,57,60,61,61,65,65,0], pred: 60, share: 58, spend: 0.0194 },
+      { key: 'rev', name: 'Reverse (volatile first)', color: 'var(--s-ctrl)', short: 'reverse', actual: [0,0,0,0,16,0,0,0,0,0,0,0,0], pred: 1, share: 1, spend: 0.0323 }
+    ]
+  },
+  refactor: {
+    head: ['', 'Original', 'No Krypton (control)', 'With Krypton'],
+    rows: [
+      ['Krypton purity score', '62', '68', '88', 3],
+      ['Files flagged', '13 of 41', '12 of 41', '5 of 43', 3],
+      ['Logic-complexity flags', '9', '8', '0', 3],
+      ['Functions rated "nested"', '8', '8', '0', 3],
+      ['Worst function over threshold', '46×', '46×', 'none', 3],
+      ['garth tests passing', '163', '163', '163', 0],
+      ['Source lines', '3,496', '3,507', '3,429', 3],
+      ['Source tokens (approx)', '24,720', '24,787', '24,622', 0],
+      ['Tokens the agent spent', '—', '42.7K', '101.4K', 0],
+      ['Agent tool calls', '—', '6', '36', 0]
+    ]
+  },
+  tasks: {
+    names: ['Sanitizer: nested JSON and new fields', 'Body Battery parser: end time and clamp', 'HTTP client: header leak fix and defaults'],
+    orig: [38771, 42068, 40361], refac: [37707, 38831, 38227], origCalls: [3, 10, 4], refacCalls: [4, 4, 4]
+  },
+  rc: { head: ['Layout', 'Volatility order', 'Alphabetical', 'Reverse'], rows: [
+    ['Original garth (predicted)', '78%', '55%', '1%'],
+    ['Refactored garth (predicted)', '78%', '56%', '1%'],
+    ['Original garth (live check)', '78%', '53%', '—']
+  ] },
+  bill: { head: ['', 'No Krypton', 'With Krypton'], rows: [
+    ['Hidden tests (83)', '83', '83'], ['Krypton purity', '31', '100'], ['Source files / lines', '4 / 596', '13 / 742'], ['Largest file', '494 lines', '262 lines'],
+    ['Agent tokens, iterations 7–20', '+32.5K', '+37.9K (+17%)']
+  ] },
+  data: { head: ['', 'Prompt tokens', 'Krypton hints'], rows: [
+    ['Before', '3,162–3,201', '8'], ['After, free model (cohere)', '3,261 (+3.1%)', '5'], ['After, openai/gpt-4o-mini', '2,934 (−8.3%)', '6'], ['gpt-4o-mini cost of the refactor', '12.4K tokens · $0.0041', '—']
+  ] }
+};
+
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => n.toLocaleString('en-US');
+const pct = (n) => n + '%';
+const tip = $('tip');
+function showTip(e, text) { tip.textContent = text; tip.style.opacity = 1; const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8), y = e.clientY + 16; tip.style.left = Math.max(8, x) + 'px'; tip.style.top = y + 'px'; }
+function hideTip() { tip.style.opacity = 0; }
+function table(el, head, rows, boldCol) {
+  el.innerHTML = '<thead><tr>' + head.map((h) => '<th scope="col">' + h + '</th>').join('') + '</tr></thead><tbody>' +
+    rows.map((r) => '<tr>' + r.slice(0, head.length).map((c, i) => (i === 0 ? '<th scope="row" style="font:500 12.5px var(--sans);color:var(--ink);letter-spacing:0;text-transform:none">' + c + '</th>' : '<td class="num' + (i === (r[head.length] || boldCol) ? ' best' : '') + '">' + c + '</td>')).join('') + '</tr>').join('') + '</tbody>';
+}
+function legend(el, items) { el.innerHTML = items.map((s) => '<span><i style="background:' + s.color + '"></i>' + s.name + '</span>').join(''); }
+function bars(el, rows, max) {
+  el.innerHTML = rows.map((r) => '<div class="row" data-tip="' + r.tip + '"><div class="lab">' + r.label + '</div><div class="track"><div class="fill" style="width:' + (100 * r.value / max) + '%;background:' + r.color + '"></div></div><div class="val">' + r.text + '</div></div>').join('');
+  el.querySelectorAll('.row').forEach((n) => { n.addEventListener('pointermove', (e) => showTip(e, n.dataset.tip)); n.addEventListener('pointerleave', hideTip); });
+}
+
+/* verdicts */
+const c = DATA.cache.series, t = DATA.tasks;
+const sum = (a) => a.reduce((x, y) => x + y, 0);
+const taskDelta = (1 - sum(t.refac) / sum(t.orig)) * 100;
+$('verdicts').innerHTML = [
+  { big: c[0].share + '%', what: 'of prompt tokens cached over the 12 replayed commits with Krypton\'s volatility order (72.6% counting the cold start), against ' + c[1].share + '% alphabetical and ' + c[2].share + '% reverse', tag: 'good', mark: '✓ Works' },
+  { big: '9 → 0', what: 'logic-complexity flags after an Krypton-guided refactor. The control agent left 8 of the 9. Tests: 163 of 163 pass.', tag: 'good', mark: '✓ Works' },
+  { big: '−' + taskDelta.toFixed(1) + '%', what: 'tokens for three identical change tasks on the refactored code. All correct, but within run-to-run noise.', tag: 'warn', mark: '~ Small' },
+  { big: '2.4×', what: 'the tokens of a no-Krypton refactor (101K vs 43K), and the code is no smaller in tokens. Recouping it takes roughly 47 tasks.', tag: 'bad', mark: '! Costs' }
+].map((v) => '<div class="verdict"><span class="tag ' + v.tag + '">' + v.mark + '</span><div class="big">' + v.big + '</div><div class="what">' + v.what + '</div></div>').join('');
+
+/* 1 · caching */
+legend($('cacheLegend'), c.map((s) => ({ name: s.name, color: s.color })));
+bars($('cacheBars'), c.map((s) => ({ label: s.short, value: s.share, color: s.color, text: pct(s.share), tip: s.name + '\nactual ' + s.share + '% cached\npredicted from prefix math: ' + s.pred + '%\nspend for 13 turns: $' + s.spend.toFixed(4) })), 100);
+table($('cacheTable'), ['Order', 'Predicted', 'Actual', 'Spend (13 turns)'], c.map((s) => [s.short, pct(s.pred), pct(s.share), '$' + s.spend.toFixed(4)]), 2);
+
+function drawLine() {
+  const el = $('cacheLine'), W = Math.max(300, el.clientWidth), H = 250, m = { l: 36, r: 12, t: 12, b: 28 };
+  const x = (i) => m.l + (W - m.l - m.r) * i / 12, y = (v) => m.t + (H - m.t - m.b) * (1 - v / 100);
+  let g = '';
+  [0, 25, 50, 75, 100].forEach((v) => { g += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--' + (v === 0 ? 'axis' : 'grid') + ')"/><text x="' + (m.l - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '%</text>'; });
+  DATA.cache.turns.forEach((i) => { if (i % 2 === 0) g += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + i + '</text>'; });
+  g += '<text x="' + (W - m.r) + '" y="' + (H - 8) + '" text-anchor="end" style="font-size:10px">commit →</text>';
+  const lines = c.map((s) => '<polyline fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linejoin="round" points="' + s.actual.map((v, i) => x(i) + ',' + y(v)).join(' ') + '"/>' +
+    '<circle cx="' + x(12) + '" cy="' + y(s.actual[12]) + '" r="4" fill="' + s.color + '" stroke="var(--surface)" stroke-width="2"/>').join('');
+  const labels = c.map((s, k) => '<text class="dl" x="' + x(7) + '" y="' + (y(s.actual[7]) - 8) + '" text-anchor="middle" style="fill:var(--ink2)">' + s.short + '</text>').join('');
+  el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" role="img" aria-label="Cached share per replayed commit for three file orders">' + g + lines + labels +
+    '<line id="cross" y1="' + m.t + '" y2="' + (H - m.b) + '" stroke="var(--muted)" stroke-dasharray="3 3" opacity="0"/><rect id="hit" x="' + m.l + '" y="0" width="' + (W - m.l - m.r) + '" height="' + H + '" fill="transparent"/></svg>';
+  const cross = el.querySelector('#cross'), hit = el.querySelector('#hit');
+  hit.addEventListener('pointermove', (e) => {
+    const r = hit.getBoundingClientRect(), i = Math.max(0, Math.min(12, Math.round(12 * (e.clientX - r.left) / r.width)));
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', 1);
+    showTip(e, 'commit ' + i + (i ? ' · ' + DATA.cache.changed[i] + ' file' + (DATA.cache.changed[i] > 1 ? 's' : '') + ' changed' : ' · cold start') + '\n' + c.map((s) => s.short.padEnd(13) + s.actual[i] + '%').join('\n'));
+  });
+  hit.addEventListener('pointerleave', () => { cross.setAttribute('opacity', 0); hideTip(); });
+}
+
+/* 2 · refactor */
+table($('refTable'), DATA.refactor.head, DATA.refactor.rows, 3);
+
+/* 3 · tasks */
+legend($('taskLegend'), [{ name: 'Original garth', color: 'var(--s-base)' }, { name: 'Krypton-refactored garth', color: 'var(--s-argon)' }]);
+const maxT = Math.max(...t.orig, ...t.refac) * 1.05;
+$('taskBars').innerHTML = t.names.map((n, i) => '<div class="grp"><div class="gl">' + n + '</div><div class="r1"></div></div>').join('') +
+  '<div class="grp"><div class="gl">All three tasks</div><div class="r1"></div></div>';
+const groups = $('taskBars').querySelectorAll('.grp .r1');
+const pairs = t.names.map((n, i) => [t.orig[i], t.refac[i], t.origCalls[i], t.refacCalls[i]]).concat([[sum(t.orig), sum(t.refac), sum(t.origCalls), sum(t.refacCalls)]]);
+pairs.forEach((p, i) => {
+  const total = i === 3, scale = total ? sum(t.orig) * 1.05 : maxT;
+  bars(groups[i], [
+    { label: 'original', value: p[0], color: 'var(--s-base)', text: fmt(p[0]), tip: 'Original garth\n' + fmt(p[0]) + ' tokens · ' + p[2] + ' tool calls' },
+    { label: 'refactored', value: p[1], color: 'var(--s-argon)', text: fmt(p[1]) + (p[1] < p[0] ? ' (−' + (100 * (1 - p[1] / p[0])).toFixed(1) + '%)' : ''), tip: 'Krypton-refactored garth\n' + fmt(p[1]) + ' tokens · ' + p[3] + ' tool calls' }
+  ], scale);
+});
+table($('taskTable'), ['Task', 'Original tokens', 'Refactored tokens', 'Tool calls (orig / refac)'], t.names.map((n, i) => [n, fmt(t.orig[i]), fmt(t.refac[i]), t.origCalls[i] + ' / ' + t.refacCalls[i]]).concat([['Total', fmt(sum(t.orig)), fmt(sum(t.refac)), sum(t.origCalls) + ' / ' + sum(t.refacCalls)]]), 2);
+
+/* 4 · refactor + caching */
+table($('rcTable'), DATA.rc.head, DATA.rc.rows, 1);
+
+/* 5 · other */
+table($('billTable'), DATA.bill.head, DATA.bill.rows, 2);
+table($('dataTable'), DATA.data.head, DATA.data.rows, 0);
+
+drawLine(); new ResizeObserver(() => drawLine()).observe($('cacheLine'));
+</script>
+
+</html>

@@ -1,6 +1,6 @@
-# [Krypton](https://pinklamb.github.io/Argon/)
+# [Krypton](https://pinklamb.github.io/Krypton/)
 
-Docs and site: https://pinklamb.github.io/Argon/
+Docs and site: https://pinklamb.github.io/Krypton/
 
 Krypton scores how structurally heavy code is: decisions, nesting, bloated functions. It works on JavaScript, TypeScript and Python, runs locally with no network, and is built to sit next to a coding agent. It is not a linter. Run your linter too.
 
@@ -130,7 +130,7 @@ The rating cannot be diluted by giving every branch a different return value, pa
 
 Files that are too large, contain extremely long lines or are extremely wide are **not checked**. They are left out of the purity score and listed under `errors` in the JSON, in the warnings and in the PR comment, as `{error code: explanation}` with the setting that fixes it (for example `max_file_bytes = 3000000` in a `--config` TOML file). Minified bundles land here; add them to your ignore file. If every file is refused, the result says so, since a score of 100 would mean nothing.
 
-The scoring and ordering algorithms are not published; the [site](https://pinklamb.github.io/Argon/how-it-works.html) explains what they measure and what you can rely on.
+The scoring and ordering algorithms are not published; the [site](https://pinklamb.github.io/Krypton/how-it-works.html) explains what they measure and what you can rely on.
 
 ## What it scans
 

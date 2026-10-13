@@ -1,6 +1,6 @@
-# [Krypton](https://pinklamb.github.io/Argon/)
+# [Krypton](https://pinklamb.github.io/Krypton/)
 
-**The compiler for AI agents.** Site and docs: https://pinklamb.github.io/Argon/
+**The compiler for AI agents.** Site and docs: https://pinklamb.github.io/Krypton/
 
 Krypton measures how structurally heavy code is (decisions, nesting, bloated functions, tangled wiring) for JavaScript, TypeScript and Python. It runs locally, needs no network, and is built to sit beside a coding agent: after each change the agent runs Krypton, sees what got heavy, and splits it before the weight costs tokens and invites mistakes. It also orders your files so a model provider can reuse the prompt cache. It is not a linter; run yours too.
 
@@ -33,7 +33,7 @@ The older `argon` command still works and runs the same program.
 
 ## Documentation
 
-Start with the [documentation site](https://pinklamb.github.io/Argon/): getting started, how it works, the command reference, integrations, prompt caching and an FAQ. The pages live in [`argon/site/`](argon/site/).
+Start with the [documentation site](https://pinklamb.github.io/Krypton/): getting started, how it works, the command reference, integrations, prompt caching and an FAQ. The pages live in [`argon/site/`](argon/site/).
 
 ## Hosted demo
 

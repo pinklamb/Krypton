@@ -1,4 +1,4 @@
-# Publishes argon/site/ to GitHub Pages on every push to main.
+# Publishes the Krypton documentation site (argon/site/) to GitHub Pages on every push to main.
 # One-time setup: repo Settings > Pages > Build and deployment > Source: "GitHub Actions".
 # GitHub only reads workflows from the repository root .github/workflows, so this lives here, not in argon/.
 name: Deploy site

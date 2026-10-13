@@ -14,10 +14,25 @@
 <div class="wrap single">
 
 <main id="content">
+<div class="hero">
+<div>
 <div class="eyebrow">The compiler for AI agents</div>
 <h1>Keep AI-written code small enough to read, edit and pay for.</h1>
 <p class="lede">Krypton measures how structurally heavy code is, tells a coding agent exactly what to split, and orders files so your model provider can reuse the prompt cache. It runs locally and needs no network.</p>
 <div class="cta"><a class="btn" href="getting-started.html">Get started</a><a class="btn ghost" href="how-it-works.html">How it works</a></div>
+</div>
+<div class="herocard" aria-label="At a glance">
+<div class="eyebrow">At a glance</div>
+<h2>What Krypton does</h2>
+<ul>
+<li><b>Measures</b> every function and file for decisions, nesting, size and coupling</li>
+<li><b>Flags</b> what is too tangled and says what to try</li>
+<li><b>Tracks</b> whether each run improved it</li>
+<li><b>Orders</b> your files for prompt-cache friendly requests</li>
+</ul>
+<p class="meta">JavaScript, TypeScript and Python · runs locally · no network</p>
+</div>
+</div>
 <pre><code><span class="p">$</span> krypton src --top 5
 <span class="c"># ranks the heaviest functions, flags what is too tangled, and says what to try</span>
 ### Krypton Structural Review -- Purity Score: 59/100
@@ -45,6 +60,6 @@
 
 </main>
 </div>
-<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Argon">Source on GitHub</a></span></div></footer>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

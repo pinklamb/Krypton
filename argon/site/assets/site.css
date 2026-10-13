@@ -48,4 +48,9 @@ td.n, th.n { text-align: right; font-family: var(--mono); white-space: nowrap; }
 .steps { counter-reset: s; list-style: none; padding: 0; } .steps li { counter-increment: s; position: relative; padding: 0 0 14px 44px; margin: 0; } .steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px; display: grid; place-items: center; background: var(--wine); color: #fff; font: 700 14px var(--mono); }
 footer.site { border-top: 1px solid var(--wine); background: rgba(255, 252, 252, .7); } footer.site .bar { justify-content: space-between; font-size: 14px; color: var(--muted); }
 .pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 44px; border-top: 1px solid var(--line); padding-top: 18px; flex-wrap: wrap; }
-@media (max-width: 860px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 10px; } aside.toc { position: static; } .stats div { border-right: 0; border-bottom: 1px solid var(--line); } .stats div:last-child { border-bottom: 0; } }
+.hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: center; margin-bottom: 26px; }
+.herocard { background: var(--wine); color: #f6e9e9; padding: 24px; box-shadow: 5px 5px 0 rgba(74, 15, 26, .35); } .herocard .eyebrow { color: #ffb3bc; } .herocard h2 { margin: 0 0 12px; font-size: 22px; padding: 0; color: #fff; } .herocard h2::before { content: none; }
+.herocard ul { list-style: none; padding: 0; margin: 0 0 14px; } .herocard li { padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, .16); font-size: 15px; } .herocard li:first-child { border-top: 0; } .herocard b { color: #fff; }
+.herocard .meta { margin: 0; font: 500 12px var(--mono); color: #d7aab0; }
+.wrap.single main:has(.hero) { max-width: 1000px; margin-inline: auto; }
+@media (max-width: 860px) { .hero { grid-template-columns: minmax(0, 1fr); } .wrap { grid-template-columns: minmax(0, 1fr); gap: 10px; } aside.toc { position: static; } .stats div { border-right: 0; border-bottom: 1px solid var(--line); } .stats div:last-child { border-bottom: 0; } }

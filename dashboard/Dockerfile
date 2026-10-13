@@ -10,9 +10,9 @@ FROM python:3.13-slim
 RUN useradd --create-home app
 WORKDIR /app
 # the analysis engine, installed from this repository (the sign-in demo analyzes visitors' repositories with it)
-COPY argon/pyproject.toml /build/argon/pyproject.toml
-COPY argon/argon /build/argon/argon
-RUN pip install --no-cache-dir /build/argon && rm -rf /build
+COPY krypton/pyproject.toml /build/krypton/pyproject.toml
+COPY krypton/krypton /build/krypton/krypton
+RUN pip install --no-cache-dir /build/krypton && rm -rf /build
 
 COPY dashboard/index.html dashboard/benchmarks.html dashboard/server.py dashboard/auth.py dashboard/repo_fetch.py dashboard/scanner.py dashboard/scan_worker.py ./
 USER app

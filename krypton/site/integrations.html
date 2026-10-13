@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integrations | Krypton</title>
+<meta name="description" content="Use Krypton with coding agents, CI, Docker and the hosted demo.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="command-reference.html">Command reference</a><a href="integrations.html" aria-current="page">Integrations</a><a href="prompt-caching.html">Prompt caching</a><a href="faq.html">FAQ</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#agents">Coding agents</a></li><li><a href="#ci">Pre-commit and CI</a></li><li><a href="#docker">Docker</a></li><li><a href="#demo">Hosted demo</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">Integrations</div>
+<h1>Use Krypton where your agent and your team already work</h1>
+
+<h2 id="agents">Coding agents</h2>
+<p>Any agent that can run a command can use Krypton. Add the rules from <a href="getting-started.html#agent">Getting started</a> to <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your tool's rules file, and pass <code>--history</code> so each iteration is compared with the last. Use <code>--json</code> if a hook needs structured output.</p>
+
+<h2 id="ci">Pre-commit and CI</h2>
+<pre><code>krypton . --base origin/main --top 0 || { echo "Krypton: structure check failed"; exit 1; }</code></pre>
+<p>A GitHub Actions job:</p>
+<pre><code>name: Krypton
+on: pull_request
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install path/to/krypton   # wherever Krypton lives for you
+      - run: krypton . --base origin/${{ github.base_ref }} --top 10</code></pre>
+<p>The <code>summary_markdown</code> field of the JSON output is formatted as a pull request comment.</p>
+
+<h2 id="docker">Docker</h2>
+<pre><code>docker build -t krypton krypton
+docker run --rm -v "$PWD:/repo" krypton .</code></pre>
+
+<h2 id="demo">The hosted demo</h2>
+<p>The repository includes a small web app that shows what a codebase costs to read and what a refactor could save.</p>
+<ol class="steps">
+<li>Visitors <b>sign in with GitHub</b> and pick one of their repositories.</li>
+<li>The server <b>reads it in memory</b> with the visitor's own access, scores the Python, JavaScript and TypeScript files, and discards it. Nothing from the repository is run or stored.</li>
+<li>The page shows <b>files, lines, tokens per read, structure score and the hardest functions</b>, then a savings view built from the real size.</li>
+</ol>
+<p>The savings use the rates measured on one repository (see <a href="prompt-caching.html">Prompt caching</a>), scaled to the visitor's repository, so treat them as estimates. Deployment steps (Docker and Railway) are in <a href="https://github.com/pinklamb/Krypton/blob/main/dashboard/DEPLOY.md">dashboard/DEPLOY.md</a>.</p>
+
+<div class="pager"><a href="command-reference.html">← Command reference</a><a href="prompt-caching.html">Prompt caching →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

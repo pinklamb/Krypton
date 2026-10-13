@@ -500,7 +500,7 @@ function pane(id, code) {
 }
 
 /* savings: the AI bill */
-const REUSE = { alpha: 0.582, argon: 0.786 }, REFACTOR = 0.053, DAYS = 22;   // measured on garth: share of each request the provider reused
+const REUSE = { alpha: 0.582, krypton: 0.786 }, REFACTOR = 0.053, DAYS = 22;   // measured on garth: share of each request the provider reused
 const MODELS = {   // list prices, USD per million tokens: normal input, cached read, cache write
   sonnet: { name: 'Claude Sonnet 5.5', input: 2.0, read: 0.2, write: 2.5, tag: 'cache writes cost 1.25×' },
   opus: { name: 'Claude Opus 5.5', input: 4.0, read: 0.2, write: 5.0, tag: 'cache writes cost 1.25×' },
@@ -527,7 +527,7 @@ function pct(before, after) { return Math.round(100 * (before - after) / before)
 function calc(devs, lines = S.lines) {
   const m = MODELS[S.model], C = lines * S.tpl, N = devs * S.turns * DAYS;
   const per = (h) => C * (h * m.read + (1 - h) * m.write) / 1e6, none = C * m.input / 1e6;
-  const orig = per(REUSE.alpha), order = per(REUSE.argon), full = order * (S.refactor ? 1 - S.effect : 1);
+  const orig = per(REUSE.alpha), order = per(REUSE.krypton), full = order * (S.refactor ? 1 - S.effect : 1);
   return { m, C, per: { none, orig, order, full }, bill: { none: none * N, orig: orig * N, order: order * N, full: full * N } };
 }
 function effectTexts() {
@@ -549,7 +549,7 @@ function renderInputs(r) {
 }
 function renderAssumptions(r) {
   const price = `$${r.m.input.toFixed(2)} / $${r.m.read.toFixed(2)} / $${r.m.write.toFixed(2)}`;
-  const rows = [['Price per million tokens: normal / cached read / cache write', price], ['Request reused by the provider: Krypton order / alphabetical', `${(REUSE.argon * 100).toFixed(1)}% / ${(REUSE.alpha * 100).toFixed(1)}%`],
+  const rows = [['Price per million tokens: normal / cached read / cache write', price], ['Request reused by the provider: Krypton order / alphabetical', `${(REUSE.krypton * 100).toFixed(1)}% / ${(REUSE.alpha * 100).toFixed(1)}%`],
     ['Refactor effect on tokens per change', `${(S.effect * 100).toFixed(1)}%`], ['Working days per month', DAYS], ['Each turn sends the whole codebase', 'yes']];
   $('assume').innerHTML = rows.map(([label, value]) => `<div class="row"><span>${label}</span><b>${value}</b></div>`).join('');
 }
@@ -561,7 +561,7 @@ function renderHero(b) {
 }
 function stairSteps(b) {
   const steps = [['No caching at all', 'every read billed in full', b.none, '#cdbcbc'], ['Caching, files in default order', `${(REUSE.alpha * 100).toFixed(0)}% of each request reused`, b.orig, '#e8b27a'],
-    ["Krypton's file order", `${(REUSE.argon * 100).toFixed(0)}% reused: stable files first`, b.order, 'var(--accent)']];
+    ["Krypton's file order", `${(REUSE.krypton * 100).toFixed(0)}% reused: stable files first`, b.order, 'var(--accent)']];
   return S.refactor ? [...steps, ['Plus a lighter codebase', `${(S.effect * 100).toFixed(1)}% fewer tokens per change`, b.full, 'var(--good)']] : steps;
 }
 function stairRow([label, note, value, color], i, steps, top) {

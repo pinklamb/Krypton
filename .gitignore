@@ -10,21 +10,21 @@ pytest-cache-files-*/
 node_modules/
 
 # generated audit page (rebuild: python -m tools.build_docs)
-argon/docs/argon_audit.html
-argon/docs/stress_test_findings.html
-argon/docs/.stress_cache.pkl
+krypton/docs/krypton_audit.html
+krypton/docs/stress_test_findings.html
+krypton/docs/.stress_cache.pkl
 ArgonTestCase*/
-argon-test-codebase/
+krypton-test-codebase/
 spreadsheet-bench/
 
 # cache/volatility experiment harnesses (not part of the tool)
-argon/tools/synth_repo.py
-argon/tools/cache_replay.py
+krypton/tools/synth_repo.py
+krypton/tools/cache_replay.py
 
 # secrets and the downloaded benchmark dataset
 .env
 HumanVSAI*
-argon/dashboard.html
+krypton/dashboard.html
 .env.*
 !.env.example
 
@@ -37,14 +37,14 @@ openrouter_bench_scratch/
 # local editor and agent state
 .claude/
 
-# packaging output (pip install ./argon)
+# packaging output (pip install ./krypton)
 build/
 *.egg-info/
 
 # internal documents and reports (the scoring algorithm, audits, benchmark write-ups, calibration data)
-argon/SCORING.md
+krypton/SCORING.md
 REPORT.md
 *_REPORT.md
 *BENCHMARK*.md
-argon/docs/
-argon/calibration/
+krypton/docs/
+krypton/calibration/

@@ -10,7 +10,7 @@
   color-scheme: light;
   --bg: #ecd0d2; --bg-2: #deb5b9; --surface: #fffcfc; --ink: #2b0a10; --ink2: #6e2f39; --muted: #8c5560;
   --grid: #ecd3d3; --axis: #c9a3a8; --wine: #4a0f1a;
-  --s-argon: #9b1c2e; --s-base: #8a7f73; --s-ctrl: #1f7a6d;
+  --s-krypton: #9b1c2e; --s-base: #8a7f73; --s-ctrl: #1f7a6d;
   --good: #137a52; --warn: #8a5a00; --bad: #b45309; --chip: #f6e4e4;
   --sans: "Plus Jakarta Sans", system-ui, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
@@ -45,7 +45,7 @@ table { border-collapse: collapse; width: 100%; font-size: 12.5px; min-width: 52
 th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; white-space: normal; } th { font: 500 11px var(--mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
 td.num { font-family: var(--mono); } td.best { font-weight: 600; } td .m { color: var(--muted); font-size: 12px; }
-details { font-size: 13px; color: var(--ink2); } summary { cursor: pointer; padding-block: 4px; } summary:focus-visible { outline: 2px solid var(--s-argon); outline-offset: 2px; }
+details { font-size: 13px; color: var(--ink2); } summary { cursor: pointer; padding-block: 4px; } summary:focus-visible { outline: 2px solid var(--s-krypton); outline-offset: 2px; }
 svg text { font-family: var(--mono); fill: var(--muted); font-size: 11px; } svg .dl { font-weight: 500; font-size: 11.5px; }
 #tip { position: fixed; z-index: 5; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.45 var(--mono); padding: 7px 9px; border-radius: 5px; max-width: 260px; opacity: 0; transition: opacity .08s; white-space: pre-line; }
 .notes { margin: 0; padding-left: 18px; color: var(--ink2); font-size: 12.5px; display: flex; flex-direction: column; gap: 6px; max-width: 78ch; }
@@ -53,11 +53,10 @@ svg text { font-family: var(--mono); fill: var(--muted); font-size: 11px; } svg 
 footer { color: var(--muted); font-size: 12px; font-family: var(--mono); }
 @media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
 .eyebrow::before { content: "> "; }
-h2::before { content: "// "; color: var(--s-argon); font-weight: 500; }
 .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--grid); border: 1px solid var(--grid); border-radius: 4px; overflow: hidden; }
 .kv div { background: var(--surface); padding: 9px 12px; min-width: 0; } .kv small { display: block; color: var(--muted); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; } .kv b { font-weight: 600; overflow-wrap: anywhere; }
 pre.cmd { margin: 0; padding: 12px 14px; background: #080405; border: 1px solid var(--grid); border-radius: 4px; overflow-x: auto; font: 500 12.5px/1.75 var(--mono); color: var(--ink); }
-pre.cmd .p { color: var(--s-argon); } pre.cmd .c { color: var(--muted); }
+pre.cmd .p { color: var(--s-krypton); } pre.cmd .c { color: var(--muted); }
 .formulas { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .formulas li { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 6px 16px; padding-block: 8px; border-top: 1px solid var(--grid); font-size: 12.5px; } .formulas li:first-child { border-top: 0; }
 .formulas b { color: var(--ink); font-weight: 600; } .formulas code { color: var(--ink2); font: 500 12.5px var(--mono); overflow-wrap: anywhere; }
@@ -68,14 +67,14 @@ pre.cmd .p { color: var(--s-argon); } pre.cmd .c { color: var(--muted); }
 .kv { border: 1px solid var(--wine); border-radius: 2px; background: var(--grid); }
 .row .fill { border-radius: 0; } .row .track { background: var(--chip); }
 .verdict .big { color: var(--wine); }
-.callout { margin: 0; padding: 10px 14px; border-left: 4px solid var(--s-argon); background: var(--chip); font: 500 14px/1.5 var(--mono); color: var(--ink); } .callout b { font-weight: 700; }
+.callout { margin: 0; padding: 10px 14px; border-left: 4px solid var(--s-krypton); background: var(--chip); font: 500 14px/1.5 var(--mono); color: var(--ink); } .callout b { font-weight: 700; }
 .meta { margin: 0; color: var(--muted); font: 500 12px/1.5 var(--mono); }
 .chip { border-radius: 0; }
 pre.cmd { background: var(--wine); color: #f4e8e8; border: 0; border-radius: 2px; } pre.cmd .p { color: #ff8a97; } pre.cmd .c { color: #cdaaad; }
 thead th { border-bottom: 1px solid var(--wine); }
 #tip { border-radius: 2px; }
 .back { display: inline-block; padding: 8px 14px; border: 1px solid var(--wine); background: var(--surface); color: var(--wine); font: 600 13px var(--mono); text-decoration: none; border-radius: 0; box-shadow: 2px 2px 0 var(--wine); }
-.back:hover { background: var(--wine); color: var(--surface); } .back:focus-visible { outline: 2px solid var(--s-argon); outline-offset: 2px; }
+.back:hover { background: var(--wine); color: var(--surface); } .back:focus-visible { outline: 2px solid var(--s-krypton); outline-offset: 2px; }
 .sumlist { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; } .sumlist li { display: grid; grid-template-columns: minmax(90px, 140px) 1fr; gap: 6px 16px; padding-block: 9px; border-top: 1px solid var(--grid); font-size: 13.5px; } .sumlist li:first-child { border-top: 0; } .sumlist b { font-family: var(--mono); font-weight: 600; }
 @media (max-width: 700px) { .sumlist li { grid-template-columns: 1fr; } }
 </style>
@@ -183,7 +182,7 @@ const DATA = {
   cache: {
     turns: [0,1,2,3,4,5,6,7,8,9,10,11,12], changed: [0,1,2,2,1,1,2,2,2,2,2,2,3],
     series: [
-      { key: 'vol', name: 'Volatility order (Krypton)', color: 'var(--s-argon)', short: 'volatility', actual: [0,86,78,73,73,99,94,73,77,73,77,77,64], pred: 81, share: 79, spend: 0.0148 },
+      { key: 'vol', name: 'Volatility order (Krypton)', color: 'var(--s-krypton)', short: 'volatility', actual: [0,86,78,73,73,99,94,73,77,73,77,77,64], pred: 81, share: 79, spend: 0.0148 },
       { key: 'alpha', name: 'Alphabetical', color: 'var(--s-base)', short: 'alphabetical', actual: [0,49,61,61,61,99,57,60,61,61,65,65,0], pred: 60, share: 58, spend: 0.0194 },
       { key: 'rev', name: 'Reverse (volatile first)', color: 'var(--s-ctrl)', short: 'reverse', actual: [0,0,0,0,16,0,0,0,0,0,0,0,0], pred: 1, share: 1, spend: 0.0323 }
     ]
@@ -277,7 +276,7 @@ function drawLine() {
 table($('refTable'), DATA.refactor.head, DATA.refactor.rows, 3);
 
 /* 3 · tasks */
-legend($('taskLegend'), [{ name: 'Original garth', color: 'var(--s-base)' }, { name: 'Krypton-refactored garth', color: 'var(--s-argon)' }]);
+legend($('taskLegend'), [{ name: 'Original garth', color: 'var(--s-base)' }, { name: 'Krypton-refactored garth', color: 'var(--s-krypton)' }]);
 const maxT = Math.max(...t.orig, ...t.refac) * 1.05;
 $('taskBars').innerHTML = t.names.map((n, i) => '<div class="grp"><div class="gl">' + n + '</div><div class="r1"></div></div>').join('') +
   '<div class="grp"><div class="gl">All three tasks</div><div class="r1"></div></div>';
@@ -287,7 +286,7 @@ pairs.forEach((p, i) => {
   const total = i === 3, scale = total ? sum(t.orig) * 1.05 : maxT;
   bars(groups[i], [
     { label: 'original', value: p[0], color: 'var(--s-base)', text: fmt(p[0]), tip: 'Original garth\n' + fmt(p[0]) + ' tokens · ' + p[2] + ' tool calls' },
-    { label: 'refactored', value: p[1], color: 'var(--s-argon)', text: fmt(p[1]) + (p[1] < p[0] ? ' (−' + (100 * (1 - p[1] / p[0])).toFixed(1) + '%)' : ''), tip: 'Krypton-refactored garth\n' + fmt(p[1]) + ' tokens · ' + p[3] + ' tool calls' }
+    { label: 'refactored', value: p[1], color: 'var(--s-krypton)', text: fmt(p[1]) + (p[1] < p[0] ? ' (−' + (100 * (1 - p[1] / p[0])).toFixed(1) + '%)' : ''), tip: 'Krypton-refactored garth\n' + fmt(p[1]) + ' tokens · ' + p[3] + ' tool calls' }
   ], scale);
 });
 table($('taskTable'), ['Task', 'Original tokens', 'Refactored tokens', 'Tool calls (orig / refac)'], t.names.map((n, i) => [n, fmt(t.orig[i]), fmt(t.refac[i]), t.origCalls[i] + ' / ' + t.refacCalls[i]]).concat([['Total', fmt(sum(t.orig)), fmt(sum(t.refac)), sum(t.origCalls) + ' / ' + sum(t.refacCalls)]]), 2);
@@ -323,8 +322,8 @@ function payShapes(g) {
   const { x, y } = g, z = y(0), end = netSaved(PAY.max);
   const neg = `<polygon points="${x(0)},${z} ${x(0)},${y(netSaved(0))} ${x(BREAK_EVEN)},${z}" fill="var(--bad)" opacity=".22"/>`;
   const pos = `<polygon points="${x(BREAK_EVEN)},${z} ${x(PAY.max)},${y(end)} ${x(PAY.max)},${z}" fill="var(--s-ctrl)" opacity=".25"/>`;
-  const line = `<line x1="${x(0)}" y1="${y(netSaved(0))}" x2="${x(PAY.max)}" y2="${y(end)}" stroke="var(--s-argon)" stroke-width="2.4"/>`;
-  const mark = `<circle cx="${x(BREAK_EVEN)}" cy="${z}" r="5" fill="var(--surface)" stroke="var(--s-argon)" stroke-width="2.4"/><text class="dl" x="${x(BREAK_EVEN) + 10}" y="${z - 10}" style="fill:var(--ink)">break-even: ${Math.round(BREAK_EVEN)} changes</text>`;
+  const line = `<line x1="${x(0)}" y1="${y(netSaved(0))}" x2="${x(PAY.max)}" y2="${y(end)}" stroke="var(--s-krypton)" stroke-width="2.4"/>`;
+  const mark = `<circle cx="${x(BREAK_EVEN)}" cy="${z}" r="5" fill="var(--surface)" stroke="var(--s-krypton)" stroke-width="2.4"/><text class="dl" x="${x(BREAK_EVEN) + 10}" y="${z - 10}" style="fill:var(--ink)">break-even: ${Math.round(BREAK_EVEN)} changes</text>`;
   return neg + pos + line + mark;
 }
 function payTip(n) {

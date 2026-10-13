@@ -21,7 +21,7 @@ import auth
 AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><circle cx='32' cy='32' r='32' fill='%236a4bd8'/></svg>"
 USER = {"login": "octotest", "name": "Octo Test", "avatar_url": AVATAR, "email": "private@example.com"}
 REPOS = [
-    {"full_name": "octotest/argon-test-codebase", "private": True, "language": "Python", "pushed_at": "2026-10-10T00:00:00Z", "token_hint": "never_shown"},
+    {"full_name": "octotest/krypton-test-codebase", "private": True, "language": "Python", "pushed_at": "2026-10-10T00:00:00Z", "token_hint": "never_shown"},
     {"full_name": "octotest/garth", "private": False, "language": "Python", "pushed_at": "2026-09-01T00:00:00Z"},
 ]
 TOKEN = "gho_FAKE_TOKEN"

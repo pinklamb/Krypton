@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started | Krypton</title>
+<meta name="description" content="Install Krypton, run your first scan and add it to your coding agent's loop.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html" aria-current="page">Getting started</a><a href="how-it-works.html">How it works</a><a href="command-reference.html">Command reference</a><a href="integrations.html">Integrations</a><a href="prompt-caching.html">Prompt caching</a><a href="faq.html">FAQ</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#install">1. Install</a></li><li><a href="#scan">2. First scan</a></li><li><a href="#read">3. Read the report</a></li><li><a href="#changed">4. Score what changed</a></li><li><a href="#agent">5. Agent loop</a></li><li><a href="#next">Next</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">Getting started</div>
+<h1>From install to your first scan in five minutes</h1>
+<p class="lede">Krypton is a command-line tool. It reads your source files locally and prints a ranked report.</p>
+
+<h2 id="install">1. Install</h2>
+<p>You need Python 3.12 or newer.</p>
+<pre><code><span class="p">$</span> cd krypton
+<span class="p">$</span> pip install .</code></pre>
+<p>This gives you the <code>krypton</code> command. To run without installing, use <code>python -m krypton.cli &lt;paths&gt;</code> from the <code>krypton</code> folder.</p>
+<p>Prefer Docker?</p>
+<pre><code><span class="p">$</span> docker build -t krypton .
+<span class="p">$</span> docker run --rm -v "$PWD:/repo" krypton .</code></pre>
+
+<h2 id="scan">2. Run your first scan</h2>
+<pre><code><span class="p">$</span> krypton src --top 10</code></pre>
+<p>Give it files or folders. Inside a git repository it skips anything your <code>.gitignore</code> ignores, and it skips vendored and generated paths such as <code>node_modules</code> and <code>dist</code>. It scans <code>.js .jsx .mjs .cjs .ts .tsx .mts .cts</code> and <code>.py</code> files.</p>
+
+<h2 id="read">3. Read the report</h2>
+<p>The report has a file table, a ranking of the heaviest functions, refactoring hints, and a summary you can paste into a pull request.</p>
+<div class="scroll"><table>
+<tr><th>Column</th><th>What it tells you</th></tr>
+<tr><td><code>branches</code></td><td>Decisions in the file: conditions, loops, cases, catches, boolean operators, ternaries. Counted the way radon and ESLint count them.</td></tr>
+<tr><td><code>nesting</code></td><td>How deeply those decisions are stacked, found by a depth-first walk of the code. A nested decision is harder to follow than a flat one.</td></tr>
+<tr><td><code>depth</code></td><td>The deepest nesting in the file. Functions three or more levels deep are marked <code>nested</code>.</td></tr>
+<tr><td><code>eff</code></td><td>Effective lines. Packing code onto fewer lines does not make it lighter.</td></tr>
+<tr><td><code>rating</code></td><td>Krypton's overall structural rating for the file. Over the limit, the file is flagged.</td></tr>
+<tr><td>Purity Score</td><td>0 to 100 for the whole run. Higher is lighter.</td></tr>
+</table></div>
+<p>A flagged file means an agent will spend extra tokens reading it and is more likely to break it. The fix is almost always to split a large function by job, not to delete logic.</p>
+
+<h3>Exit codes</h3>
+<ul><li><code>0</code>: fine.</li><li><code>1</code>: the purity score fell below the failure line.</li><li><code>2</code>: usage error, such as no files or a bad config file.</li></ul>
+
+<h2 id="changed">4. Score only what changed</h2>
+<pre><code><span class="p">$</span> krypton . --base HEAD          <span class="c"># lines changed since the last commit, including new files</span>
+<span class="p">$</span> krypton . --base origin/main   <span class="c"># everything on this branch</span></code></pre>
+<p>Only changed lines count toward the ratings, so old code in the same file does not blame the agent.</p>
+
+<h2 id="agent">5. Put it in your agent's loop</h2>
+<p>Paste this into <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your tool's rules file:</p>
+<pre><code>## Code structure (Krypton)
+- After editing source files, run: `krypton &lt;the files or folders you changed&gt; --top 10 --history .krypton/history.jsonl`
+- If a file is flagged, or a function you wrote appears with a `nested` flag, refactor it
+  before finishing: early returns, small named helpers, one job per function.
+- Do not satisfy Krypton by packing code onto fewer lines or by splitting one function into
+  many trivial wrappers.
+- If a function is marked STALLED, do what its stated reason says before trying anything else.
+- Re-run Krypton after refactoring and report the purity score.</code></pre>
+<p>A typical session: the agent edits, runs <code>krypton</code>, reads the flagged functions, refactors, and runs it again.</p>
+
+<h2 id="next">Next</h2>
+<ul>
+<li><a href="how-it-works.html">How it works</a>: what Krypton measures and why.</li>
+<li><a href="command-reference.html">Command reference</a>: every option, the JSON output and the config file.</li>
+<li><a href="integrations.html">Integrations</a>: CI, pre-commit and the hosted demo.</li>
+<li><a href="prompt-caching.html">Prompt caching</a>: ordering files to cut your token bill.</li>
+</ul>
+
+<div class="pager"><a href="index.html">← Home</a><a href="how-it-works.html">How it works →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

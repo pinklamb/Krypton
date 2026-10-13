@@ -1,4 +1,4 @@
-"""Score source text with the Argon engine and print a small JSON summary.
+"""Score source text with the Krypton engine and print a small JSON summary.
 
 Reads {path: text} as JSON on stdin. The engine only parses: nothing from the repository is imported,
 compiled or run, and no repository file exists on disk. Runs as its own process so a hard repository
@@ -68,7 +68,7 @@ def main() -> int:
     """stdin JSON in, summary JSON out."""
     limit_resources()
     sources = json.load(sys.stdin)
-    from argon.engine.run import run_local
+    from krypton.engine.run import run_local
 
     result = run_local({name: text.encode("utf-8") for name, text in sources.items()})
     json.dump(summarize(result, sources), sys.stdout)

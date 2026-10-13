@@ -5,7 +5,7 @@
 Krypton measures how structurally heavy code is (decisions, nesting, bloated functions, tangled wiring) for JavaScript, TypeScript and Python. It runs locally, needs no network, and is built to sit beside a coding agent: after each change the agent runs Krypton, sees what got heavy, and splits it before the weight costs tokens and invites mistakes. It also orders your files so a model provider can reuse the prompt cache. It is not a linter; run yours too.
 
 ```bash
-cd argon
+cd krypton
 pip install .            # Python 3.12+; gives you the `krypton` command
 krypton src --top 10
 krypton . --base origin/main --json
@@ -14,12 +14,10 @@ krypton . --base origin/main --json
 Or with Docker:
 
 ```bash
-cd argon
+cd krypton
 docker build -t krypton .
 docker run --rm -v "$PWD:/repo" krypton .
 ```
-
-The older `argon` command still works and runs the same program.
 
 ## What it does
 
@@ -33,7 +31,7 @@ The older `argon` command still works and runs the same program.
 
 ## Documentation
 
-Start with the [documentation site](https://pinklamb.github.io/Krypton/): getting started, how it works, the command reference, integrations, prompt caching and an FAQ. The pages live in [`argon/site/`](argon/site/).
+Start with the [documentation site](https://pinklamb.github.io/Krypton/): getting started, how it works, the command reference, integrations, prompt caching and an FAQ. The pages live in [`krypton/site/`](krypton/site/).
 
 ## Hosted demo
 
@@ -43,10 +41,10 @@ Start with the [documentation site](https://pinklamb.github.io/Krypton/): gettin
 
 | Path | What it is |
 |---|---|
-| [`argon/`](argon/) | the tool: package, tests, Dockerfile and [usage README](argon/README.md). The folder and Python package keep their earlier name, `argon`, for now |
-| [`argon/site/`](argon/site/) | the documentation site (deployed to GitHub Pages by `.github/workflows/pages.yml`) |
+| [`krypton/`](krypton/) | the tool: package, tests, Dockerfile and [usage README](krypton/README.md) |
+| [`krypton/site/`](krypton/site/) | the documentation site (deployed to GitHub Pages by `.github/workflows/pages.yml`) |
 | [`dashboard/`](dashboard/) | the hosted demo and benchmark page, with its Dockerfile and deploy notes |
 
 ## Status
 
-Version 0.5.0, renamed to Krypton. See [`argon/CHANGELOG.md`](argon/CHANGELOG.md).
+Version 0.5.0, renamed to Krypton. See [`krypton/CHANGELOG.md`](krypton/CHANGELOG.md).

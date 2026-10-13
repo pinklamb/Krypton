@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "krypton-local-engine"
+version = "0.5.0"
+description = "Krypton MVP: local JavaScript, TypeScript and Python structural scoring engine"
+requires-python = ">=3.12"
+dependencies = [
+    "ast-grep-py>=0.45,<0.46",
+    "pydantic>=2",
+]
+
+[project.scripts]
+krypton = "krypton.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "radon==6.0.1"]
+
+[tool.setuptools.packages.find]
+include = ["krypton*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+# Fixture folders hold sample code (e.g. tests/fixtures/spec/tests/test_asserts.py), not tests.
+norecursedirs = [".*", "node_modules", "fixtures", "performance_fixtures", "refactor_examples"]
+markers = [
+    "parity: full radon / ESLint corpus comparisons (slow; run with -m parity)",
+]
+addopts = "-m 'not parity'"

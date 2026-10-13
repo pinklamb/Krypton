@@ -29,7 +29,7 @@ Create a client secret and keep it out of chat, commits and screenshots.
 ## 3. Deploy
 
 Railway builds from the Git repository, so everything the image needs must be committed and pushed:
-`dashboard/` (pages, `server.py`, `auth.py`, `repo_fetch.py`, `scanner.py`, `scan_worker.py`, `Dockerfile`), `argon/pyproject.toml`, `argon/argon/`, `railway.toml` and `.dockerignore`.
+`dashboard/` (pages, `server.py`, `auth.py`, `repo_fetch.py`, `scanner.py`, `scan_worker.py`, `Dockerfile`), `krypton/pyproject.toml`, `krypton/krypton/`, `railway.toml` and `.dockerignore`.
 
 Locally, from the repository root:
 

@@ -1,12 +1,12 @@
-# Publishes the Krypton documentation site (argon/site/) to GitHub Pages on every push to main.
+# Publishes the Krypton documentation site (krypton/site/) to GitHub Pages on every push to main.
 # One-time setup: repo Settings > Pages > Build and deployment > Source: "GitHub Actions".
-# GitHub only reads workflows from the repository root .github/workflows, so this lives here, not in argon/.
+# GitHub only reads workflows from the repository root .github/workflows, so this lives here, not in krypton/.
 name: Deploy site
 
 on:
   push:
     branches: [main]
-    paths: ["argon/site/**", ".github/workflows/pages.yml"]
+    paths: ["krypton/site/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -29,6 +29,6 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: argon/site
+          path: krypton/site
       - id: deployment
         uses: actions/deploy-pages@v4

@@ -24,10 +24,10 @@ PASSED_ENV = ("PATH", "SYSTEMROOT", "LANG", "LC_ALL")
 
 
 def worker_env() -> dict[str, str]:
-    """A minimal environment for the child; ARGON_SRC (a source checkout) is only for running without an install."""
+    """A minimal environment for the child; KRYPTON_SRC (a source checkout) is only for running without an install."""
     env = {name: os.environ[name] for name in PASSED_ENV if name in os.environ}
-    if os.environ.get("ARGON_SRC"):
-        env["PYTHONPATH"] = os.environ["ARGON_SRC"]
+    if os.environ.get("KRYPTON_SRC"):
+        env["PYTHONPATH"] = os.environ["KRYPTON_SRC"]
     return env
 
 
@@ -40,7 +40,7 @@ def run_worker(sources: dict[str, str], seconds: int = WORKER_SECONDS) -> dict:
             raise ScanError(504, "This repository took too long to analyze.") from error
     if done.returncode != 0:
         print(f"scan worker exited with {done.returncode}", flush=True)
-        missing = b"No module named 'argon'" in done.stderr
+        missing = b"No module named 'krypton'" in done.stderr
         raise ScanError(503 if missing else 500, "The analysis engine is not installed on this server." if missing else "The analysis failed.")
     return json.loads(done.stdout)
 

@@ -2,7 +2,7 @@
 
     python -m unittest test_scan        (from dashboard/)
 
-The analysis engine is imported from a source checkout next to this folder (ARGON_SRC), so nothing needs installing.
+The analysis engine is imported from a source checkout next to this folder (KRYPTON_SRC), so nothing needs installing.
 """
 
 import http.client
@@ -23,7 +23,7 @@ from fake_github import TOKEN, FakeGitHub, archive  # noqa: E402
 from repo_fetch import Limits, ScanError, extract_sources, fetch_sources, valid_repo  # noqa: E402
 from test_oauth import Browser, serve  # noqa: E402
 
-REPO = "octotest/argon-test-codebase"
+REPO = "octotest/krypton-test-codebase"
 JSON_HEADERS = {"X-Requested-With": "krypton", "Content-Type": "application/json"}
 
 
@@ -48,7 +48,7 @@ class GitHubCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        os.environ["ARGON_SRC"] = str(Path(__file__).parent.parent / "argon")
+        os.environ["KRYPTON_SRC"] = str(Path(__file__).parent.parent / "krypton")
         cls.github = serve(FakeGitHub)
         cls.base = f"http://127.0.0.1:{cls.github.server_port}"
         cls.cfg = auth.Config(client_id="cid", client_secret="shh", base_url="http://127.0.0.1:0", secret=b"test-secret", oauth_base=cls.base, api_base=cls.base)

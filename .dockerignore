@@ -7,7 +7,7 @@
 !dashboard/repo_fetch.py
 !dashboard/scanner.py
 !dashboard/scan_worker.py
-!argon/pyproject.toml
-!argon/argon/**
+!krypton/pyproject.toml
+!krypton/krypton/**
 **/__pycache__
 **/*.pyc

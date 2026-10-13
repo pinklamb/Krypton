@@ -3,218 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Argon</title>
-<meta name="description" content="Argon measures how structurally heavy code is, so coding agents can keep it small.">
-<style>
-  :root {
-    --bg: #2b2b2b;
-    --panel: #333333;
-    --ink: #d0d0d0;
-    --mute: #8c8c8c;
-    --line: #474747;
-    --accent: #b8a5de;
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: auto; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font: 15px/1.65 ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
-  }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  .page {
-    display: grid; grid-template-columns: 210px minmax(0, 1fr) 330px;
-    gap: 32px; max-width: 1280px; margin: 0 auto; padding: 0 20px;
-  }
-  nav { position: sticky; top: 0; align-self: start; padding: 28px 0; font-size: 14px; }
-  nav h2 { margin: 0 0 8px; font-size: 12px; color: var(--mute); font-weight: normal; text-transform: uppercase; letter-spacing: .08em; }
-  nav ul { list-style: none; margin: 0 0 20px; padding: 0; }
-  nav li { padding: 2px 0; }
-  nav li.sub { padding-left: 14px; }
-  nav li.sub a { color: var(--mute); }
-
-  main { padding: 28px 0 80px; min-width: 0; }
-  .logo { position: sticky; top: 0; align-self: start; padding: 28px 0; text-align: right; }
-  .logo pre { margin: 0; font: inherit; font-size: 14px; line-height: 1.25; color: var(--accent); white-space: pre; }
-  .logo p { margin: 10px 0 0; color: var(--mute); font-size: 13px; }
-
-  h1 { margin: 0 0 12px; font-size: 20px; font-weight: normal; }
-  h2.sec { margin: 44px 0 10px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 16px; font-weight: normal; color: var(--accent); }
-  h3 { margin: 22px 0 4px; font-size: 14px; font-weight: normal; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; }
-  p, li { max-width: 72ch; }
-  main ul { padding-left: 20px; }
-  code { background: var(--panel); padding: 1px 5px; border: 1px solid var(--line); }
-  pre.cmd { margin: 8px 0; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); overflow-x: auto; }
-  pre.cmd code { background: none; border: 0; padding: 0; }
-  dl { margin: 0; }
-  dt { margin-top: 14px; color: var(--ink); }
-  dt::before { content: "> "; color: var(--mute); }
-  dd { margin: 2px 0 0 18px; color: var(--ink); max-width: 68ch; }
-  .note { color: var(--mute); }
-  footer { margin-top: 56px; color: var(--mute); font-size: 13px; }
-
-  @media (max-width: 1000px) {
-    .page { grid-template-columns: 1fr; gap: 0; }
-    .logo { position: static; order: 1; text-align: left; padding: 20px 0 0; }
-    nav { position: static; order: 2; padding: 16px 0; border-bottom: 1px solid var(--line); }
-    nav ul { display: flex; flex-wrap: wrap; gap: 4px 16px; }
-    nav li.sub { padding-left: 0; }
-    main { order: 3; padding-top: 20px; }
-  }
-  @media (max-width: 420px) { .logo pre { font-size: 11px; } }
-</style>
+<title>Krypton, the compiler for AI agents</title>
+<meta name="description" content="Krypton measures how structurally heavy code is, so coding agents can keep it small and your prompt cache stays warm.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-<div class="page">
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html" aria-current="page">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="command-reference.html">Command reference</a><a href="integrations.html">Integrations</a><a href="prompt-caching.html">Prompt caching</a><a href="faq.html">FAQ</a></nav></div></header>
+<div class="wrap single">
 
-  <nav aria-label="Contents">
-    <h2>How it works</h2>
-    <ul>
-      <li><a href="#overview">Overview</a></li>
-      <li><a href="#how">The pipeline</a></li>
-    </ul>
-    <h2>What it does</h2>
-    <ul>
-      <li><a href="#functions">Measurements</a></li>
-      <li class="sub"><a href="#branches">Branches</a></li>
-      <li class="sub"><a href="#nesting">Nesting</a></li>
-      <li class="sub"><a href="#lines">Effective lines</a></li>
-      <li class="sub"><a href="#ranking">Function ranking</a></li>
-      <li class="sub"><a href="#hints">Refactoring hints</a></li>
-      <li class="sub"><a href="#progress">Progress log</a></li>
-      <li class="sub"><a href="#levels">Strictness levels</a></li>
-      <li><a href="#flags">Flags</a></li>
-      <li class="sub"><a href="#logic">Logic complexity</a></li>
-      <li class="sub"><a href="#concentration">Concentration</a></li>
-      <li class="sub"><a href="#fragmentation">Fragmentation</a></li>
-      <li class="sub"><a href="#overload">Overload checks</a></li>
-      <li class="sub"><a href="#coupling">Coupling hotspot</a></li>
-      <li class="sub"><a href="#oversize">Not checked / unparseable</a></li>
-      <li><a href="#purity">Purity score</a></li>
-      <li><a href="#overhead">Overhead tax</a></li>
-      <li><a href="#changed">Changed lines only</a></li>
-    </ul>
-    <h2>Prompt caching</h2>
-    <ul>
-      <li><a href="#caching">How it works</a></li>
-      <li><a href="#volatility">Volatility order</a></li>
-    </ul>
-    <h2>Use it</h2>
-    <ul>
-      <li><a href="#use">Install and agents</a></li>
-    </ul>
-  </nav>
+<main id="content">
+<div class="eyebrow">The compiler for AI agents</div>
+<h1>Keep AI-written code small enough to read, edit and pay for.</h1>
+<p class="lede">Krypton measures how structurally heavy code is, tells a coding agent exactly what to split, and orders files so your model provider can reuse the prompt cache. It runs locally and needs no network.</p>
+<div class="cta"><a class="btn" href="getting-started.html">Get started</a><a class="btn ghost" href="how-it-works.html">How it works</a></div>
+<pre><code><span class="p">$</span> krypton src --top 5
+<span class="c"># ranks the heaviest functions, flags what is too tangled, and says what to try</span>
+### Krypton Structural Review -- Purity Score: 59/100
+| components/SearchPanel.jsx | Logic complexity 13400 (threshold ...) in `SearchPanel()` | Semantic Path Logic |</code></pre>
 
-  <main>
-    <section id="overview">
-      <h1>Argon</h1>
-      <p>Argon measures how structurally heavy code is: how many decisions it makes, how deeply they nest, and how much of it is packed into oversized functions. It reads JavaScript, TypeScript and Python, runs locally, and needs no network or account.</p>
-      <p>It is built for the loop where a coding agent writes code. After each change the agent runs Argon, sees which files and functions got heavy, and splits them before the weight costs tokens and invites mistakes. It is not a linter and does not judge correctness or style. Run your linter alongside it.</p>
-    </section>
-
-    <h2 class="sec" id="how">How it works</h2>
-    <p>Every run follows the same steps:</p>
-    <ul>
-      <li><b>Collect.</b> Argon finds the source files, honoring <code>.gitignore</code> and skipping vendored and generated code.</li>
-      <li><b>Parse.</b> Each file becomes a syntax tree. Files that cannot be parsed, or are too large to parse safely, are flagged instead of guessed at.</li>
-      <li><b>Measure.</b> One pass over the tree records decisions, nesting, function boundaries and file wiring.</li>
-      <li><b>Rate and flag.</b> Each function and file gets a rating, and files that cross a rule are flagged.</li>
-      <li><b>Score.</b> The whole run gets a single purity score, and the command exits non-zero when it falls too low.</li>
-    </ul>
-    <p class="note">The scoring details are not published on this page.</p>
-
-    <h2 class="sec" id="functions">Measurements</h2>
-    <dl>
-      <dt id="branches">Branches</dt>
-      <dd>Counts the decisions in the code: conditions, loops, switch cases, error handlers, boolean operators and conditional expressions. It follows the conventions of established tools so numbers are comparable.</dd>
-      <dt id="nesting">Nesting</dt>
-      <dd>Weighs a decision by how deeply it is buried. Code that branches inside branches costs more than the same number of flat branches. A function defined inside another is scored on its own, and its parent pays for it.</dd>
-      <dt id="lines">Effective lines</dt>
-      <dd>Measures size in a way packing cannot hide. Comments and blank lines do not count; long lines and lines with several statements count for more. Squeezing code onto fewer lines does not lower the size.</dd>
-      <dt id="hints">Refactoring hints</dt>
-      <dd>For each heavy or deeply nested function, Argon points at the deepest decision and the block worth pulling out, says how much of the function's weight that block holds, and gives one piece of advice for the function's shape: return early, use a lookup table, name the conditions, or split it into steps. Each names the effect it predicts. Hints never change a score.</dd>
-      <dt id="progress">Progress log</dt>
-      <dd>With a history file Argon records each run and compares it with the last: how the purity score moved, which heavy functions improved, and which have stalled. When a function is stuck it says why, for example that the block it was told to extract is untouched, or that the weight moved into another function instead of shrinking. The log holds numbers and hashes, never source text.</dd>
-      <dt id="levels">Strictness levels</dt>
-      <dd>The report says how many functions are over the limit and how far over the worst one is. <code>--level</code> sets how strict the limit is: <code>relaxed</code> to clear the worst offenders first, <code>standard</code> for the fitted limit, and <code>strict</code> for a tighter one. Nothing is saved between runs, so there is no baseline to reset.</dd>
-      <dt id="ranking">Function ranking</dt>
-      <dd>Lists the heaviest functions in the run, with their location, so an agent knows exactly what to refactor first. Functions three or more levels deep carry a <code>nested</code> note.</dd>
-    </dl>
-
-    <h2 class="sec" id="flags">Flags</h2>
-    <dl>
-      <dt id="logic">Logic complexity</dt>
-      <dd>A file is flagged when its heaviest function combines many decisions with a lot of code. The fix is usually to split that function by job.</dd>
-      <dt id="concentration">Concentration</dt>
-      <dd>A very large file that also has many asynchronous entry points is flagged as doing too much in one place.</dd>
-      <dt id="fragmentation">Fragmentation</dt>
-      <dd>Flags the opposite problem: a group of files that import each other so heavily that the code has been shattered into pieces that cannot be understood alone. Four or more tiny files that all import each other count.</dd>
-      <dt id="overload">Overload checks</dt>
-      <dd>Rating-based checks can be diluted, for instance by giving every branch a different return value. So Argon also flags a function that makes too many decisions or nests too deeply, and a file whose total weight is over budget, however the code is laid out or split into helpers. These checks count decisions, not lines or return values.</dd>
-      <dt id="coupling">Coupling hotspot</dt>
-      <dd>Flags a file that is wired to many others, through imports or through a shared global object that many scripts read from, as in browser code without modules. These are the files every feature ends up touching. The shared-global detection is a prototype and only covers JavaScript and TypeScript.</dd>
-      <dt id="oversize">Not checked and unparseable</dt>
-      <dd>Files that are too big, contain extremely long lines (minified code), are not analyzed. They are left out of the score, never silently: the result lists each kind with a plain explanation and the setting that raises the limit so they can be checked. Files with too many syntax errors are flagged instead, since broken code should not pass.</dd>
-    </dl>
-
-    <h2 class="sec" id="purity">Purity score</h2>
-    <p>A single number from 0 to 100 for the whole run. It falls as more of the changed code sits in flagged files and as flagged files get heavier. Below a set level the check fails and the command exits with status 1, which is what lets it gate a pull request or stop an agent from finishing.</p>
-
-    <h2 class="sec" id="overhead">Overhead tax</h2>
-    <p>Splitting code into many tiny functions can lower per-function numbers without making the code simpler. When most of a file's functions are trivial wrappers, Argon lowers the purity score a little. It is a warning that the structure is padded, not a flag, and files with few functions are never affected.</p>
-
-    <h2 class="sec" id="changed">Changed lines only</h2>
-    <p>With <code>--base</code> Argon scores only the lines that changed since a commit or branch, including new files. Old code in a touched file does not count against the change, so an agent is judged on what it wrote.</p>
-
-    <h2 class="sec" id="caching">How prompt caching works</h2>
-    <p>Model providers can cache the start of a prompt. When the next request begins with exactly the same text, the cached part is billed at a fraction of the normal input price and processed faster. Only the longest identical beginning counts: everything after the first changed character is processed and billed in full.</p>
-    <p>For code, this means the order of files matters when a tool sends the whole codebase each turn:</p>
-    <ul>
-      <li>If a file that changes every turn sits near the top, almost nothing after it can be reused.</li>
-      <li>If stable files come first and volatile ones last, the long stable beginning stays identical from turn to turn and is reused.</li>
-    </ul>
-    <p>Small, separate files help because a change touches fewer of them, and the untouched ones can form a long shared prefix. One huge file does not: an edit near its top invalidates the rest of it.</p>
-    <p class="note">Limits. Many agent tools append to the conversation instead of re-sending files, so edits never invalidate the cache and ordering gains little. Providers expire caches after a short time. Argon's ordering is a hint from history, not a guarantee of savings.</p>
-
-    <h3 id="volatility">Volatility order</h3>
-    <p>Argon can measure how often each file changes, using recent git history or counts you supply, and print a list of files from most stable to most volatile with a rough size for each. A tool that builds prompts can concatenate files in that order. The ordering never changes a score.</p>
-    <pre class="cmd"><code>argon src --order-by-volatility</code></pre>
-
-    <h2 class="sec" id="use">Install and agents</h2>
-    <pre class="cmd"><code>pip install .          # Python 3.12+, run from the repo folder
-argon src --top 10
-
-# or with Docker
-docker build -t argon .
-docker run --rm -v "$PWD:/repo" argon .</code></pre>
-    <p>To use it with a coding agent, add rules like these to <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your tool's rules file:</p>
-    <pre class="cmd"><code>## Code structure (Argon)
-- After editing source files, run: argon &lt;changed files or folders&gt;
-  --top 10 --history .argon/history.jsonl
-- If a file is flagged, or a function you wrote shows a nested note,
-  refactor it before finishing: early returns, small named helpers,
-  one job per function.
-- Do not satisfy Argon by packing code onto fewer lines or by splitting
-  one function into many trivial wrappers.
-- If a function is marked STALLED, do what its stated reason says
-  before trying anything else.
-- Re-run Argon after refactoring and report the purity score.</code></pre>
-    <pre class="cmd"><code>argon . --base origin/main    # score only what this branch changed
-argon src --json              # machine-readable result for hooks and CI</code></pre>
-
-    <footer>Argon. Local, no network.</footer>
-  </main>
-
-  <aside class="logo" aria-label="Argon">
-<pre aria-hidden="true"> ---   ----    ----   ---   -   -
--   -  -   -  -      -   -  --  -
------  ----   - ---  -   -  - - -
--   -  -  -   -   -  -   -  -  --
--   -  -   -   ---    ---   -   -</pre>
-    <p>structure scoring for code agents write</p>
-  </aside>
-
+<div class="cards">
+  <div class="card"><h3>Measure</h3><p>Scores every function and file for decisions, nesting, size, coupling and trivial wrappers, in JavaScript, TypeScript and Python.</p></div>
+  <div class="card"><h3>Guide</h3><p>Hints name the deepest decision and the block to pull out. A progress log shows what improved and what stalled.</p></div>
+  <div class="card"><h3>Save</h3><p>An ordering of your files, most stable first, keeps a long shared prefix that providers can cache between turns.</p></div>
 </div>
+
+<h2 id="why">Why it exists</h2>
+<p>A coding agent re-reads your codebase on every turn, so what the code costs to read is paid again and again. Heavy, tangled functions also make the agent more likely to break something. Krypton is built to sit next to the agent: after each change it runs, shows what got heavy, and the agent splits it before the weight turns into tokens and mistakes.</p>
+<p>It is not a linter. Run yours too.</p>
+
+<h2 id="results">What we measured</h2>
+<p>Tested on <b>garth</b>, an open-source Garmin client whose recent commits are mostly AI-written. These are results from one repository and one run per arm, so read them as estimates.</p>
+<div class="stats">
+  <div><b>79%</b><span>of prompt tokens cached with Krypton's file order, against 58% alphabetical</span></div>
+  <div><b>9 → 0</b><span>logic-complexity flags after a Krypton-guided refactor, all 163 tests still passing</span></div>
+  <div><b>47</b><span>change tasks to repay the one-time refactor; after that, every change costs 5.3% fewer tokens</span></div>
+</div>
+<p><a href="prompt-caching.html">See the full results and caveats →</a></p>
+
+
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Argon">Source on GitHub</a></span></div></footer>
 </body>
 </html>

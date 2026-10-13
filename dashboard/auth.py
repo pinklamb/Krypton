@@ -26,9 +26,9 @@ import urllib.request
 from dataclasses import dataclass
 from http.cookies import SimpleCookie
 
-SESSION_COOKIE, FLOW_COOKIE = "argon_session", "argon_oauth"
+SESSION_COOKIE, FLOW_COOKIE = "krypton_session", "krypton_oauth"
 SESSION_TTL, FLOW_TTL, MAX_SESSIONS = 8 * 3600, 600, 500
-API_HEADERS = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "argon-demo"}
+API_HEADERS = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "krypton-demo"}
 
 
 class OAuthError(Exception):
@@ -150,7 +150,7 @@ def _request(req: urllib.request.Request) -> dict:
 def exchange_code(cfg: Config, code: str, verifier: str) -> str:
     """Trade the one-time code for an access token (server to server; the client secret never reaches the browser)."""
     body = urllib.parse.urlencode({"client_id": cfg.client_id, "client_secret": cfg.client_secret, "code": code, "redirect_uri": cfg.redirect_uri, "code_verifier": verifier}).encode()
-    reply = _request(urllib.request.Request(f"{cfg.oauth_base}/login/oauth/access_token", data=body, headers={"Accept": "application/json", "User-Agent": "argon-demo"}))
+    reply = _request(urllib.request.Request(f"{cfg.oauth_base}/login/oauth/access_token", data=body, headers={"Accept": "application/json", "User-Agent": "krypton-demo"}))
     if "access_token" not in reply:
         raise OAuthError(str(reply.get("error", "no_token")))
     return reply["access_token"]

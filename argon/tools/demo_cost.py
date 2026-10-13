@@ -1,8 +1,8 @@
-"""Demo: what does a codebase cost an LLM agent to maintain, before and after an Argon-guided refactor?
+"""Demo: what does a codebase cost an LLM agent to maintain, before and after an Krypton-guided refactor?
 
     python -m tools.demo_cost <before folder> [<after folder>] [--sessions 100]
 
-Argon scores each folder (same engine and CLI as `python -m argon.cli`). Two costs per model:
+Krypton scores each folder (same engine and CLI as `python -m argon.cli`). Two costs per model:
 
   read    every agent session loads all scanned source as input:  tokens x input price x sessions
   hotspot every flagged file is read and rewritten once:          tokens x (input + output price)
@@ -29,7 +29,7 @@ CHARS_PER_TOKEN = 3.5
 
 @dataclass(frozen=True)
 class Scan:
-    """One folder's Argon result plus the token counts the cost model needs."""
+    """One folder's Krypton result plus the token counts the cost model needs."""
 
     folder: Path
     result: EngineResult
@@ -43,7 +43,7 @@ def estimate_tokens(path: Path) -> int:
 
 
 def scan(folder: Path) -> Scan:
-    """Run the Argon CLI on a folder (JSON mode) and total the tokens of scanned and flagged files."""
+    """Run the Krypton CLI on a folder (JSON mode) and total the tokens of scanned and flagged files."""
     done = subprocess.run([sys.executable, "-m", "argon.cli", str(folder), "--json"], cwd=ROOT, capture_output=True, text=True, check=True)
     result = EngineResult.model_validate_json(done.stdout)
     sizes = {finding.filename: estimate_tokens(folder / finding.filename) for finding in result.findings}
@@ -89,7 +89,7 @@ def cost_table(before: Scan, after: Scan | None, sessions: int) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     """Print the before/after scores and the per-model cost table."""
-    parser = argparse.ArgumentParser(description="Maintainability cost of a codebase for LLM agents, via Argon.")
+    parser = argparse.ArgumentParser(description="Maintainability cost of a codebase for LLM agents, via Krypton.")
     parser.add_argument("before", type=Path)
     parser.add_argument("after", type=Path, nargs="?")
     parser.add_argument("--sessions", type=int, default=100, help="agent sessions that read the whole codebase (default 100)")

@@ -1,13 +1,13 @@
-"""Dataset benchmark: AI-written Python, refactored by an LLM with Argon in the loop, tokens before vs after.
+"""Dataset benchmark: AI-written Python, refactored by an LLM with Krypton in the loop, tokens before vs after.
 
     python -m tools.dataset_bench                      # HumanVSAI_CodeDataset.zip in the repo root, free model
     python -m tools.dataset_bench --limit 10 --rounds 2 --html dashboard.html
     python -m tools.dataset_bench --model openai/gpt-4o --yes
     python -m tools.dataset_bench --mock               # offline dry run of the whole pipeline; numbers are NOT measurements
 
-Steps: (1) read the ChatGPT-written Python samples, (2) keep the ones Argon has refactoring hints for,
-(3) for each, show the model Argon's hints and ask it to refactor, re-run Argon, repeat up to --rounds
-(a version is kept only if it parses and Argon reports no more hints than before), (4) send the joined
+Steps: (1) read the ChatGPT-written Python samples, (2) keep the ones Krypton has refactoring hints for,
+(3) for each, show the model Krypton's hints and ask it to refactor, re-run Krypton, repeat up to --rounds
+(a version is kept only if it parses and Krypton reports no more hints than before), (4) send the joined
 "before" and joined "after" code to the model once each and print the provider's token usage.
 The dataset's code is never executed, only parsed, so behavior is NOT verified; read the diffs before trusting them.
 """
@@ -33,7 +33,7 @@ from tools.openrouter_bench import DEFAULT_MODEL, ROOT, benchmark, html_dashboar
 
 DEFAULT_DATA = ROOT.parent / "HumanVSAI_CodeDataset.zip"
 REFACTOR_PROMPT = """Refactor this Python program so it is shorter and structurally simpler without changing what it reads or prints.
-Argon, a structural-weight checker, reports these problems:
+Krypton, a structural-weight checker, reports these problems:
 {hints}
 
 Rules: keep behavior identical; no comments or docstrings; flatten nesting with early returns or helpers; keep list comprehensions.
@@ -56,16 +56,16 @@ def read_dataset(path: Path) -> list[dict]:
 
 
 def review(code: str, cfg: EngineConfig) -> tuple[int, dict]:
-    """(flagged file count, refactoring hints) Argon reports for one snippet."""
+    """(flagged file count, refactoring hints) Krypton reports for one snippet."""
     result = run_local({"sample.py": code.encode("utf-8")}, None, cfg)
     return result.flagged_file_count, result.hints
 
 
 def pick(data: list[dict], limit: int, seed: int, cfg: EngineConfig) -> list[str]:
-    """A seeded sample of ChatGPT-written Python snippets that Argon has hints for."""
+    """A seeded sample of ChatGPT-written Python snippets that Krypton has hints for."""
     pool = [row["Sample_Code"] for row in data if row["Language"] == "Python" and row["Generated"] == "AI"]
     heavy = [code for code in pool if review(code, cfg)[1]]
-    print(f"{len(pool)} AI-written Python samples; Argon has hints for {len(heavy)}; using {min(limit, len(heavy))}")
+    print(f"{len(pool)} AI-written Python samples; Krypton has hints for {len(heavy)}; using {min(limit, len(heavy))}")
     random.Random(seed).shuffle(heavy)
     return heavy[:limit]
 
@@ -105,7 +105,7 @@ def ask(client, model: str, prompt: str, spend: dict) -> str:
 
 
 def refactor(code: str, client, model: str, cfg: EngineConfig, rounds: int, spend: dict) -> str:
-    """Show the model Argon's hints and ask for a refactor, up to `rounds` times; keep only versions that parse and do not add hints."""
+    """Show the model Krypton's hints and ask for a refactor, up to `rounds` times; keep only versions that parse and do not add hints."""
     current = code
     for _ in range(rounds):
         _, hints = review(current, cfg)
@@ -143,7 +143,7 @@ def join(codes: list[str]) -> str:
 
 
 def main(args: argparse.Namespace) -> int:
-    """Pick samples, refactor them with Argon in the loop, benchmark before and after, show the dashboard."""
+    """Pick samples, refactor them with Krypton in the loop, benchmark before and after, show the dashboard."""
     cfg = apply_level(EngineConfig(), args.level)
     if not (args.mock or args.model.endswith(":free") or args.yes):
         print(f"{args.model} is a paid model: about {args.limit * args.rounds + 2} requests will be billed; re-run with --yes", file=sys.stderr)
@@ -166,7 +166,7 @@ def main(args: argparse.Namespace) -> int:
     print_usage("BEFORE", results[0])
     print_usage("AFTER", results[1])
     hints = [sum(len(review(code, cfg)[1]) for code in codes) for codes in (before, after)]
-    extra = [("Argon hints", hints[0], hints[1], ",.0f"), ("Characters", len("".join(before)), len("".join(after)), ",.0f")]
+    extra = [("Krypton hints", hints[0], hints[1], ",.0f"), ("Characters", len("".join(before)), len("".join(after)), ",.0f")]
     data = rows(results[0], results[1], list_prices("openai/gpt-4o")) + extra
     terminal_dashboard(args.model + tag, data)
     saved = results[0]["prompt"] - results[1]["prompt"]
@@ -179,7 +179,7 @@ def main(args: argparse.Namespace) -> int:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Refactor AI-written code with Argon in the loop and benchmark tokens.")
+    parser = argparse.ArgumentParser(description="Refactor AI-written code with Krypton in the loop and benchmark tokens.")
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA, help="HumanVSAI_CodeDataset.zip (nested zips are fine) or the CSV")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--limit", type=int, default=8, help="samples to refactor (free models allow few requests per day)")

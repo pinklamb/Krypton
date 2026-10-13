@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command reference | Krypton</title>
+<meta name="description" content="Every Krypton option, the exit codes, the JSON output and the config file.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="command-reference.html" aria-current="page">Command reference</a><a href="integrations.html">Integrations</a><a href="prompt-caching.html">Prompt caching</a><a href="faq.html">FAQ</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#usage">Usage</a></li><li><a href="#options">Options</a></li><li><a href="#exit">Exit codes</a></li><li><a href="#json">JSON output</a></li><li><a href="#config">Configuration</a></li><li><a href="#scanned">What gets scanned</a></li><li><a href="#examples">Examples</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">Command reference</div>
+<h1>Command reference</h1>
+<p class="lede">Everything the <code>krypton</code> command can do.</p>
+
+<h2 id="usage">Usage</h2>
+<pre><code>krypton [paths ...] [options]</code></pre>
+<p>Paths are files or folders. Reported file names are relative to the first path if it is a folder, otherwise to the current folder.</p>
+
+<h2 id="options">Options</h2>
+<div class="scroll"><table>
+<tr><th>Option</th><th>What it does</th></tr>
+<tr><td><code>--top N</code></td><td>Rows in the function ranking. <code>0</code> prints none.</td></tr>
+<tr><td><code>--base REF</code></td><td>Score only files and lines changed since a git ref.</td></tr>
+<tr><td><code>--config FILE.toml</code></td><td>Override any engine setting. See <a href="#config">Configuration</a>.</td></tr>
+<tr><td><code>--json</code></td><td>Print the full result as JSON and nothing else.</td></tr>
+<tr><td><code>--level relaxed|standard|strict</code></td><td>How strict the flag limit is. Default <code>standard</code>.</td></tr>
+<tr><td><code>--history FILE.jsonl</code></td><td>Log this run there (the file is created) and report progress since the last one.</td></tr>
+<tr><td><code>--order-by-volatility</code></td><td>Print a JSON manifest of files, most stable first, instead of the report.</td></tr>
+<tr><td><code>--volatility FILE.json</code></td><td>Use a map of path to change count instead of git history.</td></tr>
+</table></div>
+
+<h2 id="exit">Exit codes</h2>
+<div class="scroll"><table>
+<tr><th>Code</th><th>Meaning</th></tr>
+<tr><td><code>0</code></td><td>Success.</td></tr>
+<tr><td><code>1</code></td><td>The purity score fell below the failure line.</td></tr>
+<tr><td><code>2</code></td><td>Usage error: no files, or a bad config or volatility file.</td></tr>
+</table></div>
+
+<h2 id="json">JSON output</h2>
+<pre><code>krypton src --json</code></pre>
+<p>Prints the full result. The main fields:</p>
+<div class="scroll"><table>
+<tr><th>Field</th><th>Contents</th></tr>
+<tr><td><code>purity_score</code></td><td>0 to 100 for the run.</td></tr>
+<tr><td><code>check_conclusion</code></td><td><code>success</code> or <code>failure</code>.</td></tr>
+<tr><td><code>findings</code></td><td>One entry per file: <code>filename</code>, <code>logic_complexity_rating</code>, <code>flagged</code>, <code>flag_reason</code>, <code>nesting_score</code>, <code>max_depth</code>, <code>effective_lines</code> and a <code>functions</code> list.</td></tr>
+<tr><td><code>hints</code></td><td><code>{"file:line function": "advice"}</code>, heaviest first.</td></tr>
+<tr><td><code>errors</code></td><td><code>{error code: explanation}</code> for files too large to analyze, with the setting that would include them.</td></tr>
+<tr><td><code>progress</code></td><td>Filled when <code>--history</code> is used.</td></tr>
+<tr><td><code>summary_markdown</code></td><td>A summary ready to post as a pull request comment.</td></tr>
+</table></div>
+
+<h2 id="config">Configuration</h2>
+<p><code>--config krypton.toml</code> accepts any engine setting as <code>name = value</code>. The most useful ones:</p>
+<pre><code>max_file_bytes = 3000000      # include larger files
+coupling_weight_threshold = 25  # example value: how many linked files make a hotspot</code></pre>
+<p>Settings are listed in <code>argon/engine/config.py</code>. A <code>tsconfig.json</code> or <code>jsconfig.json</code> next to the scanned folder is read so path aliases resolve.</p>
+
+<h2 id="scanned">What gets scanned</h2>
+<ul>
+<li><code>.js .jsx .mjs .cjs .ts .tsx .mts .cts .py</code></li>
+<li>Inside a git repository, anything <code>.gitignore</code> ignores is skipped.</li>
+<li>Vendored and generated paths are skipped by default.</li>
+<li>Files whose real path leaves the scanned folder (symlinks) are dropped.</li>
+</ul>
+
+<h2 id="examples">Examples</h2>
+<pre><code><span class="c"># everything on this branch, quietly, for CI</span>
+krypton . --base origin/main --top 0
+
+<span class="c"># clear the worst offenders first</span>
+krypton src --level relaxed
+
+<span class="c"># machine-readable, for a hook</span>
+krypton src --json
+
+<span class="c"># log progress between iterations</span>
+krypton src --history .krypton/history.jsonl</code></pre>
+
+<div class="pager"><a href="how-it-works.html">← How it works</a><a href="integrations.html">Integrations →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Argon">Source on GitHub</a></span></div></footer>
+</body>
+</html>

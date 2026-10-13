@@ -38,7 +38,7 @@ def _git(root, *args):
 def _repo(root):
     _git(root, "init", "-q")
     _git(root, "config", "user.email", "argon@example.com")
-    _git(root, "config", "user.name", "Argon")
+    _git(root, "config", "user.name", "Krypton")
 
 
 def test_exit_codes(tmp_path, capsys):
@@ -87,7 +87,7 @@ def test_ranking_shows_nested_flag(tmp_path, capsys):
 
     assert "nested" in out
     assert "tangle.py:1  tangle" in out
-    assert "### Argon Structural Review -- Purity Score:" in out
+    assert "### Krypton Structural Review -- Purity Score:" in out
 
 
 def test_unknown_config_key_is_a_usage_error(tmp_path, capsys):

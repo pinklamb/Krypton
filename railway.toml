@@ -6,3 +6,5 @@ dockerfilePath = "dashboard/Dockerfile"
 healthcheckPath = "/healthz"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
+# sessions live in this process's memory, so keep exactly one instance
+numReplicas = 1

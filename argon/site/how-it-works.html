@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it works | Krypton</title>
+<meta name="description" content="What Krypton measures, how it flags and advises, and what is public about its algorithm.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html" aria-current="page">How it works</a><a href="command-reference.html">Command reference</a><a href="integrations.html">Integrations</a><a href="prompt-caching.html">Prompt caching</a><a href="faq.html">FAQ</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#pipeline">The pipeline</a></li><li><a href="#measures">What it measures</a></li><li><a href="#algorithm">The algorithm</a></li><li><a href="#flags">Flags and purity</a></li><li><a href="#hints">Hints</a></li><li><a href="#progress">Progress</a></li><li><a href="#caching">Prompt caching</a></li><li><a href="#private">Local and private</a></li><li><a href="#limits">Limits</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">How it works</div>
+<h1>What Krypton measures, and what it does with it</h1>
+<p class="lede">Krypton reads each file as a syntax tree, measures how heavy every function and file is to read and change, and turns that into flags, hints and a purity score.</p>
+
+<h2 id="pipeline">The pipeline</h2>
+<ol class="steps">
+<li><b>Parse.</b> Each file becomes a syntax tree. Files that cannot be parsed, or are too large to parse safely, are reported instead of guessed at.</li>
+<li><b>Measure.</b> Krypton walks every function and the file's top-level code and records decisions, nesting, effective size, the variety of outputs, and how files depend on each other.</li>
+<li><b>Rate.</b> Krypton's scoring algorithm combines those measurements into a structural rating per function and per file.</li>
+<li><b>Flag.</b> Functions and files over the limit are flagged, with a reason: tangled logic, an overloaded function, an overloaded file, a coupling hotspot, or a file that could not be parsed.</li>
+<li><b>Advise.</b> For each heavy function Krypton names the deepest decision and the block most worth extracting, and predicts the effect.</li>
+<li><b>Track.</b> With a history file, Krypton compares each run with the last and explains why a function did not improve.</li>
+</ol>
+
+<h2 id="measures">What it measures</h2>
+<h3>Decisions</h3>
+<p>Conditions, loops, cases, catches, boolean operators and ternaries. Counting follows radon for Python and ESLint for JavaScript and TypeScript, and was checked against both on about 16,500 files with no mismatches.</p>
+<h3>Nesting</h3>
+<p>Decisions inside decisions cost more than the same decisions side by side. Krypton's algorithm accounts for where each decision sits.</p>
+<h3>Effective size</h3>
+<p>Long or multi-statement lines count for more than short ones, so packing code onto fewer lines does not help.</p>
+<h3>Coupling</h3>
+<p>A file wired to many others, through imports or a shared global object, is flagged so the wiring gets split instead of piling into a few core files.</p>
+<h3>Trivial wrappers</h3>
+<p>Splitting code into many tiny functions just to stay under a limit lowers the purity score. Krypton is meant to reward real structure, not shuffling.</p>
+
+<h2 id="algorithm">The algorithm</h2>
+<p>Krypton's scoring and ordering algorithms are proprietary and are not described in detail here. What you can rely on:</p>
+<ul>
+<li>Decision counts match radon and ESLint.</li>
+<li>It resists the obvious ways to game a complexity score: packing lines, giving every branch a different return value, and spreading one heavy function across helpers in the same file.</li>
+<li>Limits were calibrated on thousands of real library files, so well-written code is rarely flagged.</li>
+<li>The ordering of files for prompt caching never changes a score.</li>
+</ul>
+
+<h2 id="flags">Flags and the purity score</h2>
+<p>Each flagged file carries a reason in the JSON output: <code>semantic_path_logic</code>, <code>function_overload</code>, <code>file_overload</code>, <code>coupling_hotspot</code>, <code>unparseable</code> or <code>concentration_rule</code>. The purity score summarizes the whole run from 0 to 100.</p>
+<p>Use <code>--level relaxed</code> to clear the worst offenders first, then tighten to <code>standard</code> or <code>strict</code>.</p>
+
+<h2 id="hints">Refactoring hints</h2>
+<p>When a function is over the limit or nested three levels deep, Krypton says where and what to try:</p>
+<pre><code>m.py:1 tangle: deepest decision at line 5 (depth 4), inside lines 4-8 which hold most of this
+function's decision weight; invert conditions with early returns, or move lines 4-8 into a helper</code></pre>
+<p>When a hint names a block it also predicts the ratings after extracting it. Hints are advice only and never change a score.</p>
+
+<h2 id="progress">Progress and stalls</h2>
+<p>With <code>--history FILE.jsonl</code> every run is logged and compared with the last:</p>
+<pre><code>Progress since the last run:
+  purity: run 4: purity 41 -> 55 -> 55 -> 60; flagged files 5 -> 4
+  src/game.js:update: improved 4840 -> 2100 (57% lower)
+  src/game.js:render: STALLED for 3 runs: the hinted block is still intact; the edits were elsewhere</code></pre>
+<p>A function that did not improve says why: not edited, the block it was told to extract is untouched, the weight moved to another function, or the block changed without helping. The log keeps ratings, names and line hashes only, never source code.</p>
+
+<h2 id="caching">Ordering files for prompt caching</h2>
+<p>If your tool sends the whole codebase on every turn, the files that rarely change should come first, so that most of the prompt is identical from one turn to the next and the provider can reuse it. Krypton orders your files from most stable to most volatile using their change history. <a href="prompt-caching.html">Details and measured results</a>.</p>
+
+<h2 id="private">Local and private</h2>
+<p>The command-line tool runs entirely on your machine and makes no network calls. The history log never stores source code.</p>
+
+<h2 id="limits">Limits</h2>
+<ul>
+<li>It measures structure, not correctness or style. It will not catch a bug.</li>
+<li>Files that are too large, contain extremely long lines (minified bundles) or are extremely wide are not analyzed. They are left out of the score and listed with the setting that would include them, never silently.</li>
+<li>Token counts and dollar figures are estimates.</li>
+<li>No import-cycle detection yet.</li>
+</ul>
+
+<div class="pager"><a href="getting-started.html">← Getting started</a><a href="command-reference.html">Command reference →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Argon">Source on GitHub</a></span></div></footer>
+</body>
+</html>

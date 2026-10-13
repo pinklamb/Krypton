@@ -1,1 +1,1 @@
-"""Argon local source analysis engine."""
+"""Krypton local source analysis engine."""

@@ -1,8 +1,9 @@
-"""Serve the Argon demo (index.html), the full benchmark data (benchmarks.html) and GitHub sign-in on $PORT, the way Railway expects.
+"""Serve the Krypton demo (index.html), the full benchmark data (benchmarks.html) and GitHub sign-in on $PORT, the way Railway expects.
 
 Pages:    GET /  /benchmarks  /healthz
 Sign-in:  GET /auth/github  /auth/github/callback    POST /auth/logout
 JSON:     GET /api/session  /api/repos               (the access token never leaves the server)
+Analyze:  POST /api/scan {"repo": "owner/name"}      (reads the repository in memory and scores it; runs none of its code)
 """
 
 import json
@@ -12,6 +13,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 import auth
+import scanner
+from repo_fetch import ScanError, valid_repo
 
 HERE = Path(__file__).parent
 PAGES = {name: (HERE / name).read_bytes() for name in ("index.html", "benchmarks.html")}
@@ -32,6 +35,7 @@ class Handler(BaseHTTPRequestHandler):
 
     cfg = auth.Config()
     sessions = auth.Sessions(cfg)
+    gate = scanner.Gate()
 
     # ---------------------------------------------------------------- plumbing
     def _send(self, status: int, body: bytes, kind: str, headers=HEADERS, cookies=(), with_body=True) -> None:
@@ -105,11 +109,46 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"error": "GitHub did not answer"}, 502)
         self._json(auth.public_repos(raw))
 
+    def _same_origin(self) -> bool:
+        """State-changing requests must come from this site's own page (custom header, matching Origin)."""
+        return self.headers.get("X-Requested-With") == "krypton" and self.headers.get("Origin", self.cfg.base_url) == self.cfg.base_url
+
     def _logout(self) -> None:
-        if self.headers.get("X-Requested-With") != "argon" or self.headers.get("Origin", self.cfg.base_url) != self.cfg.base_url:
+        if not self._same_origin():
             return self._text(403, "forbidden")
         self.sessions.delete(self._cookies())
         self._text(200, "ok", [auth.clear_cookie(self.cfg, auth.SESSION_COOKIE)])
+
+    def _repo_from_body(self) -> str | None:
+        """The `repo` field of a small JSON body, or None if it is missing or malformed."""
+        length = int(self.headers.get("Content-Length") or 0)
+        if not 0 < length <= 2048:
+            return None
+        try:
+            repo = json.loads(self.rfile.read(length)).get("repo")
+        except (ValueError, AttributeError):
+            return None
+        return repo if valid_repo(repo) else None
+
+    def _scan(self) -> None:
+        session = self.sessions.get(self._cookies())
+        if not self._same_origin():
+            return self._json({"error": "forbidden"}, 403)
+        if not session:
+            return self._json({"error": "Connect GitHub first."}, 401)
+        repo = self._repo_from_body()
+        if repo is None:
+            return self._json({"error": "That is not a valid repository name."}, 400)
+        try:
+            self.gate.start(session["user"]["login"])
+        except ScanError as error:
+            return self._json({"error": error.message}, error.status)
+        try:
+            self._json(scanner.analyze(self.cfg, session["token"], repo))
+        except ScanError as error:
+            self._json({"error": error.message}, error.status)
+        finally:
+            self.gate.finish()
 
     # ---------------------------------------------------------------- routing
     def _get_routes(self) -> dict:
@@ -133,8 +172,11 @@ class Handler(BaseHTTPRequestHandler):
         self._route()
 
     def do_POST(self) -> None:
-        if urlsplit(self.path).path == "/auth/logout":
+        path = urlsplit(self.path).path
+        if path == "/auth/logout":
             self._logout()
+        elif path == "/api/scan":
+            self._scan()
         else:
             self._text(404, "not found")
 
@@ -146,9 +188,9 @@ class Handler(BaseHTTPRequestHandler):
         print(f"{self.address_string()} {fmt % args}", flush=True)
 
 
-def make_server(cfg: auth.Config, port: int, host: str = "0.0.0.0") -> ThreadingHTTPServer:
-    """A server whose handler uses `cfg` and its own session store."""
-    handler = type("BoundHandler", (Handler,), {"cfg": cfg, "sessions": auth.Sessions(cfg)})
+def make_server(cfg: auth.Config, port: int, host: str = "0.0.0.0", gate: scanner.Gate | None = None) -> ThreadingHTTPServer:
+    """A server whose handler uses `cfg`, its own session store and its own analysis limits."""
+    handler = type("BoundHandler", (Handler,), {"cfg": cfg, "sessions": auth.Sessions(cfg), "gate": gate or scanner.Gate()})
     return ThreadingHTTPServer((host, port), handler)
 
 

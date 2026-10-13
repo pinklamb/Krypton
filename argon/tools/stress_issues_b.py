@@ -101,8 +101,8 @@ def issue4() -> TestResult:
         [f"A catalog of {len(CATALOG)} constructs across JavaScript, JSX, TypeScript and Python, each with the decision count the spec's rules give.",
          "Every snippet scored by the engine and cross-checked against an independent reference: radon's rules for Python, ESLint's <code>complexity</code> rule for JS/TS.",
          "A second list of constructs that run decisions without any counted node."])
-    out.tables = [("Construct catalog", ["Lang", "Construct", "Snippet", "Expected", "Argon", "Reference tool", "Result"], rows),
-                  ("Decisions that no node-counting tool sees", ["Lang", "Dodge", "Snippet", "Argon", "Reference"], dodge_rows())]
+    out.tables = [("Construct catalog", ["Lang", "Construct", "Snippet", "Expected", "Krypton", "Reference tool", "Result"], rows),
+                  ("Decisions that no node-counting tool sees", ["Lang", "Dodge", "Snippet", "Krypton", "Reference"], dodge_rows())]
     out.checks = [
         Check("Is the example in the report accurate?", CAVEAT,
               "Not quite. Python's <code>and</code> is the node kind <code>boolean_operator</code> (there is no <code>and_expr</code> in the grammar), and JavaScript's <code>&&</code> is a <code>binary_expression</code> with an operator token; <code>assignment_expression</code> is the surrounding <code>x = ...</code>, not the <code>&&</code>. The engine reads the operator token, so both forms count."),
@@ -128,7 +128,7 @@ def scenario_repo(files: dict[str, str], edits: dict[str, str]) -> Path:
     root = Path(tempfile.mkdtemp(prefix="argon_issue_"))
     git(root, "init", "-q")
     git(root, "config", "user.email", "argon@example.com")
-    git(root, "config", "user.name", "Argon")
+    git(root, "config", "user.name", "Krypton")
     for name, text in files.items():
         (root / name).write_text(text, encoding="utf-8")
     git(root, "add", ".")

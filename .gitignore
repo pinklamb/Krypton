@@ -23,7 +23,7 @@ argon/tools/cache_replay.py
 
 # secrets and the downloaded benchmark dataset
 .env
-HumanVSAI_CodeDataset.zip
+HumanVSAI*
 argon/dashboard.html
 .env.*
 !.env.example
@@ -36,3 +36,15 @@ openrouter_bench_scratch/
 
 # local editor and agent state
 .claude/
+
+# packaging output (pip install ./argon)
+build/
+*.egg-info/
+
+# internal documents and reports (the scoring algorithm, audits, benchmark write-ups, calibration data)
+argon/SCORING.md
+REPORT.md
+*_REPORT.md
+*BENCHMARK*.md
+argon/docs/
+argon/calibration/

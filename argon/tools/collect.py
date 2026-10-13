@@ -1,4 +1,4 @@
-"""Read Argon's source and measure it: signatures, docstrings, radon grades, Argon's own scores."""
+"""Read Krypton's source and measure it: signatures, docstrings, radon grades, Krypton's own scores."""
 
 from __future__ import annotations
 
@@ -29,9 +29,9 @@ class Entry:
     source: str
     complexity: int = 0  # radon cyclomatic complexity (includes radon's +1 base)
     rank: str = "-"  # radon grade A-F
-    score: int | None = None  # Argon nesting-weighted score
+    score: int | None = None  # Krypton nesting-weighted score
     branches: int | None = None
-    depth: int | None = None  # Argon reported depth, 1 = flat
+    depth: int | None = None  # Krypton reported depth, 1 = flat
 
     @property
     def nested(self) -> bool:

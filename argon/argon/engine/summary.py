@@ -25,7 +25,7 @@ def build_summary_markdown(
     worst_function: dict[str, str] | None = None,
 ) -> str:
     """worst_function maps a filename to the function whose rating flagged it."""
-    lines = [f"### Argon Structural Review -- Purity Score: {result.purity_score}/100", ""]
+    lines = [f"### Krypton Structural Review -- Purity Score: {result.purity_score}/100", ""]
     lines += _flagged_table(result, cfg, worst_function or {})
     lines.append(f"{result.flagged_file_count} of {len(result.findings)} changed files flagged.")
     lines.append(_distance_line(result))

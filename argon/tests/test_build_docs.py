@@ -17,7 +17,7 @@ def test_audit_page_builds_and_lists_every_function(tmp_path):
         module = analyze_module(ROOT, path)
         assert f'id="{slug(path.relative_to(ROOT).as_posix())}"' in page, path
         assert all(entry.qualname in page for entry in module.entries)
-    assert "Argon" in page and "<script>" in page
+    assert "Krypton" in page and "<script>" in page
 
 
 def test_spec_references_are_all_valid():

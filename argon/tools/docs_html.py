@@ -156,7 +156,7 @@ def _metrics(entry: Entry) -> str:
         return ""
     cells = [f"radon complexity <b>{entry.complexity}</b> (grade {grade(entry.rank)})"]
     if entry.score is not None:
-        cells += [f"Argon score <b>{entry.score}</b>", f"branches <b>{entry.branches}</b>", f"depth <b>{entry.depth}</b>"]
+        cells += [f"Krypton score <b>{entry.score}</b>", f"branches <b>{entry.branches}</b>", f"depth <b>{entry.depth}</b>"]
     return '<div class="metrics">' + "".join(f"<span>{cell}</span>" for cell in cells) + "</div>"
 
 

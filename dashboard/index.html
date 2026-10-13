@@ -210,6 +210,17 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
 .cell { border: 1px solid var(--card-line); border-radius: 3px; padding: 4px 8px; background: var(--card); color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell small { display: block; color: var(--muted); font-size: 10px; } .cell.new { border-color: var(--accent); background: var(--accent-soft); } .cell.deep { border-color: var(--bad); }
 @media (max-width: 900px) { .optgrid { grid-template-columns: 1fr; } .memrow { grid-template-columns: 1fr; } }
+
+/* repository analysis */
+.scancard { display: flex; flex-direction: column; gap: 20px; padding-block: 30px; }
+.scanlog { width: min(640px, 100%); }
+.scanerr { margin: 0; color: var(--bad); font-weight: 700; }
+.scanfacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 8px; }
+.sbox { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .sbox b { font: 800 28px/1.1 var(--sans); letter-spacing: -.02em; } .sbox span { color: var(--ink-2); font-size: 14px; }
+.worst { width: 100%; border-collapse: collapse; font-size: 14px; margin-block: 8px 14px; } .worst th, .worst td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--card-line); overflow-wrap: anywhere; }
+.worst th { font: 700 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); } .worst .ovr { text-align: right; white-space: nowrap; font-family: var(--mono); }
+.notice { margin: 0; background: var(--accent-soft); padding: 12px 16px; border-radius: 6px; }
+.repobadge { background: var(--accent-soft); border: 1px solid var(--card-line); padding: 10px 16px; border-radius: 6px; font-size: 14px; }
 </style>
 
 <div class="wrap">
@@ -229,7 +240,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
         <h1 id="h-start">Your AI agents re&#8209;read your whole codebase every turn. Krypton makes that cheaper.</h1>
         <p class="lede">Krypton keeps the files that rarely change at the front of every request, so the AI provider can reuse more of what it has already read. A 25,000-line codebase is roughly 175,000 tokens, read again on every turn.</p>
         <div class="cta"><button class="btn" id="go" type="button">Optimize this codebase →</button><button class="btn link" id="gh2" type="button">or connect your own repository</button></div>
-        <div class="card repos" id="repoPanel" hidden><h3>Your repositories</h3><p class="muted small" id="repoNote"></p><div class="chips" id="repoChips"></div><p class="small" id="picked"></p></div>
+        <div class="card repos" id="repoPanel" hidden><h3>Your repositories</h3><p class="muted small" id="repoNote"></p><div class="chips" id="repoChips"></div><div class="cta" style="margin-top:8px"><button class="btn" id="analyze" type="button" hidden>Analyze</button></div><p class="small muted" id="picked"></p></div>
       </div>
       <div class="card project">
         <span class="eyebrow" style="color:inherit;opacity:.8">Today's example</span>
@@ -241,6 +252,18 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
         </div>
         <div class="meter"><div class="bar"><i></i></div><small>Hardest function to read: <b>46× over the safe limit</b></small></div>
       </div>
+    </div>
+  </section>
+
+  <!-- your repository: read, score, then show the numbers -->
+  <section class="screen" id="s-repo" aria-labelledby="h-repo">
+    <div class="card scancard">
+      <span class="eyebrow" id="repoEyebrow">Your repository</span>
+      <h2 id="h-repo">Reading your code…</h2>
+      <ul class="tasks scanlog" id="scanLog" aria-live="polite"></ul>
+      <p class="scanerr" id="scanErr" role="alert" hidden></p>
+      <div id="scanOut" hidden></div>
+      <div class="cta" id="scanBtns" hidden><button class="btn" id="scanSave" type="button" hidden>See what it costs and could save →</button><button class="btn link" id="scanBack" type="button">← Pick another repository</button></div>
     </div>
   </section>
 
@@ -283,6 +306,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
 
   <!-- 4 · savings -->
   <section class="screen" id="s-savings" aria-labelledby="h-sav">
+    <div class="repobadge" id="repoBadge" hidden></div>
     <div class="stackh"><span class="eyebrow">Savings</span><h2 id="h-sav">Your AI bill, before and after Krypton</h2>
       <p class="lede">Coding agents send your codebase to the model again on every turn. Providers bill text they have already seen at a fraction of the normal price, so the longer the unchanged part of your code stays at the front of each request, the smaller the bill.</p></div>
 
@@ -293,7 +317,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
           <div class="hint" id="tokHint">About 177K tokens every time the code is read</div></div>
         <div><label for="turns">AI agent turns per developer per day <output id="turnsOut">100</output></label><input type="range" id="turns" min="20" max="300" step="10" value="100"></div>
         <div><label id="mLabel" style="margin-bottom:8px">AI model priced</label><div class="models" role="group" aria-labelledby="mLabel" id="models"></div></div>
-        <label class="check" for="refactor" style="margin:0"><input type="checkbox" id="refactor" checked><span>Include the 5.3% lighter-codebase effect<br><span class="small muted" style="font-weight:500">Measured once on a real project; treat as an estimate.</span></span></label>
+        <label class="check" for="refactor" style="margin:0"><input type="checkbox" id="refactor" checked><span><span id="effLabel">Include the 5.3% lighter-codebase effect</span><br><span class="small muted" id="effNote" style="font-weight:500">Measured once on a real project; treat as an estimate.</span></span></label>
         <details><summary>Assumptions</summary><div id="assume"></div>
           <div class="row"><span>Tokens per line of code</span><span class="num" style="gap:4px"><input type="number" id="tpl" min="3" max="20" step="0.5" value="7" style="width:74px;padding:6px 8px"></span></div></details>
       </div>
@@ -361,7 +385,7 @@ const ORDER = ['start', 'optimizing', 'compare', 'savings'];
 let reached = 0, timer = null;
 function go(name) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('show', s.id === 's-' + name));
-  const at = ORDER.indexOf(name); reached = Math.max(reached, at);
+  const at = ORDER.indexOf(name === 'repo' ? 'optimizing' : name); reached = Math.max(reached, at);
   document.querySelectorAll('#steps li').forEach((li, i) => { li.classList.toggle('on', i === at); li.classList.toggle('done', i < at); });
   if (name === 'optimizing') runOptimizer(); else clearInterval(timer);
   if (name === 'savings') renderSavings();
@@ -484,7 +508,7 @@ const MODELS = {   // list prices, USD per million tokens: normal input, cached 
 };
 function readState() {
   const num = (key, fallback) => +q.get(key) || fallback;
-  return { devs: num('devs', 50), lines: num('lines', 25000), turns: num('turns', 100), tpl: num('tpl', 7), model: q.get('model') in MODELS ? q.get('model') : 'sonnet', refactor: q.get('refactor') !== '0' };
+  return { devs: num('devs', 50), lines: num('lines', 25000), turns: num('turns', 100), tpl: num('tpl', 7), model: q.get('model') in MODELS ? q.get('model') : 'sonnet', refactor: q.get('refactor') !== '0', effect: REFACTOR, repo: null };
 }
 const S = readState();
 function money(v) {
@@ -493,16 +517,31 @@ function money(v) {
   if (v >= 1e3) return '$' + (v / 1e3).toFixed(2) + 'K';
   return '$' + v.toFixed(v >= 10 ? 0 : 2);
 }
-function tokK(n) { return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : Math.round(n / 1e3) + 'K'; }
+function tokK(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e4) return Math.round(n / 1e3) + 'K';
+  return n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(Math.round(n));
+}
 function pct(before, after) { return Math.round(100 * (before - after) / before); }
 
 function calc(devs, lines = S.lines) {
   const m = MODELS[S.model], C = lines * S.tpl, N = devs * S.turns * DAYS;
   const per = (h) => C * (h * m.read + (1 - h) * m.write) / 1e6, none = C * m.input / 1e6;
-  const orig = per(REUSE.alpha), order = per(REUSE.argon), full = order * (S.refactor ? 1 - REFACTOR : 1);
+  const orig = per(REUSE.alpha), order = per(REUSE.argon), full = order * (S.refactor ? 1 - S.effect : 1);
   return { m, C, per: { none, orig, order, full }, bill: { none: none * N, orig: orig * N, order: order * N, full: full * N } };
 }
+function effectTexts() {
+  const none = S.repo && S.repo.tangled === 0;
+  $('effLabel').textContent = `Include the ${(S.effect * 100).toFixed(1)}% lighter-codebase effect`;
+  $('effNote').textContent = none ? 'No tangled functions were found, so no refactor saving is assumed.' : S.repo ? "Scaled from the 5.3% measured on garth to your share of tangled functions; an estimate." : 'Measured once on a real project; treat as an estimate.';
+}
+function renderRepoBadge() {
+  const d = S.repo;
+  $('repoBadge').hidden = !d;
+  if (d) $('repoBadge').innerHTML = `Based on <b>${esc(d.repo)}</b> · ${fmt(d.files)} files · ${fmt(d.lines)} lines · about ${tokK(d.tokens)} tokens each time it is read`;
+}
 function renderInputs(r) {
+  effectTexts(); renderRepoBadge();
   $('devsOut').textContent = fmt(S.devs); $('linesOut').textContent = fmt(S.lines) + ' lines'; $('turnsOut').textContent = S.turns;
   $('tokHint').textContent = `About ${tokK(r.C)} tokens every time the code is read (${S.tpl} tokens per line)`;
   $('models').innerHTML = Object.entries(MODELS).map(([k, m]) => `<button type="button" data-m="${k}" class="${k === S.model ? 'on' : ''}">${m.name}<small>${m.tag}</small></button>`).join('');
@@ -511,7 +550,7 @@ function renderInputs(r) {
 function renderAssumptions(r) {
   const price = `$${r.m.input.toFixed(2)} / $${r.m.read.toFixed(2)} / $${r.m.write.toFixed(2)}`;
   const rows = [['Price per million tokens: normal / cached read / cache write', price], ['Request reused by the provider: Krypton order / alphabetical', `${(REUSE.argon * 100).toFixed(1)}% / ${(REUSE.alpha * 100).toFixed(1)}%`],
-    ['Working days per month', DAYS], ['Each turn sends the whole codebase', 'yes']];
+    ['Refactor effect on tokens per change', `${(S.effect * 100).toFixed(1)}%`], ['Working days per month', DAYS], ['Each turn sends the whole codebase', 'yes']];
   $('assume').innerHTML = rows.map(([label, value]) => `<div class="row"><span>${label}</span><b>${value}</b></div>`).join('');
 }
 function renderHero(b) {
@@ -523,7 +562,7 @@ function renderHero(b) {
 function stairSteps(b) {
   const steps = [['No caching at all', 'every read billed in full', b.none, '#cdbcbc'], ['Caching, files in default order', `${(REUSE.alpha * 100).toFixed(0)}% of each request reused`, b.orig, '#e8b27a'],
     ["Krypton's file order", `${(REUSE.argon * 100).toFixed(0)}% reused: stable files first`, b.order, 'var(--accent)']];
-  return S.refactor ? [...steps, ['Plus a lighter codebase', '5.3% fewer tokens per change', b.full, 'var(--good)']] : steps;
+  return S.refactor ? [...steps, ['Plus a lighter codebase', `${(S.effect * 100).toFixed(1)}% fewer tokens per change`, b.full, 'var(--good)']] : steps;
 }
 function stairRow([label, note, value, color], i, steps, top) {
   const delta = i ? `<span>−${money(steps[i - 1][2] - value)}</span>` : '<span>&nbsp;</span>';
@@ -542,7 +581,7 @@ function renderReads(r) {
   $('readTxt').textContent = `One read of a ${fmt(S.lines)}-line codebase is about ${tokK(r.C)} tokens. At ${r.m.name} prices, it costs:`;
   const cards = [['Without caching', r.per.none], ['Default file order', r.per.orig], ['With Krypton', r.per.full]];
   $('reads').innerHTML = cards.map(([label, value], i) => `<div class="${i === 2 ? 'last' : ''}"><small>${label}</small><b>${money(value)}</b></div>`).join('');
-  $('readDay').innerHTML = `At ${S.turns} turns a day, one developer's reads cost <s style="color:var(--bad)">${money(r.per.orig * S.turns)}</s> → <b>${money(r.per.full * S.turns)}</b> a day.`;
+  $('readDay').innerHTML = `At ${S.turns} turns a day, one developer's reads cost <s style="color:var(--bad)">${money(r.per.orig * S.turns)}</s> → <b>${money(r.per.full * S.turns)}</b> a day. Across ${fmt(S.devs)} developers that is about ${tokK(r.C * S.turns * S.devs * DAYS)} tokens read a month.`;
 }
 function sizeRow(lines) {
   const y = calc(S.devs, lines), saved = y.bill.orig - y.bill.full;
@@ -584,7 +623,7 @@ function connectGithub() {
   openNotice(AUTH.available ? NOTICES.unconfigured : NOTICES.static);
 }
 async function disconnect() {
-  await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin', headers: { 'X-Requested-With': 'argon' } });
+  await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin', headers: { 'X-Requested-With': 'krypton' } });
   Object.assign(AUTH, { connected: false, user: null, repos: [], picked: '' });
   renderAuth();
 }
@@ -603,9 +642,9 @@ function repoChip(repo) {
 function renderRepos() {
   $('repoPanel').hidden = !AUTH.connected;
   if (!AUTH.connected) return;
-  $('repoNote').textContent = AUTH.repos.length ? 'Pick the repository you want Krypton to look at.' : 'No repositories found for this account.';
+  $('repoNote').textContent = AUTH.repos.length ? 'Pick a repository. Krypton reads it in memory, scores it and discards it; nothing is run or stored.' : 'No repositories found for this account.';
   $('repoChips').innerHTML = AUTH.repos.slice(0, 10).map(repoChip).join('');
-  $('picked').textContent = AUTH.picked ? `Selected ${AUTH.picked}. Analyzing your own repository is the next step; this demo still replays the garth run.` : '';
+  $('analyze').hidden = !AUTH.picked; $('analyze').textContent = `Analyze ${AUTH.picked} →`;
   document.querySelectorAll('#repoChips button').forEach((b) => { b.onclick = () => { AUTH.picked = b.dataset.repo; renderRepos(); }; });
 }
 function renderAuth() { renderAuthButton(); renderRepos(); }
@@ -615,9 +654,69 @@ function showSignInResult() {
   if (key) history.replaceState(null, '', location.pathname);
 }
 
+/* analyze a connected visitor's own repository: the server reads it in memory and sends back numbers only */
+const GARTH_TANGLED_SHARE = 11 / 111;   // garth: 11 of 111 functions over the threshold, where the refactor saved 5.3%
+const SCAN_STEPS = ['Fetching the repository from GitHub', 'Reading the source files', 'Scoring every function'];
+const SCAN = { data: null, timer: null };
+function scanLog(done) {
+  $('scanLog').innerHTML = SCAN_STEPS.map((text, i) => `<li class="${i < done ? 'ok' : i === done ? 'now' : ''}"><span class="tick">✓</span>${text}</li>`).join('');
+}
+function startScanLog() {
+  let step = 0;
+  scanLog(0); clearInterval(SCAN.timer);
+  SCAN.timer = setInterval(() => { step = Math.min(step + 1, SCAN_STEPS.length - 1); scanLog(step); }, 1400);
+}
+function stopScanLog() { clearInterval(SCAN.timer); scanLog(SCAN_STEPS.length); }
+async function postScan(repo) {
+  const options = { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'krypton' }, body: JSON.stringify({ repo }) };
+  const reply = await fetch('/api/scan', options).catch(() => { throw new Error('Could not reach the server. Please try again.'); });
+  const body = await reply.json().catch(() => ({}));
+  if (!reply.ok) throw new Error(body.error || 'The analysis failed. Please try again.');
+  return body;
+}
+function resetScanView(repo) {
+  $('h-repo').textContent = repo; $('repoEyebrow').textContent = 'Reading your repository';
+  $('scanLog').hidden = false; $('scanErr').hidden = true; $('scanOut').hidden = true; $('scanBtns').hidden = true; $('scanSave').hidden = true;
+}
+function showScanError(message) {
+  $('scanErr').textContent = message; $('scanErr').hidden = false; $('scanLog').hidden = true; $('scanBtns').hidden = false; $('scanSave').hidden = true;
+  $('h-repo').textContent = "That didn't work";
+}
+function statBox(value, label) { return `<div class="sbox"><b>${value}</b><span>${label}</span></div>`; }
+function worstRow(w) { return `<tr><td class="mono">${esc(w.file)}:${w.line}</td><td class="mono">${esc(w.function)}</td><td class="ovr">${w.times}×</td></tr>`; }
+function worstTable(d) {
+  if (!d.tangled) return '<p class="notice">No function is over the limit, so there is little for a refactor to untangle.</p>';
+  return `<table class="worst"><thead><tr><th>Where</th><th>Function</th><th class="ovr">Over the limit</th></tr></thead><tbody>${d.worst.map(worstRow).join('')}</tbody></table>`;
+}
+function renderScan(d) {
+  $('repoEyebrow').textContent = 'Your repository';
+  const facts = [statBox(fmt(d.files), 'source files'), statBox(fmt(d.lines), 'lines of code'), statBox('~' + tokK(d.tokens), 'tokens each time an agent reads it'),
+    statBox(d.purity + ' / 100', 'structure score'), statBox(`${d.tangled} of ${fmt(d.functions)}`, 'functions too tangled')];
+  $('scanOut').innerHTML = `<div class="scanfacts">${facts.join('')}</div><h3>Hardest functions to read</h3>${worstTable(d)}<p class="small muted">Read in memory on the server and discarded; nothing was run or stored. Token counts are estimates (characters ÷ 3.5).</p>`;
+  $('scanOut').hidden = false; $('scanBtns').hidden = false; $('scanSave').hidden = false;
+}
+async function analyzeRepo() {
+  const repo = AUTH.picked;
+  if (!repo) return;
+  resetScanView(repo); go('repo'); startScanLog();
+  try { SCAN.data = await postScan(repo); } catch (error) { stopScanLog(); return showScanError(error.message); }
+  stopScanLog(); renderScan(SCAN.data);
+}
+function effectFor(d) {
+  const share = d.functions ? d.tangled / d.functions : 0;
+  return REFACTOR * Math.min(1, share / GARTH_TANGLED_SHARE);
+}
+function applyScan(d) {
+  const tokensPerLine = Math.min(20, Math.max(1, Math.round(10 * d.tokens / Math.max(1, d.lines)) / 10));
+  Object.assign(S, { devs: 5, lines: d.lines, tpl: tokensPerLine, effect: effectFor(d), refactor: d.tangled > 0, repo: d });
+  Object.assign($('lines'), { min: Math.min(2000, d.lines), max: Math.max(100000, d.lines), step: d.lines < 5000 ? 100 : 1000, value: S.lines });
+  $('devs').value = S.devs; $('tpl').value = S.tpl; $('refactor').checked = S.refactor;
+  renderSavings();
+}
+
 /* wire up */
 function bindFlow() {
-  $('go').onclick = () => go('optimizing'); $('tosave').onclick = () => go('savings'); $('again').onclick = () => go('start');
+  $('go').onclick = () => go('optimizing'); $('analyze').onclick = analyzeRepo; $('scanBack').onclick = () => go('start'); $('scanSave').onclick = () => { applyScan(SCAN.data); go('savings'); }; $('tosave').onclick = () => go('savings'); $('again').onclick = () => go('start');
   $('gh2').onclick = connectGithub; $('mOk').onclick = closeNotice;
   $('veil').addEventListener('click', (e) => { if (e.target === $('veil')) closeNotice(); });
 }

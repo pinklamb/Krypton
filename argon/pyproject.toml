@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "argon-local-engine"
+name = "krypton-local-engine"
 version = "0.5.0"
-description = "Argon MVP: local JavaScript, TypeScript and Python structural scoring engine"
+description = "Krypton MVP: local JavaScript, TypeScript and Python structural scoring engine"
 requires-python = ">=3.12"
 dependencies = [
     "ast-grep-py>=0.45,<0.46",
@@ -13,7 +13,8 @@ dependencies = [
 ]
 
 [project.scripts]
-argon = "argon.cli:main"
+krypton = "argon.cli:main"
+argon = "argon.cli:main"  # old name, kept so existing scripts keep working
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "radon==6.0.1"]

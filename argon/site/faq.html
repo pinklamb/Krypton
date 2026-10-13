@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ | Krypton</title>
+<meta name="description" content="Answers to common questions about Krypton.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="command-reference.html">Command reference</a><a href="integrations.html">Integrations</a><a href="prompt-caching.html">Prompt caching</a><a href="faq.html" aria-current="page">FAQ</a></nav></div></header>
+<div class="wrap single">
+
+<main id="content">
+<div class="eyebrow">FAQ</div>
+<h1>Frequently asked questions</h1>
+
+<h3>Is Krypton a linter?</h3>
+<p>No. It measures structural weight, how hard code is to read, edit and pay for in tokens. It does not check style or correctness. Run your linter and tests too.</p>
+
+<h3>Does it send my code anywhere?</h3>
+<p>The command-line tool runs locally and makes no network calls. The hosted demo reads a repository you choose in memory, scores it and discards it; nothing is stored or run.</p>
+
+<h3>Which languages does it support?</h3>
+<p>JavaScript, TypeScript (including JSX and TSX) and Python.</p>
+
+<h3>How is the score calculated?</h3>
+<p>With Krypton's scoring algorithm, which is not published. What is public: decisions are counted the way radon and ESLint count them, nesting makes decisions count for more, and the result resists gaming. See <a href="how-it-works.html">How it works</a>.</p>
+
+<h3>Why was my file flagged?</h3>
+<p>The report lists the reason, and hints name the block most worth extracting. Run <code>krypton path/to/file --top 10</code> to see the heaviest functions.</p>
+
+<h3>Can I make it less strict while I clean up?</h3>
+<p>Yes: <code>--level relaxed</code>, or <code>--base origin/main</code> to score only what changed on your branch.</p>
+
+<h3>Will it find bugs?</h3>
+<p>No. Heavy code is more likely to hide bugs, but Krypton only measures structure.</p>
+
+<h3>What happens to minified or generated files?</h3>
+<p>Generated and vendored paths are skipped. Files that are too large or have extremely long lines are not analyzed; they are left out of the score and listed, with the setting that would include them.</p>
+
+<h3>Does it work with my coding agent?</h3>
+<p>Any agent that can run a command can use it. See <a href="integrations.html#agents">Integrations</a>.</p>
+
+<h3>Is the old <code>argon</code> command gone?</h3>
+<p>No. <code>argon</code> still works and runs the same program as <code>krypton</code>. The Python package is still imported as <code>argon</code> for now.</p>
+
+<h3>Does it work on Windows?</h3>
+<p>Yes. It is a Python package; you need Python 3.12 or newer.</p>
+
+<div class="pager"><a href="prompt-caching.html">← Prompt caching</a><span></span></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Argon">Source on GitHub</a></span></div></footer>
+</body>
+</html>

@@ -10,7 +10,7 @@ NL = chr(10)
 
 
 def _run(tmp_path, capsys, source: bytes) -> dict:
-    """One agent iteration: the file is edited, then Argon runs with --history."""
+    """One agent iteration: the file is edited, then Krypton runs with --history."""
     (tmp_path / "src").mkdir(exist_ok=True)
     (tmp_path / "src" / "m.py").write_bytes(source)
     main([str(tmp_path / "src"), "--json", "--history", str(tmp_path / "log" / "history.jsonl")])

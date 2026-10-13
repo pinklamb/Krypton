@@ -1,7 +1,7 @@
 """Independent Python references for parity (spec §12.3), built on radon 6.0.1 and Python's own ast.
 
 flat_count(): radon's exact per-node rules, every decision in the file in one total.
-nesting_score(): radon's per-construct increments + Argon's nesting math (§7-§8),
+nesting_score(): radon's per-construct increments + Krypton's nesting math (§7-§8),
 tracked over `ast`, separately from tree-sitter.
 """
 
@@ -22,7 +22,7 @@ class FlatVisitor(ComplexityVisitor):
     visit_ClassDef = visit_FunctionDef
 
     def visit_Assert(self, node):
-        # §6.4: radon 6.0.1 never descends into an assert; Argon counts its and / or.
+        # §6.4: radon 6.0.1 never descends into an assert; Krypton counts its and / or.
         self.complexity += 1
         self.generic_visit(node)
 

@@ -1,9 +1,9 @@
-"""Prompt-cache replay: what does Argon's --order-by-volatility save when a file changes?
+"""Prompt-cache replay: what does Krypton's --order-by-volatility save when a file changes?
 
     python -m tools.cache_replay argon --mock                    # free, simulated cache (checks the harness)
     python -m tools.cache_replay argon --max-usd 3 --yes         # real API, needs ANTHROPIC_API_KEY
 
-The same 8-turn script runs against three file orders: Argon's volatility order (stable first),
+The same 8-turn script runs against three file orders: Krypton's volatility order (stable first),
 alphabetical, and the reverse (volatile first, the adversarial control). Each turn sends the
 whole folder as one prompt in three cache-marked blocks, split at the same character fractions
 for every order. Between turns one scripted edit lands on a volatile, middle or stable file.
@@ -98,7 +98,7 @@ def volatility_order(folder: Path) -> list[str]:
 
 
 def targets(order: list[str]) -> dict[str, str]:
-    """The files the scripted edits hit, picked by Argon's rank so every prompt order edits the same ones."""
+    """The files the scripted edits hit, picked by Krypton's rank so every prompt order edits the same ones."""
     return {"stable": order[0], "middle": order[len(order) // 2], "volatile": order[-1], "volatile2": order[-2]}
 
 
@@ -217,7 +217,7 @@ def preflight(corpus: dict[str, str], model: str, count: int) -> float:
 
 def main(argv: list[str] | None = None) -> int:
     """Run the replay for every order and print one table each."""
-    parser = argparse.ArgumentParser(description="Prompt-cache replay for Argon's volatility ordering.")
+    parser = argparse.ArgumentParser(description="Prompt-cache replay for Krypton's volatility ordering.")
     parser.add_argument("folder", type=Path)
     parser.add_argument("--model", default="claude-sonnet-5-5", choices=sorted(PRICES))
     parser.add_argument("--mock", action="store_true", help="simulate the cache offline; numbers are NOT measurements")

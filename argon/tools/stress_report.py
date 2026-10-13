@@ -111,7 +111,7 @@ def run_details(quick: bool) -> str:
         ["effective-line width", f"{CFG.effective_line_width} characters"], ["score cap", f"{CFG.score_cap:,}"],
         ["versions", f"python {sys.version.split()[0]}, ast-grep-py {version('ast-grep-py')}, radon {version('radon')}"],
         ["run size", "quick (smaller scaling, leak and thread runs)" if quick else "full"],
-        ["re-run", "python -m tools.stress_report   (from Argon/argon)"],
+        ["re-run", "python -m tools.stress_report   (from Krypton/argon)"],
         ["sample files", "argon/stress/samples/  (inputs for the tests; run the CLI on them yourself)"],
     ])
 
@@ -135,8 +135,8 @@ def page(tests: list[TestResult], issues: list[TestResult], quick: bool) -> str:
     nav = " ".join(f'<a href="#test{i}">{esc(r.title.split(":")[0])}</a>' for i, r in enumerate(everything, 1))
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        f"<title>Argon stress tests</title><style>{h.CSS}{EXTRA_CSS}</style></head><body><main>"
-        f'<h1>Argon stress tests and reported issues</h1><p><a href="#summary">Summary</a> {nav}</p>{body}</main></body></html>'
+        f"<title>Krypton stress tests</title><style>{h.CSS}{EXTRA_CSS}</style></head><body><main>"
+        f'<h1>Krypton stress tests and reported issues</h1><p><a href="#summary">Summary</a> {nav}</p>{body}</main></body></html>'
     )
 
 
@@ -162,7 +162,7 @@ def run_all(quick: bool, only: set[str] | None, cache: Path) -> tuple[list[TestR
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run Argon's math stress tests and write the findings page.")
+    parser = argparse.ArgumentParser(description="Run Krypton's math stress tests and write the findings page.")
     parser.add_argument("--out", type=Path, default=ROOT / "docs" / "stress_test_findings.html")
     parser.add_argument("--quick", action="store_true", help="smaller scaling, leak and thread runs")
     parser.add_argument("--only", metavar="KEYS", help="re-run only these (comma-separated: test1..test4, issue1..issue17); the rest are reused from the last run")

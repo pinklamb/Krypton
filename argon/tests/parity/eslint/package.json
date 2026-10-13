@@ -1,7 +1,7 @@
 {
   "name": "argon-eslint-parity",
   "private": true,
-  "description": "ESLint complexity reference for Argon's JS/TS parity test (spec 12.3). Run `npm install` here first.",
+  "description": "ESLint complexity reference for Krypton's JS/TS parity test (spec 12.3). Run `npm install` here first.",
   "type": "module",
   "devDependencies": {
     "@typescript-eslint/parser": "^8",

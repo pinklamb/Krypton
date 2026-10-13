@@ -1,4 +1,4 @@
-# Argon: structural-complexity scoring for JS/TS/Python.
+# Krypton: structural-complexity scoring for JS/TS/Python.
 #
 #   docker build -t argon .
 #   docker run --rm -v "$PWD:/repo" argon .                    # scan the mounted repo

@@ -4,3 +4,10 @@
 !dashboard/benchmarks.html
 !dashboard/server.py
 !dashboard/auth.py
+!dashboard/repo_fetch.py
+!dashboard/scanner.py
+!dashboard/scan_worker.py
+!argon/pyproject.toml
+!argon/argon/**
+**/__pycache__
+**/*.pyc

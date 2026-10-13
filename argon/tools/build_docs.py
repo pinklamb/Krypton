@@ -1,4 +1,4 @@
-"""Build argon/docs/argon_audit.html: a self-contained page documenting what Argon does today.
+"""Build argon/docs/argon_audit.html: a self-contained page documenting what Krypton does today.
 
 Run from the project root (the folder holding pyproject.toml):
 
@@ -27,7 +27,7 @@ from tools.collect import Entry, Module, analyze_module, collect_tests, fields_o
 from tools.spec_map import ROWS
 
 ROOT = Path(__file__).resolve().parent.parent
-TITLE = "Argon"
+TITLE = "Krypton"
 
 CAPABILITIES = [
     "Parses <code>.js .jsx .mjs .cjs .ts .mts .cts .tsx .py</code> with Rust-backed ast-grep (tree-sitter grammars)",
@@ -104,7 +104,7 @@ def overview(modules: list[Module], tests: dict, run_tests: bool) -> str:
         ]
     )
     intro = (
-        "<p>Argon scores structural bloat in JavaScript, TypeScript and Python: it counts decisions, weighs them by "
+        "<p>Krypton scores structural bloat in JavaScript, TypeScript and Python: it counts decisions, weighs them by "
         "nesting, rates each function, and turns the result into a purity score. This page is generated from the "
         "source, so it describes what the code does today.</p>"
     )
@@ -132,8 +132,10 @@ def capabilities() -> str:
 
 
 def scoring_rules() -> str:
-    text = (ROOT / "SCORING.md").read_text(encoding="utf-8")
-    body = text.split("\n", 1)[1]  # drop the "# How Argon scores code" title
+    path = ROOT / "SCORING.md"
+    if not path.exists():
+        return "<p>The scoring notes are internal and are not part of this checkout.</p>"
+    body = path.read_text(encoding="utf-8").split("# How Krypton scores code", 1)[-1]  # drop any banner and the title
     return markdown_lite.to_html(body).replace("<h2", "<h3").replace("</h2>", "</h3>")
 
 
@@ -223,7 +225,7 @@ def audit_notes(modules: list[Module], spec_problems: list[str]) -> str:
         [
             "<h3>Radon grades</h3>", grade_table(callables),
             "<h3>Highest radon complexity</h3>", top_table(callables, lambda e: e.complexity, "radon"),
-            "<h3>Highest Argon score</h3>", top_table([p for p in callables if p[1].score is not None], lambda e: e.score or 0, "Argon score"),
+            "<h3>Highest Krypton score</h3>", top_table([p for p in callables if p[1].score is not None], lambda e: e.score or 0, "Krypton score"),
             "<h3>Functions flagged nested</h3>", nested_list(callables),
             "<h3>Largest modules</h3>", h.table(["Module", "Lines"], [[m.path, str(m.lines)] for m in sorted(modules, key=lambda m: -m.lines)[:8]]),
             "<h3>Undocumented definitions</h3>", undocumented_list(pairs),
@@ -262,7 +264,7 @@ def undocumented_list(pairs: list[tuple[Module, Entry]]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Build the Argon audit page.")
+    parser = argparse.ArgumentParser(description="Build the Krypton audit page.")
     parser.add_argument("--out", type=Path, default=ROOT / "docs" / "argon_audit.html")
     parser.add_argument("--with-tests", action="store_true", help="run the test suite and record its result")
     args = parser.parse_args(argv)

@@ -105,7 +105,7 @@ def _change_frequency(args, files: dict[str, Path], cfg: EngineConfig) -> dict[s
 
 def _parser() -> argparse.ArgumentParser:
     """The argparse definition of every flag (spec §11)."""
-    parser = argparse.ArgumentParser(prog="python -m argon.cli", description="Argon structural review, locally.")
+    parser = argparse.ArgumentParser(prog="krypton", description="Krypton structural review, locally.")
     parser.add_argument("paths", nargs="*", type=Path, help="source files or folders to scan")
     parser.add_argument("--top", type=int, default=20, metavar="N", help="function ranking rows (0 = none)")
     parser.add_argument("--base", metavar="REF", help="score only files and lines changed since REF")

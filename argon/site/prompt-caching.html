@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompt caching | Krypton</title>
+<meta name="description" content="How file order affects your token bill, with measured results.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="command-reference.html">Command reference</a><a href="integrations.html">Integrations</a><a href="prompt-caching.html" aria-current="page">Prompt caching</a><a href="faq.html">FAQ</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#how">How caching rewards order</a></li><li><a href="#order">Krypton's ordering</a></li><li><a href="#results">Measured results</a></li><li><a href="#refactor">Refactor payback</a></li><li><a href="#try">Try it</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">Prompt caching</div>
+<h1>Cut the cost of re-reading your code</h1>
+<p class="lede">Coding agents send your codebase to the model on every turn. Providers bill text they have already seen at a fraction of the normal price, so the longer the unchanged part stays at the front of each request, the smaller the bill.</p>
+
+<h2 id="how">How caching rewards order</h2>
+<p>Providers cache the longest identical <em>prefix</em> of a request. If a file near the start changes, everything after it has to be read again at full price. If only files near the end change, almost the whole request is reused.</p>
+<p>So the best order puts the files that rarely change first and the ones that change often last.</p>
+
+<h2 id="order">Krypton's ordering</h2>
+<pre><code><span class="p">$</span> krypton src --order-by-volatility
+<span class="c"># JSON: files from most stable to most volatile, with a token estimate for each</span></code></pre>
+<p>Krypton's ordering algorithm uses each file's change history. Build your prompt from the files in that order. You can supply your own change counts with <code>--volatility counts.json</code>. The ordering is a hint from history, not a guarantee, and it never changes a score.</p>
+
+<h2 id="results">Measured results</h2>
+<p>We replayed 12 real commits of <b>garth</b> (about 25,000 tokens of source per turn) against a live model and measured how much of each prompt the provider reused.</p>
+<div class="scroll"><table>
+<tr><th>File order</th><th class="n">Predicted reuse</th><th class="n">Measured reuse</th></tr>
+<tr><td>Krypton (most stable first)</td><td class="n">81%</td><td class="n">79%</td></tr>
+<tr><td>Alphabetical</td><td class="n">60%</td><td class="n">58%</td></tr>
+<tr><td>Reverse (most volatile first)</td><td class="n">1%</td><td class="n">1%</td></tr>
+</table></div>
+<p>Excluding the first turn, which can never hit the cache. Including it, Krypton's order reused 72.6%. Predictions come from the shared prefix of consecutive prompts and landed within about two points of the live numbers.</p>
+
+<h2 id="refactor">Refactoring and the payback</h2>
+<p>A Krypton-guided refactor of garth took the logic-complexity flags from 9 to 0 with all 163 tests passing, where an unguided refactor left 8 of 9. Fresh agents then made the same three changes on the original and the refactored code:</p>
+<ul>
+<li>The refactored code used <b>5.3% fewer tokens per change</b> (2,145 of about 40,400).</li>
+<li>The refactor itself cost <b>101,398 tokens</b>, about 2.4 times an unguided refactor.</li>
+<li>So it takes about <b>47 change tasks</b> to repay the refactor. After that, every change costs 5.3% fewer tokens.</li>
+</ul>
+<div class="scroll"><table>
+<tr><th class="n">Changes after the refactor</th><th class="n">Net tokens saved</th><th class="n">Return on total spend</th></tr>
+<tr><td class="n">10</td><td class="n">−79,948</td><td class="n">−19.8%</td></tr>
+<tr><td class="n">25</td><td class="n">−47,773</td><td class="n">−4.7%</td></tr>
+<tr><td class="n">47 (break-even)</td><td class="n">−583</td><td class="n">0.0%</td></tr>
+<tr><td class="n">100</td><td class="n">+113,102</td><td class="n">+2.8%</td></tr>
+<tr><td class="n">250</td><td class="n">+434,852</td><td class="n">+4.3%</td></tr>
+<tr><td class="n">500</td><td class="n">+971,102</td><td class="n">+4.8%</td></tr>
+</table></div>
+<p>Return on total spend includes the one-time refactor, so it approaches 5.3% as changes accumulate.</p>
+
+<div class="note"><b>Read these as estimates.</b> One repository, one cache model and one run per arm. The caching gap is large; the 5.3% task saving is within run-to-run noise, so the 47-change payback is approximate.</div>
+
+<h2 id="try">Try it on your own repository</h2>
+<p>The <a href="integrations.html#demo">hosted demo</a> reads a repository you choose and shows its real size in tokens and an estimate of what ordering and a refactor could save.</p>
+
+<div class="pager"><a href="integrations.html">← Integrations</a><a href="faq.html">FAQ →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Argon">Source on GitHub</a></span></div></footer>
+</body>
+</html>

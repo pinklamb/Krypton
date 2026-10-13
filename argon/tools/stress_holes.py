@@ -27,7 +27,7 @@ def lap(name):
     now = time.perf_counter(); marks[name] = (now - t) * 1000; t = now
 import ast_grep_py; lap("import ast_grep_py")
 import pydantic; lap("import pydantic")
-from argon.engine.run import run_local; lap("import the Argon engine")
+from argon.engine.run import run_local; lap("import the Krypton engine")
 run_local({"a.py": b"def f(x):\\n    if x:\\n        return 1\\n    return 2\\n"}); lap("first scan (Python file)")
 run_local({"a.js": b"function f(x){ if (x) { return 1; } return 2; }"}); lap("first scan (JavaScript file)")
 run_local({"b.py": b"x = 1\\n"}); lap("second scan (warm)")
@@ -65,15 +65,15 @@ def hole1() -> TestResult:
     out.tables = [("Where the file and function names appear in the engine's JSON result", ["JSON path", "Contains"], [[where, needle] for where, needle in paths])]
     out.checks = [
         Check("Is the quoted 'zero-knowledge' promise in the specs?", CAVEAT,
-              "I couldn't find that sentence in either PDF I have. The MVP spec says \"There is no GitHub App, server or database\" for the MVP; the V1 spec says the engine <i>never persists</i> source and, for enterprise, Argon \"never receives raw source code\" (\u00a77). If the quote comes from another document, tell me which."),
+              "I couldn't find that sentence in either PDF I have. The MVP spec says \"There is no GitHub App, server or database\" for the MVP; the V1 spec says the engine <i>never persists</i> source and, for enterprise, Krypton \"never receives raw source code\" (\u00a77). If the quote comes from another document, tell me which."),
         Check("Do identifying names leave the engine today?", FINDING,
               f"Yes, in more places than the filename: the result carries the path and the function name in {len(paths)} JSON fields (table below), plus line numbers and scores. In the MVP nothing leaves the machine, so this is a Phase 1 / Phase 3 design question, not a current bug."),
         Check("Is raw_content_url / patch a bigger leak than the filename?", FINDING,
-              "By the same logic, yes. The V1 spec's <code>ChangedFile</code> carries <code>patch</code> (the unified diff text, i.e. source lines) as well as <code>raw_content_url</code>, and \u00a77.1 forwards <code>job.model_dump()</code> to the customer's worker. That diff passes through Argon's server before it is forwarded, which contradicts \"never receives raw source code\". The URL itself is only an access key if it embeds a token; the diff is code either way."),
+              "By the same logic, yes. The V1 spec's <code>ChangedFile</code> carries <code>patch</code> (the unified diff text, i.e. source lines) as well as <code>raw_content_url</code>, and \u00a77.1 forwards <code>job.model_dump()</code> to the customer's worker. That diff passes through Krypton's server before it is forwarded, which contradicts \"never receives raw source code\". The URL itself is only an access key if it embeds a token; the diff is code either way."),
         Check("Does plain sha256(filename) hide the path?", FINDING,
               f"Not for guessable paths: all {recovered} of {len(COMMON_PATHS)} common paths were recovered from their hashes with a plain dictionary. The same applies to function names. A keyed hash (HMAC-SHA256 with a per-customer secret that stays in the customer's cloud) avoids that."),
-        Check("Would hashing change what Argon already knows?", CAVEAT,
-              "Only for enterprise mode. In the shared mode Argon's server fetches the file list and diffs from GitHub itself, so it already sees the paths; hashing them in the result would not remove that. The PR comment also needs the real paths, so the platform must keep a path-to-hash map on its side."),
+        Check("Would hashing change what Krypton already knows?", CAVEAT,
+              "Only for enterprise mode. In the shared mode Krypton's server fetches the file list and diffs from GitHub itself, so it already sees the paths; hashing them in the result would not remove that. The PR comment also needs the real paths, so the platform must keep a path-to-hash map on its side."),
     ]
     out.cli = [cli_run("json", [str(folder.relative_to(ROOT)), "--json"])]
     return out
@@ -117,7 +117,7 @@ def hole2(quick: bool = False) -> TestResult:
         Check("Does the MVP compile or load a tree-sitter .so?", PASS,
               f"No. The engine uses <code>ast-grep-py</code>, a prebuilt native binding (PyO3) that already contains the grammars: {native_binding()}. There is no grammar build step anywhere in the repo, and the MVP spec says so in \u00a73: \"ast-grep ships its grammars inside the wheel, so master \u00a72.3's grammar compile step and its cross-architecture crash don't apply.\" Your proposed fix is already what the code does."),
         Check("Is the cold start really under 5 ms?", FINDING,
-              f"No. From launch to exit a fresh process takes about {total:.0f} ms, of which Python itself is {baseline:.0f} ms. The Argon-specific part is about {engine_cost:.0f} ms (first scan of a file: {stages['first scan (Python file)']:.1f} ms Python, {stages['first scan (JavaScript file)']:.1f} ms JavaScript; a warm scan: {stages['second scan (warm)']:.1f} ms). The 5 ms figure only holds for a warm scan, and it is the import of the engine and its data models, not parsing, that dominates the cold start."),
+              f"No. From launch to exit a fresh process takes about {total:.0f} ms, of which Python itself is {baseline:.0f} ms. The Krypton-specific part is about {engine_cost:.0f} ms (first scan of a file: {stages['first scan (Python file)']:.1f} ms Python, {stages['first scan (JavaScript file)']:.1f} ms JavaScript; a warm scan: {stages['second scan (warm)']:.1f} ms). The 5 ms figure only holds for a warm scan, and it is the import of the engine and its data models, not parsing, that dominates the cold start."),
         Check("Is the old 1.5 s figure a risk for Phase 1?", PASS,
               f"Not from parsing. The measured cold start is a fraction of a second, so a serverless worker pays about {total / 1000:.1f} s at most, mostly interpreter and import time; keeping the process warm (the spec's worker design) removes even that."),
     ]

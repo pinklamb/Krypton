@@ -1,9 +1,9 @@
-"""Does Argon's volatility order help real prompt caching? Replay a repo's real commits against a live model.
+"""Does Krypton's volatility order help real prompt caching? Replay a repo's real commits against a live model.
 
     python -m tools.cache_live REPO_WITH_GIT_HISTORY --dry                  # no API: predicted cache hits only
     python -m tools.cache_live REPO --turns 12 --model openai/gpt-4.1-nano --yes
 
-The file order is fixed from history BEFORE the replay window (Argon's own change_frequency / order_by_volatility
+The file order is fixed from history BEFORE the replay window (Krypton's own change_frequency / order_by_volatility
 on the commits up to the base commit), so the test asks: do files that changed often before keep changing
 afterwards? Turn 0 sends the whole source tree at the base commit; turn N sends it as of the Nth later commit that
 touched the source. Three orders are compared: volatility (stable first), alphabetical, reverse volatility.
@@ -51,7 +51,7 @@ def tree(repo: Path, commit: str, subdir: str) -> dict[str, str]:
 
 
 def base_counts(repo: Path, base: str, subdir: str, window: int, scratch: Path) -> dict[str, int]:
-    """Argon's own commit_counts, run in a throwaway clone checked out at the base commit (history before the replay only)."""
+    """Krypton's own commit_counts, run in a throwaway clone checked out at the base commit (history before the replay only)."""
     clone = scratch / f"base_{base[:8]}"
     if not clone.exists():
         subprocess.run(["git", "clone", "--quiet", str(repo), str(clone)], check=True, capture_output=True)

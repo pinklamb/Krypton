@@ -3,7 +3,7 @@
     python -m tools.synth_repo OUT --profile team3 --heavy-fraction 0.4 --seed 1
 
 Writes OUT/before (a share of the modules heavy, the rest clean, like a real repo before a cleanup)
-and OUT/after (every module clean, what an Argon-guided refactor aims for). Each module is a
+and OUT/after (every module clean, what an Krypton-guided refactor aims for). Each module is a
 pricing-rule engine generated from a seeded spec, so no two are textual copies: different
 categories, bulk tiers, coupons, regions and shipping bands. Both renderings come from the same
 spec and are checked against each other on generated cases before anything is written, and each

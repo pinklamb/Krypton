@@ -46,8 +46,11 @@ class Browser:
     def call(self, method, path, headers=None):
         conn = http.client.HTTPConnection("127.0.0.1", self.port)
         conn.request(method, path, headers={**self._cookie_header(), **(headers or {})})
-        reply = conn.getresponse()
-        body = reply.read().decode()
+        try:
+            reply = conn.getresponse()
+            body = reply.read().decode()
+        finally:
+            conn.close()
         self._remember(reply)
         return reply, body
 
@@ -133,7 +136,7 @@ class SignInTests(unittest.TestCase):
         reply, _ = self.me.call("POST", "/auth/logout")
         self.assertEqual(reply.status, 403)
         self.assertTrue(json.loads(self.me.call("GET", "/api/session")[1])["connected"])
-        reply, _ = self.me.call("POST", "/auth/logout", {"X-Requested-With": "argon"})
+        reply, _ = self.me.call("POST", "/auth/logout", {"X-Requested-With": "krypton"})
         self.assertEqual(reply.status, 200)
         self.assertFalse(json.loads(self.me.call("GET", "/api/session")[1])["connected"])
         self.assertEqual(self.me.call("GET", "/api/repos")[0].status, 401)

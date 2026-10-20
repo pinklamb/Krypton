@@ -12,11 +12,12 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="command-reference.html">Command reference</a><a href="integrations.html">Integrations</a><a href="prompt-caching.html" aria-current="page">Prompt caching</a><a href="faq.html">FAQ</a></nav></div></header>
 <div class="wrap">
-<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#how">How caching rewards order</a></li><li><a href="#order">Krypton's ordering</a></li><li><a href="#results">Measured results</a></li><li><a href="#refactor">Refactor payback</a></li><li><a href="#try">Try it</a></li></ul></aside>
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#how">How caching rewards order</a></li><li><a href="#order">Krypton's ordering</a></li><li><a href="#results">Measured results</a></li><li><a href="#survey">Other repositories</a></li><li><a href="#projection">Projected savings</a></li><li><a href="#refactor">Refactor payback</a></li><li><a href="#gate">CI gate</a></li><li><a href="#try">Try it</a></li></ul></aside>
 <main id="content">
 <div class="eyebrow">Prompt caching</div>
 <h1>Cut the cost of re-reading your code</h1>
 <p class="lede">Coding agents send your codebase to the model on every turn. Providers bill text they have already seen at a fraction of the normal price, so the longer the unchanged part stays at the front of each request, the smaller the bill.</p>
+<div class="note"><b>The short version.</b> On garth, ordering files by change history made the same prompts 35% cheaper. Across 20 real repositories it beat alphabetical order on 12 and lost on 7, a typical gain of about 4 points of cache reuse, so how much you save depends on your repository.</div>
 
 <h2 id="how">How caching rewards order</h2>
 <p>Providers cache the longest identical <em>prefix</em> of a request. If a file near the start changes, everything after it has to be read again at full price. If only files near the end change, almost the whole request is reused.</p>
@@ -28,34 +29,99 @@
 <p>Krypton's ordering algorithm uses each file's change history. Build your prompt from the files in that order. You can supply your own change counts with <code>--volatility counts.json</code>. The ordering is a hint from history, not a guarantee, and it never changes a score.</p>
 
 <h2 id="results">Measured results</h2>
-<p>We replayed 12 real commits of <b>garth</b> (about 25,000 tokens of source per turn) against a live model and measured how much of each prompt the provider reused.</p>
+<p>We replayed 12 real commits of <b>garth</b> (about 40,000 tokens of source per turn as Claude counts them) against the live Claude API (Sonnet 5.5, four cache breakpoints per request) and measured how much of each prompt the provider reused and what the replay cost.</p>
+<div class="scroll"><table>
+<tr><th>File order</th><th class="n">Predicted reuse</th><th class="n">Measured reuse</th><th class="n">Cost of the 13 turns</th></tr>
+<tr><td>Krypton (most stable first)</td><td class="n">73%</td><td class="n">71%</td><td class="n">$0.51</td></tr>
+<tr><td>Alphabetical</td><td class="n">48%</td><td class="n">47%</td><td class="n">$0.79</td></tr>
+<tr><td>Reverse (most volatile first)</td><td class="n">0%</td><td class="n">0%</td><td class="n">$1.30</td></tr>
+</table></div>
+<p>Excluding the first turn, which can never hit the cache. Including it, Krypton's order reused 65.7%. Krypton's order made the replay about 35% cheaper than alphabetical order. With a single cache breakpoint at the end of the prompt, every order reused 0%, so the ordering only pays when the stable files sit in front of earlier breakpoints. Predictions come from the shared prefix of consecutive prompts and landed within about two points of the live numbers.</p>
+
+<h2 id="survey">Does it hold on other repositories?</h2>
+<p>Not always. We ran the same replay on a second repository, <b>pluggy</b>, against the live Claude API, and Krypton's order did worst:</p>
 <div class="scroll"><table>
 <tr><th>File order</th><th class="n">Predicted reuse</th><th class="n">Measured reuse</th></tr>
-<tr><td>Krypton (most stable first)</td><td class="n">81%</td><td class="n">79%</td></tr>
-<tr><td>Alphabetical</td><td class="n">60%</td><td class="n">58%</td></tr>
-<tr><td>Reverse (most volatile first)</td><td class="n">1%</td><td class="n">1%</td></tr>
+<tr><td>Krypton (most stable first)</td><td class="n">4%</td><td class="n">4%</td></tr>
+<tr><td>Alphabetical</td><td class="n">23%</td><td class="n">22%</td></tr>
+<tr><td>Reverse (most volatile first)</td><td class="n">26%</td><td class="n">25%</td></tr>
 </table></div>
-<p>Excluding the first turn, which can never hit the cache. Including it, Krypton's order reused 72.6%. Predictions come from the shared prefix of consecutive prompts and landed within about two points of the live numbers.</p>
+<p>(The reverse run stopped early at the spending cap, so its figure covers only the first eight replay turns.) The history ranked one file as the most stable, and it then changed in 3 of the next 12 commits, and a refactor added and renamed files. A change early in the order throws away most of the cache. The prediction matched the live result within a point, on garth and on pluggy, so we used it to survey 20 repositories without spending anything on live runs. The table shows predicted reuse for each order, sorted by how much Krypton's order beat alphabetical (points of reuse).</p>
+<div class="scroll"><table>
+<tr><th>Repository</th><th class="n">Files</th><th class="n">Krypton</th><th class="n">Alphabetical</th><th class="n">Reverse</th><th class="n">Krypton vs alphabetical</th></tr>
+<tr><td>pallets/flask</td><td class="n">24</td><td class="n">51%</td><td class="n">20%</td><td class="n">18%</td><td class="n">+31</td></tr>
+<tr><td>pallets/click</td><td class="n">17</td><td class="n">27%</td><td class="n">0%</td><td class="n">32%</td><td class="n">+27</td></tr>
+<tr><td>matin/garth</td><td class="n">41</td><td class="n">73%</td><td class="n">48%</td><td class="n">0%</td><td class="n">+25</td></tr>
+<tr><td>pallets/itsdangerous</td><td class="n">8</td><td class="n">45%</td><td class="n">29%</td><td class="n">17%</td><td class="n">+16</td></tr>
+<tr><td>pallets/jinja</td><td class="n">25</td><td class="n">19%</td><td class="n">6%</td><td class="n">17%</td><td class="n">+13</td></tr>
+<tr><td>psf/requests</td><td class="n">19</td><td class="n">23%</td><td class="n">12%</td><td class="n">31%</td><td class="n">+11</td></tr>
+<tr><td>encode/httpx</td><td class="n">23</td><td class="n">27%</td><td class="n">16%</td><td class="n">33%</td><td class="n">+11</td></tr>
+<tr><td>Textualize/rich</td><td class="n">100</td><td class="n">49%</td><td class="n">38%</td><td class="n">21%</td><td class="n">+11</td></tr>
+<tr><td>pallets-eco/flask-wtf</td><td class="n">10</td><td class="n">42%</td><td class="n">32%</td><td class="n">14%</td><td class="n">+10</td></tr>
+<tr><td>hynek/structlog</td><td class="n">21</td><td class="n">19%</td><td class="n">14%</td><td class="n">28%</td><td class="n">+5</td></tr>
+<tr><td>pypa/packaging</td><td class="n">22</td><td class="n">35%</td><td class="n">33%</td><td class="n">37%</td><td class="n">+2</td></tr>
+<tr><td>tqdm/tqdm</td><td class="n">31</td><td class="n">22%</td><td class="n">20%</td><td class="n">40%</td><td class="n">+2</td></tr>
+<tr><td>pallets/markupsafe</td><td class="n">2</td><td class="n">33%</td><td class="n">33%</td><td class="n">33%</td><td class="n">+0</td></tr>
+<tr><td>agronholm/anyio</td><td class="n">46</td><td class="n">40%</td><td class="n">41%</td><td class="n">32%</td><td class="n">−1</td></tr>
+<tr><td>theskumar/python-dotenv</td><td class="n">8</td><td class="n">33%</td><td class="n">36%</td><td class="n">27%</td><td class="n">−3</td></tr>
+<tr><td>python-attrs/attrs</td><td class="n">19</td><td class="n">11%</td><td class="n">14%</td><td class="n">43%</td><td class="n">−3</td></tr>
+<tr><td>python-jsonschema/jsonschema</td><td class="n">37</td><td class="n">14%</td><td class="n">17%</td><td class="n">37%</td><td class="n">−3</td></tr>
+<tr><td>python-attrs/cattrs</td><td class="n">50</td><td class="n">25%</td><td class="n">37%</td><td class="n">38%</td><td class="n">−12</td></tr>
+<tr><td>pallets/werkzeug</td><td class="n">54</td><td class="n">23%</td><td class="n">36%</td><td class="n">11%</td><td class="n">−13</td></tr>
+<tr><td>pytest-dev/pluggy</td><td class="n">8</td><td class="n">4%</td><td class="n">23%</td><td class="n">18%</td><td class="n">−19</td></tr>
+</table></div>
+<ul>
+<li>Krypton's order beat alphabetical on <b>12</b> of 20, tied on 1 and lost on <b>7</b>.</li>
+<li>It was the best of the three orders on only <b>7</b>.</li>
+<li>On average it reused <b>31%</b> of each prompt against 25% for alphabetical and 26% for reverse. The typical (median) gain over alphabetical was <b>4 points</b>, and garth is one of the best cases.</li>
+</ul>
+<div class="note"><b>What to expect.</b> The ordering helps when the files that changed often recently keep changing, and the files that were quiet stay quiet. It can hurt after a refactor or a change in what the team is working on. We tried changing how the history is weighed (recent changes counting more, shorter windows, size of change) and choosing a rule per repository from its own earlier history; none of it improved results reliably on repositories it had not been tuned on, so the ordering is unchanged. The best way to know is to check your own repository: replay its recent commits with the research tool in <code>krypton/tools</code> (<code>python -m tools.cache_anthropic REPO --dry --no-control</code> prints the predicted reuse for each order and costs nothing).</div>
+
+<h2 id="projection">Projected savings for a team</h2>
+<p>This is a model, not a measurement of your bill. It takes a team of 50 developers, each sending 100 agent requests a day for 22 days a month, over a 25,000-line repository (about 287,000 tokens each time the code is read), at list prices. It counts only the cost of re-reading the code on every request, and compares alphabetical file order with Krypton's order using the reuse rates measured on garth and predicted across the other repositories.</p>
+<table>
+<thead><tr><th>Model</th><th>Repository</th><th>Monthly bill, alphabetical</th><th>Monthly bill, Krypton order</th><th>Saved a month</th><th>Saved a year</th></tr></thead>
+<tbody>
+<tr><td>Claude Sonnet 5.5</td><td>Typical repository</td><td>$61.5K</td><td>$58.3K</td><td><b>$3.2K</b> (5%)</td><td>$38.4K</td></tr>
+<tr><td>Claude Sonnet 5.5</td><td>garth-like best case</td><td>$45.2K</td><td>$27.3K</td><td><b>$17.9K</b> (40%)</td><td>$214.7K</td></tr>
+<tr><td>Claude Opus 5.5</td><td>Typical repository</td><td>$121.5K</td><td>$114.9K</td><td><b>$6.7K</b> (5%)</td><td>$80.2K</td></tr>
+<tr><td>Claude Opus 5.5</td><td>garth-like best case</td><td>$87.4K</td><td>$50.0K</td><td><b>$37.3K</b> (43%)</td><td>$448.1K</td></tr>
+</tbody>
+</table>
+<div class="note"><b>Plan on the typical row.</b> The typical rows use the average over 19 repositories other than garth: 29% of each request reused with Krypton's order against 24% alphabetical. The garth-like rows use what was measured on the live Claude API there (71% against 47%) and are a best case. Across 20 repositories the order lost on 7, so check your own repository first. The refactor payback in the next section is separate and is not included here.</div>
 
 <h2 id="refactor">Refactoring and the payback</h2>
-<p>A Krypton-guided refactor of garth took the logic-complexity flags from 9 to 0 with all 163 tests passing, where an unguided refactor left 8 of 9. Fresh agents then made the same three changes on the original and the refactored code:</p>
+<p>A Krypton-guided refactor of garth took the logic-complexity flags from 9 to 0 with all 163 tests passing, where an unguided refactor left 8 of 9. We then asked whether the cleaned code is cheaper for an agent to change. Fresh agents made the same five change tickets on the original code and after each of two cleanups, six runs each (three with unrelated tickets, three revising one feature), with real token usage priced at list prices:</p>
 <ul>
-<li>The refactored code used <b>5.3% fewer tokens per change</b> (2,145 of about 40,400).</li>
-<li>The refactor itself cost <b>101,398 tokens</b>, about 2.4 times an unguided refactor.</li>
-<li>So it takes about <b>47 change tasks</b> to repay the refactor. After that, every change costs 5.3% fewer tokens.</li>
+<li>Cleaning <b>everything</b> cost <b>$0.48</b> once and made each later change <b>16.9% cheaper</b> on average, but the typical run saved about 6% (runs: 44%, 7%, 5%, 25%, 0%, 1%).</li>
+<li>Cleaning <b>only the often-changed, tangled files</b> (chosen from git history) cost <b>$0.27</b> and saved 8.0% on average (runs: 26%, 14%, −17%, 20%, 0%, −12%).</li>
+<li>On the averages, cleaning everything pays for itself after about <b>66 changes</b> and the hot-files option after about 79, but run by run it ranged from 18 to never changes.</li>
+<li>Without a cleanup, one feature kept compounding: after five revisions its main function was about 457 times over Krypton's limit, from 46 times at the start. With a cleanup first it stayed between 5 and 37 times over.</li>
+<li>Rebuilding garth worst-function-first until Krypton scored it 81 (from 62) left the cost of the same five later revisions unchanged in one run ($0.176 against $0.177).</li>
 </ul>
 <div class="scroll"><table>
-<tr><th class="n">Changes after the refactor</th><th class="n">Net tokens saved</th><th class="n">Return on total spend</th></tr>
-<tr><td class="n">10</td><td class="n">−79,948</td><td class="n">−19.8%</td></tr>
-<tr><td class="n">25</td><td class="n">−47,773</td><td class="n">−4.7%</td></tr>
-<tr><td class="n">47 (break-even)</td><td class="n">−583</td><td class="n">0.0%</td></tr>
-<tr><td class="n">100</td><td class="n">+113,102</td><td class="n">+2.8%</td></tr>
-<tr><td class="n">250</td><td class="n">+434,852</td><td class="n">+4.3%</td></tr>
-<tr><td class="n">500</td><td class="n">+971,102</td><td class="n">+4.8%</td></tr>
+<tr><th class="n">Changes after the cleanup</th><th class="n">Net dollars saved</th><th class="n">Return on total spend</th></tr>
+<tr><td class="n">10</td><td class="n">−$0.40</td><td class="n">−94.0%</td></tr>
+<tr><td class="n">25</td><td class="n">−$0.29</td><td class="n">−27.5%</td></tr>
+<tr><td class="n">66 (break-even)</td><td class="n">+$0.00</td><td class="n">+0.1%</td></tr>
+<tr><td class="n">100</td><td class="n">+$0.25</td><td class="n">+5.8%</td></tr>
+<tr><td class="n">250</td><td class="n">+$1.34</td><td class="n">+12.5%</td></tr>
+<tr><td class="n">500</td><td class="n">+$3.15</td><td class="n">+14.7%</td></tr>
 </table></div>
-<p>Return on total spend includes the one-time refactor, so it approaches 5.3% as changes accumulate.</p>
+<p>Return on total spend includes the one-time cleanup, so it approaches 16.9% as changes accumulate. The table uses the clean-everything averages.</p>
 
-<div class="note"><b>Read these as estimates.</b> One repository, one cache model and one run per arm. The caching gap is large; the 5.3% task saving is within run-to-run noise, so the 47-change payback is approximate.</div>
+<div class="note"><b>Read these as estimates.</b> Six runs on one repository, one model and one cache model. The caching gap is large; the cleanup saving is not: it ranged from −17% to 44% between runs, so the 66-change payback is a range, not a number. The cleaned code was also not more correct (28 of 30 tickets right after clean-everything and 29 of 30 after hot-files-only, against 30 of 30 with no cleanup), and an earlier test of three tickets over ten repetitions found no saving at all after a refactor.</div>
+
+<h2 id="gate">A CI gate over twenty revisions</h2>
+<p>We also tested Krypton as a check in CI. One feature of garth grew over 20 sequential revisions made by an agent, three times with each setup. In the <b>plain</b> setup the agent just did each ticket. In the <b>gate</b> setup the harness scored the code with Krypton after each ticket, and if a function the ticket touched was over the structure limit, an agent was sent back with Krypton's report to fix it before the next ticket. Neither agent was given the Krypton tool or told to refactor.</p>
+<div class="scroll"><table>
+<tr><th></th><th class="n">Plain</th><th class="n">With the gate</th></tr>
+<tr><td>Cost of 20 revisions</td><td class="n">$0.92</td><td class="n">$1.49 (+62%)</td></tr>
+<tr><td>Worst function at the end</td><td class="n">about 1,900× over the limit</td><td class="n">about 12× over</td></tr>
+<tr><td>Structure score at the end</td><td class="n">55</td><td class="n">72</td></tr>
+<tr><td>Revisions done correctly</td><td class="n">60 of 60</td><td class="n">60 of 60</td></tr>
+</table></div>
+<p>The gate kept the code far healthier, at a cost of about 62% more per chain, most of it the fix rounds. Cost per revision did not keep rising with the tangle: in the plain chains it rose about 30% over the first ten revisions and then stayed flat while the worst function grew from about 56× to about 1,900× over the limit. So within 20 revisions we found no saving from cleaner code, and the case for it rests on the people who read the code and on future risk, which we did not measure.</p>
 
 <h2 id="try">Try it on your own repository</h2>
 <p>The <a href="integrations.html#demo">hosted demo</a> reads a repository you choose and shows its real size in tokens and an estimate of what ordering and a refactor could save.</p>

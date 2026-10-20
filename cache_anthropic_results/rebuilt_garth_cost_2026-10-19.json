@@ -1,0 +1,803 @@
+{
+ "meta": {
+  "date": "2026-10-19",
+  "model": "claude-sonnet-5-5",
+  "prices_per_mtok": {
+   "input": 2.0,
+   "output": 10.0,
+   "read": 0.2,
+   "write": 2.5
+  },
+  "spent_usd": 0.219847,
+  "max_usd": 0.55,
+  "tasks": [
+   2,
+   7,
+   8,
+   9,
+   10,
+   11
+  ],
+  "tree": "C:\\Users\\Me\\AppData\\Local\\Temp\\claude\\c--Users-Me-Downloads-Argon\\183d06e6-82e5-42fd-8f68-d528671a2e72\\scratchpad\\garth_rebuilt"
+ },
+ "start": {
+  "files": 42,
+  "lines": 3474,
+  "tokens_est": 30777,
+  "purity": 81,
+  "flagged_files": 7,
+  "nested_functions": 5
+ },
+ "stages": [
+  {
+   "summary": "ts.py`:\n- **Start time:** it is now always converted to UTC. A start time without a timezone is treated as UTC.\n- **Clamped duration:** the stored `duration_in_milliseconds` is also clamped to 0 for negative values, not just the end-time calculation.\n- **Already in place:** skipping items with no start time, keeping items with no `event` as `event=None`, and returning `[]` for a non-list response.",
+   "finished": true,
+   "stop": "end_turn",
+   "totals": {
+    "input_tokens": 12,
+    "output_tokens": 2097,
+    "cache_read_input_tokens": 18502,
+    "cache_creation_input_tokens": 7672,
+    "requests": 5,
+    "cost": 0.0438744,
+    "tool_calls": 9,
+    "cached_share": 0.7065607576567632
+   },
+   "tool_calls": {
+    "read_file": 1,
+    "list_files": 1,
+    "grep": 1,
+    "edit_file": 5,
+    "run_tests": 1
+   },
+   "requests": [
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1264
+      },
+      "cache_creation_input_tokens": 1264,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 4,
+      "output_tokens": 115,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.004318,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 2988
+      },
+      "cache_creation_input_tokens": 2988,
+      "cache_read_input_tokens": 1264,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 161,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0093368,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1443
+      },
+      "cache_creation_input_tokens": 1443,
+      "cache_read_input_tokens": 4252,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 1450,
+      "output_tokens_details": {
+       "thinking_tokens": 94
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0189619,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1596
+      },
+      "cache_creation_input_tokens": 1596,
+      "cache_read_input_tokens": 5695,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 122,
+      "output_tokens_details": {
+       "thinking_tokens": 72
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.006353,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 381
+      },
+      "cache_creation_input_tokens": 381,
+      "cache_read_input_tokens": 7291,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 249,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0049047,
+     "stop_reason": "end_turn"
+    }
+   ],
+   "after": {
+    "files": 42,
+    "lines": 3487,
+    "tokens_est": 30876,
+    "purity": 82,
+    "flagged_files": 7,
+    "nested_functions": 5
+   },
+   "check": {
+    "hidden_t1": false,
+    "hidden_t2": true,
+    "hidden_t3": false,
+    "hidden_t4": false,
+    "hidden_t5": false,
+    "hidden_t6": false,
+    "hidden_t7": false,
+    "hidden_t8": false,
+    "hidden_t9": false,
+    "hidden_t10": false,
+    "hidden_t11": false,
+    "suite_ok": true,
+    "suite_tail": "163 passed, 1 warning in 2.80s"
+   },
+   "label": "ticket 2",
+   "kind": "ticket"
+  },
+  {
+   "summary": "or the new filters.\n\n- **Filtering:** it runs after parsing, and an item must pass every filter that is given. An item with no `event` is dropped whenever any filter is set. An empty `event_types` list matches nothing.\n- **Default behaviour:** with no filters the original list is returned untouched, in the same order.\n- **Edit location:** all changes are in `src/garth/data/body_battery/events.py`.",
+   "finished": true,
+   "stop": "end_turn",
+   "totals": {
+    "input_tokens": 8,
+    "output_tokens": 1139,
+    "cache_read_input_tokens": 5594,
+    "cache_creation_input_tokens": 5604,
+    "requests": 3,
+    "cost": 0.026534799999999997,
+    "tool_calls": 5,
+    "cached_share": 0.49919685882562914
+   },
+   "tool_calls": {
+    "read_file": 1,
+    "edit_file": 3,
+    "run_tests": 1
+   },
+   "requests": [
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1269
+      },
+      "cache_creation_input_tokens": 1269,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 4,
+      "output_tokens": 69,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0038705,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 3056
+      },
+      "cache_creation_input_tokens": 3056,
+      "cache_read_input_tokens": 1269,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 882,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.016717799999999998,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1279
+      },
+      "cache_creation_input_tokens": 1279,
+      "cache_read_input_tokens": 4325,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 188,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0059465,
+     "stop_reason": "end_turn"
+    }
+   ],
+   "after": {
+    "files": 42,
+    "lines": 3513,
+    "tokens_est": 31169,
+    "purity": 77,
+    "flagged_files": 8,
+    "nested_functions": 5
+   },
+   "check": {
+    "hidden_t1": false,
+    "hidden_t2": true,
+    "hidden_t3": false,
+    "hidden_t4": false,
+    "hidden_t5": false,
+    "hidden_t6": false,
+    "hidden_t7": true,
+    "hidden_t8": false,
+    "hidden_t9": false,
+    "hidden_t10": false,
+    "hidden_t11": false,
+    "suite_ok": true,
+    "suite_tail": "163 passed, 1 warning in 3.61s"
+   },
+   "label": "ticket 7",
+   "kind": "ticket"
+  },
+  {
+   "summary": "DONE: `BodyBatteryData.get` now takes `order` (None/\"asc\"/\"desc\", stable sort by `event_start_time_gmt`, items with no event always last) and `limit` (None or int >= 0, applied after filtering and ordering). Invalid values raise `ValueError` before any request is made. The existing tests pass (163), but I didn't add tests for the new arguments.",
+   "finished": true,
+   "stop": "end_turn",
+   "totals": {
+    "input_tokens": 10,
+    "output_tokens": 1263,
+    "cache_read_input_tokens": 11726,
+    "cache_creation_input_tokens": 6122,
+    "requests": 4,
+    "cost": 0.030300200000000003,
+    "tool_calls": 4,
+    "cached_share": 0.6566244820248628
+   },
+   "tool_calls": {
+    "read_file": 1,
+    "edit_file": 2,
+    "run_tests": 1
+   },
+   "requests": [
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1247
+      },
+      "cache_creation_input_tokens": 1247,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 4,
+      "output_tokens": 70,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0038255,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 3463
+      },
+      "cache_creation_input_tokens": 3463,
+      "cache_read_input_tokens": 1247,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 997,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.018880900000000003,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1059
+      },
+      "cache_creation_input_tokens": 1059,
+      "cache_read_input_tokens": 4710,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 67,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0042635,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 353
+      },
+      "cache_creation_input_tokens": 353,
+      "cache_read_input_tokens": 5769,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 129,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0033303,
+     "stop_reason": "end_turn"
+    }
+   ],
+   "after": {
+    "files": 42,
+    "lines": 3537,
+    "tokens_est": 31489,
+    "purity": 76,
+    "flagged_files": 8,
+    "nested_functions": 6
+   },
+   "check": {
+    "hidden_t1": false,
+    "hidden_t2": true,
+    "hidden_t3": false,
+    "hidden_t4": false,
+    "hidden_t5": false,
+    "hidden_t6": false,
+    "hidden_t7": true,
+    "hidden_t8": true,
+    "hidden_t9": false,
+    "hidden_t10": false,
+    "hidden_t11": false,
+    "suite_ok": true,
+    "suite_tail": "163 passed, 1 warning in 2.67s"
+   },
+   "label": "ticket 8",
+   "kind": "ticket"
+  },
+  {
+   "summary": "dupe=False` to `BodyBatteryData.get`; when True it keeps only the first item for each non-None `activity_id` (items with no `event` included, `None` ids never removed). It runs after the filters and before ordering and limit. The existing body battery tests pass, but I didn't add a test for the new argument.\n\n`activity_id` is compared as-is, so an int `1` and a string `\"1\"` count as different ids.",
+   "finished": true,
+   "stop": "end_turn",
+   "totals": {
+    "input_tokens": 10,
+    "output_tokens": 997,
+    "cache_read_input_tokens": 12316,
+    "cache_creation_input_tokens": 6273,
+    "requests": 4,
+    "cost": 0.0281357,
+    "tool_calls": 6,
+    "cached_share": 0.6621861390397333
+   },
+   "tool_calls": {
+    "read_file": 1,
+    "list_files": 1,
+    "edit_file": 3,
+    "run_tests": 1
+   },
+   "requests": [
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1178
+      },
+      "cache_creation_input_tokens": 1178,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 4,
+      "output_tokens": 123,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.004183,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 4008
+      },
+      "cache_creation_input_tokens": 4008,
+      "cache_read_input_tokens": 1178,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 676,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0170196,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 766
+      },
+      "cache_creation_input_tokens": 766,
+      "cache_read_input_tokens": 5186,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 55,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0035061999999999997,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 321
+      },
+      "cache_creation_input_tokens": 321,
+      "cache_read_input_tokens": 5952,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 143,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0034269,
+     "stop_reason": "end_turn"
+    }
+   ],
+   "after": {
+    "files": 42,
+    "lines": 3553,
+    "tokens_est": 31669,
+    "purity": 75,
+    "flagged_files": 8,
+    "nested_functions": 6
+   },
+   "check": {
+    "hidden_t1": false,
+    "hidden_t2": true,
+    "hidden_t3": false,
+    "hidden_t4": false,
+    "hidden_t5": false,
+    "hidden_t6": false,
+    "hidden_t7": true,
+    "hidden_t8": true,
+    "hidden_t9": true,
+    "hidden_t10": false,
+    "hidden_t11": false,
+    "suite_ok": true,
+    "suite_tail": "163 passed, 1 warning in 2.78s"
+   },
+   "label": "ticket 9",
+   "kind": "ticket"
+  },
+  {
+   "summary": "d raises `TypeError` just as `get` does, which matches \"exactly the same arguments\".\n\nDONE: added `BodyBatteryData.summary(day=None, *, client=None, **options)`, which calls `get` with the same options and returns `count`, `total_impact`, `total_duration_ms` and `by_type` (all zero or empty when nothing comes back). The 16 existing body battery tests pass; I did not add tests for `summary` itself.",
+   "finished": true,
+   "stop": "end_turn",
+   "totals": {
+    "input_tokens": 8,
+    "output_tokens": 1038,
+    "cache_read_input_tokens": 6858,
+    "cache_creation_input_tokens": 6602,
+    "requests": 3,
+    "cost": 0.0282726,
+    "tool_calls": 4,
+    "cached_share": 0.5092070092070092
+   },
+   "tool_calls": {
+    "read_file": 1,
+    "list_files": 1,
+    "edit_file": 1,
+    "run_tests": 1
+   },
+   "requests": [
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1311
+      },
+      "cache_creation_input_tokens": 1311,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 4,
+      "output_tokens": 125,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0045355,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 4236
+      },
+      "cache_creation_input_tokens": 4236,
+      "cache_read_input_tokens": 1311,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 734,
+      "output_tokens_details": {
+       "thinking_tokens": 85
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0181962,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1055
+      },
+      "cache_creation_input_tokens": 1055,
+      "cache_read_input_tokens": 5547,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 179,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0055409,
+     "stop_reason": "end_turn"
+    }
+   ],
+   "after": {
+    "files": 42,
+    "lines": 3587,
+    "tokens_est": 32031,
+    "purity": 75,
+    "flagged_files": 8,
+    "nested_functions": 6
+   },
+   "check": {
+    "hidden_t1": false,
+    "hidden_t2": true,
+    "hidden_t3": false,
+    "hidden_t4": false,
+    "hidden_t5": false,
+    "hidden_t6": false,
+    "hidden_t7": true,
+    "hidden_t8": true,
+    "hidden_t9": true,
+    "hidden_t10": true,
+    "hidden_t11": false,
+    "suite_ok": true,
+    "suite_tail": "163 passed, 1 warning in 2.71s"
+   },
+   "label": "ticket 10",
+   "kind": "ticket"
+  },
+  {
+   "summary": " not add tests for the new filter or the averages.\n\n`min_duration_ms` is applied together with `event_types` and `min_impact`. An item must pass all the filters it is given, and an item with no event is dropped when any of them is set. Items with no event are also left out of `avg_impact_by_type`, and an empty result gives an empty dict.\n\nAll changes are in `src/garth/data/body_battery/events.py`.",
+   "finished": true,
+   "stop": "end_turn",
+   "totals": {
+    "input_tokens": 10,
+    "output_tokens": 2808,
+    "cache_read_input_tokens": 21671,
+    "cache_creation_input_tokens": 12118,
+    "requests": 4,
+    "cost": 0.0627292,
+    "tool_calls": 10,
+    "cached_share": 0.64117281576378
+   },
+   "tool_calls": {
+    "read_file": 1,
+    "grep": 1,
+    "edit_file": 6,
+    "run_tests": 2
+   },
+   "requests": [
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 1260
+      },
+      "cache_creation_input_tokens": 1260,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 4,
+      "output_tokens": 151,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.004668,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 7652
+      },
+      "cache_creation_input_tokens": 7652,
+      "cache_read_input_tokens": 1260,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 2140,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.040786,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 2587
+      },
+      "cache_creation_input_tokens": 2587,
+      "cache_read_input_tokens": 8912,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 305,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0113039,
+     "stop_reason": "tool_use"
+    },
+    {
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 619
+      },
+      "cache_creation_input_tokens": 619,
+      "cache_read_input_tokens": 11499,
+      "inference_geo": "global",
+      "input_tokens": 2,
+      "output_tokens": 212,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "cost": 0.0059713000000000006,
+     "stop_reason": "end_turn"
+    }
+   ],
+   "after": {
+    "files": 42,
+    "lines": 3616,
+    "tokens_est": 32334,
+    "purity": 74,
+    "flagged_files": 8,
+    "nested_functions": 6
+   },
+   "check": {
+    "hidden_t1": false,
+    "hidden_t2": true,
+    "hidden_t3": false,
+    "hidden_t4": false,
+    "hidden_t5": false,
+    "hidden_t6": false,
+    "hidden_t7": true,
+    "hidden_t8": true,
+    "hidden_t9": true,
+    "hidden_t10": true,
+    "hidden_t11": true,
+    "suite_ok": true,
+    "suite_tail": "163 passed, 1 warning in 2.82s"
+   },
+   "label": "ticket 11",
+   "kind": "ticket"
+  }
+ ]
+}

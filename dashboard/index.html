@@ -317,9 +317,9 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
           <div class="hint" id="tokHint">About 177K tokens every time the code is read</div></div>
         <div><label for="turns">AI agent turns per developer per day <output id="turnsOut">100</output></label><input type="range" id="turns" min="20" max="300" step="10" value="100"></div>
         <div><label id="mLabel" style="margin-bottom:8px">AI model priced</label><div class="models" role="group" aria-labelledby="mLabel" id="models"></div></div>
-        <label class="check" for="refactor" style="margin:0"><input type="checkbox" id="refactor" checked><span><span id="effLabel">Include the 5.3% lighter-codebase effect</span><br><span class="small muted" id="effNote" style="font-weight:500">Measured once on a real project; treat as an estimate.</span></span></label>
+        <label class="check" for="refactor" style="margin:0"><input type="checkbox" id="refactor" checked><span><span id="effLabel">Include the 5.6% lighter-codebase effect</span><br><span class="small muted" id="effNote" style="font-weight:500">Median of six runs on one project; the average was 17% and one run saved nothing. Treat as an estimate.</span></span></label>
         <details><summary>Assumptions</summary><div id="assume"></div>
-          <div class="row"><span>Tokens per line of code</span><span class="num" style="gap:4px"><input type="number" id="tpl" min="3" max="20" step="0.5" value="7" style="width:74px;padding:6px 8px"></span></div></details>
+          <div class="row"><span>Tokens per line of code</span><span class="num" style="gap:4px"><input type="number" id="tpl" min="3" max="20" step="0.5" value="11.5" style="width:74px;padding:6px 8px"></span></div></details>
       </div>
       <div class="card hero2" aria-live="polite">
         <span class="eyebrow">Monthly bill for reading your code</span>
@@ -350,19 +350,23 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
       <h3>Where the numbers come from</h3>
       <p class="muted small" style="margin:6px 0 12px">Measured on garth, an open-source Garmin library (MIT license) where most recent changes were AI-assisted. Prices are list prices; the bill estimate applies the measured reuse rates to them.</p>
       <div class="scroll"><table class="src"><thead><tr><th>What we measured</th><th class="n">Result</th></tr></thead><tbody>
-        <tr><td>Share of each request the provider reused, <b>Krypton's file order</b> (12 real commits, live billing data)</td><td class="n">78.6%</td></tr>
-        <tr><td>Same, files in <b>alphabetical order</b></td><td class="n">58.2%</td></tr>
-        <tr><td>Same, most-changed files first (the worst case)</td><td class="n">1.3%</td></tr>
-        <tr><td>AI tokens per code change after optimizing (3 real changes: 40,400 → 38,255)</td><td class="n">−5.3%</td></tr>
+        <tr><td>Share of each request the provider reused, <b>Krypton's file order</b> (garth, 12 real commits, live Claude API)</td><td class="n">71.2%</td></tr>
+        <tr><td>Same, files in <b>alphabetical order</b></td><td class="n">46.6%</td></tr>
+        <tr><td>Same, most-changed files first (the worst case)</td><td class="n">0%</td></tr>
+        <tr><td>Across 20 open-source repositories (predicted): Krypton order / alphabetical, and how often it won</td><td class="n">31% / 25% · won 12, tied 1, lost 7</td></tr>
+        <tr><td><b>Used for the bill above:</b> the average of the 19 repositories other than garth, Krypton order / alphabetical (garth is a best case)</td><td class="n">28.5% / 24.1%</td></tr>
+        <tr><td>Cost per later change after cleaning up garth (6 runs: 44%, 7%, 5%, 25%, 0%, 1%)</td><td class="n">−6% median · −17% average</td></tr>
+        <tr><td>Changes until the cleanup has paid for itself, on the averages (runs: 18 to never)</td><td class="n">66</td></tr>
+        <tr><td>CI gate over 20 agent revisions: worst function at the end, plain / with the gate (cost +62%)</td><td class="n">~1,900× / ~12× over the limit</td></tr>
         <tr><td>The project's own tests, before and after</td><td class="n"><span class="pill-ok">163 of 163 pass</span></td></tr>
-        <tr><td>Tokens per line of code in this project (24,720 tokens, 3,496 lines)</td><td class="n">7.1</td></tr>
+        <tr><td>Tokens per line of code in this project (about 40,000 tokens as Claude counts them, 3,496 lines)</td><td class="n">11.5</td></tr>
       </tbody></table></div>
       <p style="margin-top:12px"><a class="btn link" href="benchmarks.html" style="padding:0">Full benchmark data →</a></p>
     </div>
     <div><button class="btn ghost" id="again" type="button">↺ Start over</button></div>
   </section>
 
-  <footer><span>Replay of measured results · garth (MIT license) · figures from one run each</span><span class="mono">Estimates from measured results</span></footer>
+  <footer><span>Replay of measured results · garth (MIT license) · caching from live Claude runs, cleanup from six runs</span><span class="mono">Estimates from measured results</span></footer>
 </div>
 
 <div class="veil" id="veil" role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="card modal"><h3 id="mTitle" style="font-size:24px"></h3>
@@ -500,7 +504,8 @@ function pane(id, code) {
 }
 
 /* savings: the AI bill */
-const REUSE = { alpha: 0.582, krypton: 0.786 }, REFACTOR = 0.053, DAYS = 22;   // measured on garth: share of each request the provider reused
+const REUSES = { typical: { alpha: 0.241, krypton: 0.285 }, garth: { alpha: 0.466, krypton: 0.712 } };   // share of each request the provider reused: typical is the average predicted over 19 other open-source repositories; garth was measured on the live Claude API and is a best case (open with ?reuse=garth)
+const REUSE = REUSES[q.get('reuse')] || REUSES.typical, REFACTOR = 0.056, DAYS = 22, CLAUDE_TOKENS = 40048 / 24720;   // REFACTOR: the median of six runs on garth of the saving per later change after cleanup (the average was 17%, the range 0 to 44%); CLAUDE_TOKENS: how many tokens Claude counts for a file compared with the estimate
 const MODELS = {   // list prices, USD per million tokens: normal input, cached read, cache write
   sonnet: { name: 'Claude Sonnet 5.5', input: 2.0, read: 0.2, write: 2.5, tag: 'cache writes cost 1.25×' },
   opus: { name: 'Claude Opus 5.5', input: 4.0, read: 0.2, write: 5.0, tag: 'cache writes cost 1.25×' },
@@ -508,7 +513,7 @@ const MODELS = {   // list prices, USD per million tokens: normal input, cached 
 };
 function readState() {
   const num = (key, fallback) => +q.get(key) || fallback;
-  return { devs: num('devs', 50), lines: num('lines', 25000), turns: num('turns', 100), tpl: num('tpl', 7), model: q.get('model') in MODELS ? q.get('model') : 'sonnet', refactor: q.get('refactor') !== '0', effect: REFACTOR, repo: null };
+  return { devs: num('devs', 50), lines: num('lines', 25000), turns: num('turns', 100), tpl: num('tpl', 11.5), model: q.get('model') in MODELS ? q.get('model') : 'sonnet', refactor: q.get('refactor') !== '0', effect: REFACTOR, repo: null };
 }
 const S = readState();
 function money(v) {
@@ -518,6 +523,7 @@ function money(v) {
   return '$' + v.toFixed(v >= 10 ? 0 : 2);
 }
 function tokK(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
   if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
   if (n >= 1e4) return Math.round(n / 1e3) + 'K';
   return n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(Math.round(n));
@@ -533,12 +539,12 @@ function calc(devs, lines = S.lines) {
 function effectTexts() {
   const none = S.repo && S.repo.tangled === 0;
   $('effLabel').textContent = `Include the ${(S.effect * 100).toFixed(1)}% lighter-codebase effect`;
-  $('effNote').textContent = none ? 'No tangled functions were found, so no refactor saving is assumed.' : S.repo ? "Scaled from the 5.3% measured on garth to your share of tangled functions; an estimate." : 'Measured once on a real project; treat as an estimate.';
+  $('effNote').textContent = none ? 'No tangled functions were found, so no refactor saving is assumed.' : S.repo ? "Scaled from the 5.6% median measured on garth to your share of tangled functions; an estimate." : 'Median of six runs on one project; the average was 17% and one run saved nothing. Treat as an estimate.';
 }
 function renderRepoBadge() {
   const d = S.repo;
   $('repoBadge').hidden = !d;
-  if (d) $('repoBadge').innerHTML = `Based on <b>${esc(d.repo)}</b> · ${fmt(d.files)} files · ${fmt(d.lines)} lines · about ${tokK(d.tokens)} tokens each time it is read`;
+  if (d) $('repoBadge').innerHTML = `Based on <b>${esc(d.repo)}</b> · ${fmt(d.files)} files · ${fmt(d.lines)} lines · about ${tokK(d.tokens * CLAUDE_TOKENS)} tokens each time it is read`;
 }
 function renderInputs(r) {
   effectTexts(); renderRepoBadge();
@@ -655,7 +661,7 @@ function showSignInResult() {
 }
 
 /* analyze a connected visitor's own repository: the server reads it in memory and sends back numbers only */
-const GARTH_TANGLED_SHARE = 11 / 111;   // garth: 11 of 111 functions over the threshold, where the refactor saved 5.3%
+const GARTH_TANGLED_SHARE = 11 / 111;   // garth: 11 of 111 functions over the threshold, where the cleanup saved a median 5.6% per change
 const SCAN_STEPS = ['Fetching the repository from GitHub', 'Reading the source files', 'Scoring every function'];
 const SCAN = { data: null, timer: null };
 function scanLog(done) {
@@ -690,7 +696,7 @@ function worstTable(d) {
 }
 function renderScan(d) {
   $('repoEyebrow').textContent = 'Your repository';
-  const facts = [statBox(fmt(d.files), 'source files'), statBox(fmt(d.lines), 'lines of code'), statBox('~' + tokK(d.tokens), 'tokens each time an agent reads it'),
+  const facts = [statBox(fmt(d.files), 'source files'), statBox(fmt(d.lines), 'lines of code'), statBox('~' + tokK(d.tokens * CLAUDE_TOKENS), 'tokens each time an agent reads it'),
     statBox(d.purity + ' / 100', 'structure score'), statBox(`${d.tangled} of ${fmt(d.functions)}`, 'functions too tangled')];
   $('scanOut').innerHTML = `<div class="scanfacts">${facts.join('')}</div><h3>Hardest functions to read</h3>${worstTable(d)}<p class="small muted">Read in memory on the server and discarded; nothing was run or stored. Token counts are estimates (characters ÷ 3.5).</p>`;
   $('scanOut').hidden = false; $('scanBtns').hidden = false; $('scanSave').hidden = false;
@@ -707,7 +713,7 @@ function effectFor(d) {
   return REFACTOR * Math.min(1, share / GARTH_TANGLED_SHARE);
 }
 function applyScan(d) {
-  const tokensPerLine = Math.min(20, Math.max(1, Math.round(10 * d.tokens / Math.max(1, d.lines)) / 10));
+  const tokensPerLine = Math.min(20, Math.max(1, Math.round(10 * d.tokens * CLAUDE_TOKENS / Math.max(1, d.lines)) / 10));
   Object.assign(S, { devs: 5, lines: d.lines, tpl: tokensPerLine, effect: effectFor(d), refactor: d.tangled > 0, repo: d });
   Object.assign($('lines'), { min: Math.min(2000, d.lines), max: Math.max(100000, d.lines), step: d.lines < 5000 ? 100 : 1000, value: S.lines });
   $('devs').value = S.devs; $('tpl').value = S.tpl; $('refactor').checked = S.refactor;

@@ -9,6 +9,13 @@
 - New documentation site (getting started, how it works, command reference, integrations, prompt caching, FAQ).
 - Public documentation describes what Krypton measures and why. The scoring and ordering algorithms are not published.
 
+### Measurements and research tools
+- New `tools.ai_human_gap`: compares the structure of AI-credited code with the rest of a repository, in size bands (measured on garth and the MCP reference servers: no per-size difference). `tools.cache_anthropic` gained `--ext` for TypeScript and other suffixes; a live replay on the MCP filesystem server reused 38% with Krypton's order against 31% alphabetical.
+- The docs home page now starts with a plain-language "What Krypton is", and the benchmarks page opens with a one-line-per-question summary.
+- Prompt-caching results now cover 20 open-source repositories and a second live replay: Krypton's file order beat alphabetical order on 12, tied on 1 and lost on 7, with a typical gain of about 4 points of reuse, and the 35% saving measured on garth is a best case. The docs, the demo and the benchmark page say so.
+- Cleanup payback restated over six runs (about 66 changes on average, a typical saving of about 6% per change) and a 20-revision CI-gate test added to the results.
+- Research tools in `tools/`: live and free cache replays (`tools.cache_anthropic`, with `--dry` and `--no-control`), the cleanup ladders (`tools.refactor_ladder`, `tools.iteration_chain`), an agent rebuild runner and `tools.tune_volatility`. Re-weighting the change history and choosing a rule per repository did not improve results reliably on held-out repositories, so the ordering is unchanged.
+
 ### Hosted demo
 - A small web app shows what a repository costs to read and what a refactor could save. Visitors sign in with GitHub and pick a repository; it is read in memory, scored and discarded, and nothing from it is run or stored.
 

@@ -44,6 +44,15 @@
 <h3>Does it work with my coding agent?</h3>
 <p>Any agent that can run a command can use it. See <a href="integrations.html#agents">Integrations</a>.</p>
 
+<h3>How much will the file ordering save me?</h3>
+<p>It depends on your repository. On garth it made the same prompts 35% cheaper. Across 20 open-source repositories it beat alphabetical order on 12 and lost on 7, with a typical gain of about 4 points of cache reuse. It helps when recently active files stay active. You can predict your own result for free; see <a href="prompt-caching.html#survey">Prompt caching</a>.</p>
+
+<h3>Does cleaning up code make my agents cheaper?</h3>
+<p>In our tests, only a little and unevenly: later changes were about 17% cheaper on average over six runs, but about 6% for the typical run, and the cleanup costs money once. Cleaned code was not more correct, and an unguarded tangle did not make agents' later changes steadily dearer within 20 revisions. The reasons to clean up are the people who read the code and future risk. See <a href="prompt-caching.html#refactor">the results</a>.</p>
+
+<h3>Should I add Krypton to CI?</h3>
+<p>For code health, yes: in our 20-revision test a gate held garth's worst function near 12 times over the limit against about 1,900 times without it, with every revision still correct. It did not save money; the gated runs cost about 62% more because of the fix rounds. See <a href="prompt-caching.html#gate">the CI gate results</a>.</p>
+
 <h3>Does it work on Windows?</h3>
 <p>Yes. It is a Python package; you need Python 3.12 or newer.</p>
 

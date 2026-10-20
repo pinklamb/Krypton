@@ -45,6 +45,7 @@ table { border-collapse: collapse; width: 100%; font-size: 12.5px; min-width: 52
 th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; white-space: normal; } th { font: 500 11px var(--mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
 td.num { font-family: var(--mono); } td.best { font-weight: 600; } td .m { color: var(--muted); font-size: 12px; }
+table.glance { table-layout: fixed; min-width: 640px; } table.glance th, table.glance td { text-align: left; white-space: normal; vertical-align: top; } table.glance th:nth-child(1) { width: 26%; } table.glance th:nth-child(3) { width: 17%; } table.glance td:nth-child(3) { font-weight: 700; color: var(--wine); }
 details { font-size: 13px; color: var(--ink2); } summary { cursor: pointer; padding-block: 4px; } summary:focus-visible { outline: 2px solid var(--s-krypton); outline-offset: 2px; }
 svg text { font-family: var(--mono); fill: var(--muted); font-size: 11px; } svg .dl { font-weight: 500; font-size: 11.5px; }
 #tip { position: fixed; z-index: 5; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.45 var(--mono); padding: 7px 9px; border-radius: 5px; max-width: 260px; opacity: 0; transition: opacity .08s; white-space: pre-line; }
@@ -87,21 +88,36 @@ thead th { border-bottom: 1px solid var(--wine); }
     <p class="lede">Krypton measured on <b>garth</b>, an MIT-licensed Garmin client where 163 of the last 225 commits carry an AI co-author trailer.</p>
     <div class="kv" aria-label="Run card">
       <div><small>Repository</small><b>matin/garth v0.8.0 (MIT)</b></div>
-      <div><small>Code sent</small><b>src/ · 41 files · 3,496 lines · ~24.7K tokens</b></div>
+      <div><small>Code sent</small><b>src/ · 41 files · 3,496 lines · ~40K tokens (as Claude counts them)</b></div>
       <div><small>Cache replay</small><b>12 real commits · 13 turns · 39 function-level edits</b></div>
-      <div><small>Cache model</small><b>openai/gpt-4.1-nano</b></div>
+      <div><small>Cache model</small><b>Claude Sonnet 5.5, live API, 4 cache breakpoints</b></div>
       <div><small>Agent model</small><b>Claude Sonnet 5.5 (medium effort)</b></div>
       <div><small>Check</small><b>garth's own 163 tests · 14 hidden acceptance tests</b></div>
-      <div><small>Repetitions</small><b>one run per arm</b></div>
+      <div><small>Repetitions</small><b>caching, refactor: one run per arm · payback: 6 runs</b></div>
       <div><small>History signal</small><b>git history</b></div>
     </div>
   </header>
 
   <div class="verdicts" id="verdicts"></div>
 
+  <section class="panel" aria-labelledby="h-glance">
+    <div><h2 id="h-glance">What we tested and what we found</h2>
+    <p class="meta">Five questions, one line each. The numbered sections below hold the evidence.</p></div>
+    <div class="scroll"><table class="glance">
+      <thead><tr><th>Question</th><th>Result</th><th>How much to trust it</th></tr></thead>
+      <tbody>
+        <tr><td>Does Krypton's file order cut the prompt bill?</td><td>35% cheaper on garth (71% of each request reused against 47%). On a typical repository about 4 points more reuse. Beat alphabetical on 12 of 20 repositories and lost on 7. Live replays: filesystem server 38% vs 31%, pluggy 4% vs 22%.</td><td>Varies by repository</td></tr>
+        <tr><td>Does a Krypton-guided refactor fix the tangle without breaking anything?</td><td>Flags 9 → 0, all 163 tests still pass. An unguided agent left 8 of 9.</td><td>Works, one project</td></tr>
+        <tr><td>Is the cleaned-up code cheaper to change later?</td><td>6% cheaper per change for the typical run, 17% on average, 0 to 44% run by run. Pays back after about 66 changes on average (18 to never). Not more correct.</td><td>Small and uneven</td></tr>
+        <tr><td>Does a CI gate keep agent code clean?</td><td>After 20 agent revisions the worst function was about 12× over the limit with the gate and about 1,900× without. Structure score 72 against 55. About 62% more cost per run.</td><td>Works, at a cost</td></tr>
+        <tr><td>Is AI-assisted code structurally different from the rest of a repository?</td><td>Not per unit of size, in garth or in the MCP reference servers. AI-assisted functions are smaller, and the flag-rate gap disappears inside size bands.</td><td>Measured on two repositories</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
   <section class="panel" aria-labelledby="h-cache">
     <div><h2 id="h-cache">1 · Prompt caching: does Krypton's volatility order work?</h2>
-    <p class="meta">src/ · 41 files · ~24.7K tokens per turn · 12 replayed commits</p></div>
+    <p class="meta">src/ · 41 files · ~40K tokens per turn (as Claude counts them) · 12 replayed commits · live Claude API</p></div>
     <div class="legend" id="cacheLegend"></div>
     <div class="two">
       <div><div class="eyebrow" style="margin-bottom:6px">Cached share of prompt tokens, commits 1–12</div><div id="cacheBars"></div><div class="scroll" style="margin-top:12px"><table id="cacheTable"></table></div></div>
@@ -109,40 +125,76 @@ thead th { border-bottom: 1px solid var(--wine); }
     </div>
   </section>
 
+  <section class="panel" aria-labelledby="h-survey">
+    <div><h2 id="h-survey">2 · Does it hold on other repositories?</h2>
+    <p class="meta">20 open-source repositories, 12 replayed commits each, predicted reuse for each file order (the prediction matched live Claude runs within about a point on garth and pluggy)</p></div>
+    <p class="callout">Krypton's order beat alphabetical on <b>12</b> of 20, tied on 1 and lost on <b>7</b>. Average reuse: <b>31%</b> against 25% alphabetical and 26% reverse; typical gain <b>4 points</b>. garth is one of the best cases.</p>
+    <details><summary>Show all 20 repositories</summary><div class="scroll"><table id="surveyTable"></table></div></details>
+    <p class="meta">Live replays on two more repositories: pluggy, Krypton's order 4% reused against 22% alphabetical and 25% reverse (the reverse run stopped early at the spending cap); MCP filesystem server (TypeScript, 13 files, 12 commits), Krypton's order 38% against 31% alphabetical, predicted 42% and 31% (the run stopped at the spending cap during the alphabetical order, and reverse did not run). Re-weighting the change history and picking a rule per repository did not improve held-out results, so the ordering is unchanged.</p>
+  </section>
+
   <section class="panel" aria-labelledby="h-ref">
-    <div><h2 id="h-ref">2 · Refactor: what did Krypton change in the code?</h2>
+    <div><h2 id="h-ref">3 · Refactor: what did Krypton change in the code?</h2>
     <p class="meta">2 agents on identical copies · 163 of 163 tests pass in every copy</p></div>
     <div class="scroll"><table id="refTable"></table></div>
     <p class="meta">Remaining flags (coupling): __init__.py, http.py, utils.py, data/_base.py</p>
   </section>
 
   <section class="panel" aria-labelledby="h-task">
-    <div><h2 id="h-task">3 · Change tasks: is the refactored code cheaper to modify?</h2>
-    <p class="meta">3 change tasks · 14 of 14 hidden acceptance tests pass per arm</p></div>
+    <div><h2 id="h-task">4 · Change tasks: is the cleaned code cheaper to modify?</h2>
+    <p class="meta">5 unrelated change tickets after the cleanup, averaged over 3 runs · dollars per ticket · hidden acceptance tests: 15 of 15 with no cleanup, 13 of 15 after the standard cleanup</p></div>
     <div class="legend" id="taskLegend"></div>
     <div id="taskBars"></div>
     <details><summary>Show data table</summary><div class="scroll"><table id="taskTable"></table></div></details>
   </section>
 
   <section class="panel" aria-labelledby="h-pay">
-    <div><h2 id="h-pay">4 · Payback: refactor once, then iterate</h2>
-    <p class="meta">one-time refactor 101,398 tokens · 40,400 tokens per change on the original · 38,255 on the refactored code (−2,145, −5.3%)</p></div>
-    <p class="callout"><b>47 changes</b> to break even. After that, every change costs <b>5.3% fewer tokens</b> (2,145 of 40,400).</p>
-    <div class="eyebrow">Cumulative tokens saved vs. not refactoring</div>
+    <div><h2 id="h-pay">5 · Payback: refactor once, then iterate</h2>
+    <p class="meta">one-time cleanup $0.476 · $0.0429 per change on the original · $0.0356 after the standard cleanup (−$0.0073, −16.9%) · average of 6 runs</p></div>
+    <p class="callout"><b>66 changes</b> to break even on the average of six runs. After that, every change costs <b>16.9% less</b> ($0.0073 of $0.0429), though the typical run saved about 6%.</p>
+    <p class="meta">Run by run the payback ranged from 18 changes to never: the savings were 44%, 7%, 5%, 25%, 0%, 1%. Six runs on one project (three with unrelated tickets, three revising one feature), so treat 66 as an estimate.</p>
+    <div class="eyebrow">Cumulative dollars saved vs. not cleaning up</div>
     <div id="payChart"></div>
     <div class="scroll"><table id="payTable"></table></div>
-    <p class="meta">Return on total spend includes the one-time refactor, so it approaches 5.3% as changes accumulate.</p>
+    <p class="meta">Return on total spend includes the one-time refactor, so it approaches 16.9% as changes accumulate.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-rebuild">
+    <div><h2 id="h-rebuild">6 · Rebuild garth to a score of 75, then measure</h2>
+    <p class="meta">An agent used Krypton's own output to refactor the worst function first, re-scoring after each step, until garth's structure score passed 75. It stopped at 81.</p></div>
+    <div class="scroll"><table id="rebuildTable"></table></div>
+    <p class="meta">Cost row: one run of five later feature revisions on the rebuilt code against the three no-cleanup runs ($0.177 on average, range $0.163 to $0.191). One run is a data point, not a result.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-gate">
+    <div><h2 id="h-gate">7 · A Krypton CI gate over 20 revisions</h2>
+    <p class="meta">One feature grew over 20 sequential agent revisions, three chains per setup. Gate: after each ticket the harness scored the code with Krypton and sent an agent back to fix any touched function over the limit (up to two rounds).</p></div>
+    <div class="scroll"><table id="gateTable"></table></div>
+    <p class="meta">The gate kept the code far healthier and cost about 62% more per chain. Cost per revision did not keep rising with the tangle in the plain chains: about 30% up over the first ten revisions, then flat.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-gap">
+    <div><h2 id="h-gap">8 · AI-assisted code against the rest of the repository</h2>
+    <p class="meta">Every function in the current code (tests excluded) is scored by Krypton and attributed with git blame: the share of its lines whose last change was in a commit crediting Claude. Functions at least half AI-credited are compared with the rest.</p></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Repository</th><th>Functions: AI / rest</th><th>Median lines: AI / rest</th><th>Over the limit: AI / rest</th><th>Decision points per line: AI / rest</th></tr></thead>
+      <tbody>
+        <tr><td>garth (41 files)</td><td>27 / 44</td><td>16 / 18</td><td>15% / 16%</td><td>0.189 / 0.148</td></tr>
+        <tr><td>MCP reference servers (7 servers)</td><td>144 / 82</td><td>19 / 29</td><td>16% / 32%</td><td>0.084 / 0.088</td></tr>
+      </tbody>
+    </table></div>
+    <p class="meta">Inside size bands the difference mostly disappears. In the MCP servers: 5 to 15 lines, 0% against 0%; 15 to 30 lines, 8% against 5%; 30 to 60 lines, 50% against 52%; over 60 lines, 67% against 91% (12 and 11 functions). The raw gap comes from AI-assisted functions being smaller. This measures a difference, not which is better: the other code is older and not human-only, and commit trailers show involvement, not authorship. The tool is <code>python -m tools.ai_human_gap REPO --subdir src</code>.</p>
   </section>
 
   <section class="panel" aria-labelledby="h-rc">
-    <div><h2 id="h-rc">5 · Does the refactor itself make caching easier?</h2>
-    <p class="meta">39 function-level edits from the last 12 commits, applied to both layouts</p></div>
+    <div><h2 id="h-rc">9 · Does the live Claude run match the prediction?</h2>
+    <p class="meta">the same 12 commits, predicted from the shared prefix of consecutive prompts and measured on the live Claude API</p></div>
     <div class="scroll"><table id="rcTable"></table></div>
-    <p class="meta">Predicted cached share is identical for both layouts under every order. Live check on the original layout (78% and 53%) is within 2 points of prediction.</p>
+    <p class="meta">Predictions land within about 2 points of the live result. With a single cache breakpoint at the end of the prompt, every order cached 0%: the ordering only helps when stable files sit in front of earlier breakpoints.</p>
   </section>
 
   <section class="panel" aria-labelledby="h-other">
-    <div><h2 id="h-other">6 · Other runs</h2></div>
+    <div><h2 id="h-other">10 · Other runs</h2></div>
     <div class="two">
       <div><div class="eyebrow" style="margin-bottom:6px">Built from scratch (billing engine, 20 iterations)</div><div class="scroll"><table id="billTable"></table></div></div>
       <div><div class="eyebrow" style="margin-bottom:6px">AI-written snippets, hints in the refactor loop (8 samples, code not executed)</div><div class="scroll"><table id="dataTable"></table></div></div>
@@ -150,27 +202,29 @@ thead th { border-bottom: 1px solid var(--wine); }
   </section>
 
   <section class="panel" aria-labelledby="h-method">
-    <div><h2 id="h-method">7 · Method and formulas</h2>
+    <div><h2 id="h-method">11 · Method and formulas</h2>
     <p class="meta">The ordering only arranges files; it never changes a complexity score.</p></div>
     <ul class="formulas">
       <li><b>Volatility order</b><code>files are sent from least to most frequently changed, using Krypton's ordering algorithm over the repository's change history, so the stable part of the prompt stays at the front.</code></li>
       <li><b>Cached share</b><code>cached_tokens ÷ prompt_tokens, read from the provider's usage fields, replayed commits 1–12 (turn 0 is a cold start and can never hit).</code></li>
-      <li><b>Predicted share</b><code>longest common prefix of two consecutive prompts ÷ prompt length, rounded down to the provider's 128-token steps (cache starts at 1,024 tokens). Matched the live result within about 2 points.</code></li>
+      <li><b>Predicted share</b><code>longest common prefix of two consecutive prompts ÷ prompt length, Matched the live Claude result within about 2 points.</code></li>
       <li><b>Bill ratio</b><code>1 − (1 − k) · h, where h is the reused share of each request and k is the cached-read price as a fraction of the normal input price.</code></li>
-      <li><b>Per-change saving</b><code>tokens an agent spent on three identical change tasks, original vs refactored: 2,145 fewer of about 40,400 per change (5.3%).</code></li>
-      <li><b>Payback</b><code>one-time refactor cost ÷ per-change saving = 101,398 ÷ 2,145 ≈ 47 change tasks. Net tokens saved after n changes = 2,145 · n − 101,398; return on total spend = that ÷ (40,400 · n).</code></li>
+      <li><b>Per-change saving</b><code>dollars an agent spent on five change tickets, original vs after the standard cleanup, over six runs: $0.0073 less of about $0.0429 per change (16.9%). The runs saved 44%, 7%, 5%, 25%, 0%, 1%.</code></li>
+      <li><b>Payback</b><code>one-time cleanup cost ÷ per-change saving = $0.476 ÷ $0.0073 ≈ 66 change tasks. Net dollars saved after n changes = 0.0073 · n − 0.476; return on total spend = that ÷ (0.0429 · n).</code></li>
     </ul>
   </section>
 
   <section class="panel" aria-labelledby="h-sum">
     <h2 id="h-sum">Summary</h2>
     <ul class="sumlist">
-      <li><b>Caching</b><span>Krypton's file order kept 79% of prompt tokens cached, against 58% alphabetical and 1% reverse.</span></li>
+      <li><b>Caching</b><span>On garth, Krypton's file order kept 71% of prompt tokens cached, against 47% alphabetical and 0% reverse, so the 13-turn replay cost $0.51 against $0.79 and $1.30. That is a best case: across 20 repositories it beat alphabetical on 12, tied on 1 and lost on 7, and on a second live replay (pluggy) it reused 4% against 22% and 25%.</span></li>
       <li><b>Refactor</b><span>Logic-complexity flags went from 9 to 0 with all 163 tests passing; the control agent left 8 of 9.</span></li>
-      <li><b>Payback</b><span>47 change tasks repay the one-time refactor (101,398 tokens). After that, every change costs 5.3% fewer tokens.</span></li>
+      <li><b>Payback</b><span>66 change tasks repay the one-time cleanup ($0.48) on the average of six runs. After that, every change costs 16.9% less on average (about 6% for the typical run).</span></li>
+      <li><b>CI gate</b><span>Over 20 agent revisions a gate kept the worst function near 12× the limit against about 1,900×, and the structure score at 72 against 55, for about 62% more cost per run.</span></li>
+      <li><b>AI against the rest</b><span>In garth and the MCP reference servers, AI-assisted functions are not more tangled per unit of size; they are smaller.</span></li>
       <li><b>Cost</b><span>The refactor used 2.4× the tokens of a no-Krypton refactor and left the code the same size.</span></li>
     </ul>
-    <p class="meta">One repo (garth), one cache model, one run per arm: read the figures as estimates.</p>
+    <p class="meta">One repo (garth), one cache model; the payback figures come from 6 runs: read them as estimates.</p>
     <p><a class="back" href="index.html">← Back to demo</a></p>
   </section>
   <footer>garth v0.8.0 · cached share = cached_tokens ÷ prompt_tokens over replayed commits 1–12 · dollar figures cover all 13 turns</footer>
@@ -182,9 +236,9 @@ const DATA = {
   cache: {
     turns: [0,1,2,3,4,5,6,7,8,9,10,11,12], changed: [0,1,2,2,1,1,2,2,2,2,2,2,3],
     series: [
-      { key: 'vol', name: 'Volatility order (Krypton)', color: 'var(--s-krypton)', short: 'volatility', actual: [0,86,78,73,73,99,94,73,77,73,77,77,64], pred: 81, share: 79, spend: 0.0148 },
-      { key: 'alpha', name: 'Alphabetical', color: 'var(--s-base)', short: 'alphabetical', actual: [0,49,61,61,61,99,57,60,61,61,65,65,0], pred: 60, share: 58, spend: 0.0194 },
-      { key: 'rev', name: 'Reverse (volatile first)', color: 'var(--s-ctrl)', short: 'reverse', actual: [0,0,0,0,16,0,0,0,0,0,0,0,0], pred: 1, share: 1, spend: 0.0323 }
+      { key: 'vol', name: 'Volatility order (Krypton)', color: 'var(--s-krypton)', short: 'volatility', actual: [0, 74, 74, 73, 73, 73, 73, 73, 73, 73, 73, 73, 50], pred: 73, share: 71.2, spend: 0.5147 },
+      { key: 'alpha', name: 'Alphabetical', color: 'var(--s-base)', short: 'alphabetical', actual: [0, 49, 49, 48, 48, 76, 48, 48, 48, 48, 48, 48, 0], pred: 48, share: 46.6, spend: 0.7869 },
+      { key: 'rev', name: 'Reverse (volatile first)', color: 'var(--s-ctrl)', short: 'reverse', actual: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], pred: 0, share: 0.0, spend: 1.302 }
     ]
   },
   refactor: {
@@ -203,13 +257,13 @@ const DATA = {
     ]
   },
   tasks: {
-    names: ['Sanitizer: nested JSON and new fields', 'Body Battery parser: end time and clamp', 'HTTP client: header leak fix and defaults'],
-    orig: [38771, 42068, 40361], refac: [37707, 38831, 38227], origCalls: [3, 10, 4], refacCalls: [4, 4, 4]
+    names: ["Body Battery parser: end time and clamp", "HTTP client: header leak fix and defaults", "Key helpers: nested lists and DTO suffix", "Training status: every device, no mutation", "Stats paging: empty pages and duplicates"],
+    orig: [0.0392, 0.0277, 0.0453, 0.0229, 0.1172], refac: [0.0374, 0.0314, 0.0368, 0.0284, 0.0616], origCalls: [5, 3.7, 5.3, 3, 13.7], refacCalls: [5.3, 4, 4.7, 5.3, 9]
   },
   rc: { head: ['Layout', 'Volatility order', 'Alphabetical', 'Reverse'], rows: [
-    ['Original garth (predicted)', '78%', '55%', '1%'],
-    ['Refactored garth (predicted)', '78%', '56%', '1%'],
-    ['Original garth (live check)', '78%', '53%', '—']
+    ['Predicted', '73%', '48%', '0%'],
+    ['Live Claude API', '71%', '47%', '0%'],
+    ['One breakpoint at the end (live)', '0%', '0%', '0%']
   ] },
   bill: { head: ['', 'No Krypton', 'With Krypton'], rows: [
     ['Hidden tests (83)', '83', '83'], ['Krypton purity', '31', '100'], ['Source files / lines', '4 / 596', '13 / 742'], ['Largest file', '494 lines', '262 lines'],
@@ -222,6 +276,7 @@ const DATA = {
 
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => n.toLocaleString('en-US');
+const money = (v) => '$' + v.toFixed(3);
 const pct = (n) => n + '%';
 const tip = $('tip');
 function showTip(e, text) { tip.textContent = text; tip.style.opacity = 1; const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8), y = e.clientY + 16; tip.style.left = Math.max(8, x) + 'px'; tip.style.top = y + 'px'; }
@@ -240,10 +295,10 @@ function bars(el, rows, max) {
 const c = DATA.cache.series, t = DATA.tasks;
 const sum = (a) => a.reduce((x, y) => x + y, 0);
 $('verdicts').innerHTML = [
-  { big: c[0].share + '%', what: 'of prompt tokens cached over the 12 replayed commits with Krypton\'s volatility order (72.6% counting the cold start), against ' + c[1].share + '% alphabetical and ' + c[2].share + '% reverse', tag: 'good', mark: '✓ Works' },
+  { big: c[0].share + '%', what: 'of prompt tokens cached over the 12 replayed commits with Krypton\'s volatility order (65.7% counting the cold start), against ' + c[1].share + '% alphabetical and ' + c[2].share + '% reverse. Across 20 real repositories Krypton\'s order beat alphabetical on 12 and lost on 7 (typical gain 4 points).', tag: 'bad', mark: '! Varies' },
   { big: '9 → 0', what: 'logic-complexity flags after an Krypton-guided refactor. The control agent left 8 of the 9. Tests: 163 of 163 pass.', tag: 'good', mark: '✓ Works' },
-  { big: '47', what: 'change tasks to repay the one-time refactor (101,398 tokens). After that, every change costs 5.3% fewer tokens (2,145 of 40,400).', tag: 'good', mark: '✓ Pays back' },
-  { big: '2.4×', what: 'the tokens of a no-Krypton refactor (101K vs 43K), and the code is no smaller in tokens. Recouping it takes roughly 47 tasks.', tag: 'bad', mark: '! Costs' }
+  { big: '66', what: 'change tasks to repay the one-time cleanup ($0.48), averaged over six runs. After that, every change costs 16.9% less on average (the typical run saved 6%). Runs ranged from 18 to never.', tag: 'good', mark: '✓ Pays back' },
+  { big: '$0.48', what: 'one-time cost of the standard cleanup on garth ($0.27 for the targeted one). The agent got 28 of 30 tickets right after it, against 30 of 30 with no cleanup.', tag: 'bad', mark: '! Costs' }
 ].map((v) => '<div class="verdict"><span class="tag ' + v.tag + '">' + v.mark + '</span><div class="big">' + v.big + '</div><div class="what">' + v.what + '</div></div>').join('');
 
 /* 1 · caching */
@@ -276,20 +331,20 @@ function drawLine() {
 table($('refTable'), DATA.refactor.head, DATA.refactor.rows, 3);
 
 /* 3 · tasks */
-legend($('taskLegend'), [{ name: 'Original garth', color: 'var(--s-base)' }, { name: 'Krypton-refactored garth', color: 'var(--s-krypton)' }]);
+legend($('taskLegend'), [{ name: 'Original garth', color: 'var(--s-base)' }, { name: 'Krypton-cleaned garth', color: 'var(--s-krypton)' }]);
 const maxT = Math.max(...t.orig, ...t.refac) * 1.05;
 $('taskBars').innerHTML = t.names.map((n, i) => '<div class="grp"><div class="gl">' + n + '</div><div class="r1"></div></div>').join('') +
-  '<div class="grp"><div class="gl">All three tasks</div><div class="r1"></div></div>';
+  '<div class="grp"><div class="gl">All five tasks</div><div class="r1"></div></div>';
 const groups = $('taskBars').querySelectorAll('.grp .r1');
 const pairs = t.names.map((n, i) => [t.orig[i], t.refac[i], t.origCalls[i], t.refacCalls[i]]).concat([[sum(t.orig), sum(t.refac), sum(t.origCalls), sum(t.refacCalls)]]);
 pairs.forEach((p, i) => {
-  const total = i === 3, scale = total ? sum(t.orig) * 1.05 : maxT;
+  const total = i === t.names.length, scale = total ? sum(t.orig) * 1.05 : maxT;
   bars(groups[i], [
-    { label: 'original', value: p[0], color: 'var(--s-base)', text: fmt(p[0]), tip: 'Original garth\n' + fmt(p[0]) + ' tokens · ' + p[2] + ' tool calls' },
-    { label: 'refactored', value: p[1], color: 'var(--s-krypton)', text: fmt(p[1]) + (p[1] < p[0] ? ' (−' + (100 * (1 - p[1] / p[0])).toFixed(1) + '%)' : ''), tip: 'Krypton-refactored garth\n' + fmt(p[1]) + ' tokens · ' + p[3] + ' tool calls' }
+    { label: 'original', value: p[0], color: 'var(--s-base)', text: money(p[0]), tip: 'Original garth\n' + money(p[0]) + ' · ' + p[2] + ' requests' },
+    { label: 'cleaned', value: p[1], color: 'var(--s-krypton)', text: money(p[1]) + (p[1] < p[0] ? ' (−' + (100 * (1 - p[1] / p[0])).toFixed(1) + '%)' : ' (+' + (100 * (p[1] / p[0] - 1)).toFixed(1) + '%)'), tip: 'Krypton-cleaned garth\n' + money(p[1]) + ' · ' + p[3] + ' requests' }
   ], scale);
 });
-table($('taskTable'), ['Task', 'Original tokens', 'Refactored tokens', 'Tool calls (orig / refac)'], t.names.map((n, i) => [n, fmt(t.orig[i]), fmt(t.refac[i]), t.origCalls[i] + ' / ' + t.refacCalls[i]]).concat([['Total', fmt(sum(t.orig)), fmt(sum(t.refac)), sum(t.origCalls) + ' / ' + sum(t.refacCalls)]]), 2);
+table($('taskTable'), ['Task', 'Original cost', 'Cleaned cost', 'Requests (orig / cleaned)'], t.names.map((n, i) => [n, money(t.orig[i]), money(t.refac[i]), t.origCalls[i] + ' / ' + t.refacCalls[i]]).concat([['Total', money(sum(t.orig)), money(sum(t.refac)), sum(t.origCalls).toFixed(1) + ' / ' + sum(t.refacCalls).toFixed(1)]]), 2);
 
 /* 5 · refactor + caching */
 table($('rcTable'), DATA.rc.head, DATA.rc.rows, 1);
@@ -298,24 +353,24 @@ table($('rcTable'), DATA.rc.head, DATA.rc.rows, 1);
 table($('billTable'), DATA.bill.head, DATA.bill.rows, 2);
 table($('dataTable'), DATA.data.head, DATA.data.rows, 0);
 
-/* 4 · payback: cumulative tokens saved after n changes = save * n - one-time cost */
-const PAY = { once: 101398, per: 40400, save: 2145, max: 150 };
+/* 4 · payback: cumulative dollars saved after n changes = save * n - one-time cost */
+const PAY = { once: 0.47583, per: 0.04289, save: 0.00725, max: 150 };
 const BREAK_EVEN = PAY.once / PAY.save;
 function netSaved(n) { return PAY.save * n - PAY.once; }
 function returnPct(n) { return 100 * netSaved(n) / (PAY.per * n); }
-function kTok(v) { return (v < 0 ? '−' : v > 0 ? '+' : '') + Math.round(Math.abs(v) / 1000) + 'K'; }
+function kTok(v) { return (v < 0 ? '−' : v > 0 ? '+' : '') + '$' + Math.abs(v).toFixed(2); }
 function signedPct(v) { const s = Math.abs(v).toFixed(1); return (Number(s) === 0 ? '' : v < 0 ? '−' : '+') + s + '%'; }
-table($('payTable'), ['Changes after the refactor', 'Net tokens saved', 'Return on total spend'],
-  [10, 25, 47, 100, 150, 250, 500].map((n) => [n === 47 ? '47 (break-even)' : String(n), fmt(Math.round(netSaved(n))), signedPct(returnPct(n))]), 2);
+table($('payTable'), ['Changes after the cleanup', 'Net dollars saved', 'Return on total spend'],
+  [10, 25, 66, 100, 150, 250, 500].map((n) => [n === 66 ? '66 (break-even)' : String(n), (netSaved(n) < 0 ? '−$' : '+$') + Math.abs(netSaved(n)).toFixed(2), signedPct(returnPct(n))]), 2);
 
 function payGeometry(el) {
-  const W = Math.max(300, el.clientWidth), H = 270, m = { l: 54, r: 14, t: 14, b: 32 }, lo = -120000, hi = 240000;
+  const W = Math.max(300, el.clientWidth), H = 270, m = { l: 54, r: 14, t: 14, b: 32 }, lo = -0.6, hi = 0.8;
   return { W, H, m, x: (n) => m.l + (W - m.l - m.r) * n / PAY.max, y: (v) => m.t + (H - m.t - m.b) * (1 - (v - lo) / (hi - lo)) };
 }
 function payGrid(g) {
   const { W, m, x, y } = g;
-  const rows = [-100000, 0, 100000, 200000].map((v) => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--${v === 0 ? 'axis' : 'grid'})" stroke-width="${v === 0 ? 1.5 : 1}"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${v === 0 ? '0' : kTok(v)}</text>`);
-  const cols = [0, 25, 50, 75, 100, 125, 150].map((n) => `<text x="${x(n)}" y="${g.H - 10}" text-anchor="middle">${n}</text>`);
+  const rows = [-0.5, 0, 0.5].map((v) => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--${v === 0 ? 'axis' : 'grid'})" stroke-width="${v === 0 ? 1.5 : 1}"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${v === 0 ? '0' : kTok(v)}</text>`);
+  const cols = [0, 25, 50, 75, 100].map((n) => `<text x="${x(n)}" y="${g.H - 10}" text-anchor="middle">${n}</text>`);
   return rows.join('') + cols.join('') + `<text x="${W - m.r}" y="${g.H - 22}" text-anchor="end" style="font-size:10px">changes →</text>`;
 }
 function payShapes(g) {
@@ -327,11 +382,11 @@ function payShapes(g) {
   return neg + pos + line + mark;
 }
 function payTip(n) {
-  return 'after ' + n + ' change' + (n === 1 ? '' : 's') + '\nnet tokens saved ' + fmt(Math.round(netSaved(n))) + '\nreturn on total spend ' + (n ? signedPct(returnPct(n)) : 'n/a');
+  return 'after ' + n + ' change' + (n === 1 ? '' : 's') + '\nnet dollars saved ' + (netSaved(n) < 0 ? '−$' : '+$') + Math.abs(netSaved(n)).toFixed(2) + '\nreturn on total spend ' + (n ? signedPct(returnPct(n)) : 'n/a');
 }
 function drawPayback() {
   const el = $('payChart'), g = payGeometry(el);
-  el.innerHTML = `<svg viewBox="0 0 ${g.W} ${g.H}" width="100%" height="${g.H}" role="img" aria-label="Cumulative tokens saved by refactoring first, crossing zero after about 47 changes">${payGrid(g)}${payShapes(g)}<line id="payCross" y1="${g.m.t}" y2="${g.H - g.m.b}" stroke="var(--muted)" stroke-dasharray="3 3" opacity="0"/><rect id="payHit" x="${g.m.l}" y="0" width="${g.W - g.m.l - g.m.r}" height="${g.H}" fill="transparent"/></svg>`;
+  el.innerHTML = `<svg viewBox="0 0 ${g.W} ${g.H}" width="100%" height="${g.H}" role="img" aria-label="Cumulative dollars saved by cleaning up first, crossing zero after about 66 changes">${payGrid(g)}${payShapes(g)}<line id="payCross" y1="${g.m.t}" y2="${g.H - g.m.b}" stroke="var(--muted)" stroke-dasharray="3 3" opacity="0"/><rect id="payHit" x="${g.m.l}" y="0" width="${g.W - g.m.l - g.m.r}" height="${g.H}" fill="transparent"/></svg>`;
   const cross = el.querySelector('#payCross'), hit = el.querySelector('#payHit');
   hit.addEventListener('pointermove', (e) => {
     const r = hit.getBoundingClientRect(), n = Math.max(0, Math.min(PAY.max, Math.round(PAY.max * (e.clientX - r.left) / r.width)));
@@ -340,6 +395,17 @@ function drawPayback() {
   hit.addEventListener('pointerleave', () => { cross.setAttribute('opacity', 0); hideTip(); });
 }
 drawPayback(); new ResizeObserver(() => drawPayback()).observe($('payChart'));
+$('rebuildTable').innerHTML = '<thead><tr><th></th><th>Original</th><th>Rebuilt to 75</th></tr></thead><tbody>' + [
+  ['Krypton structure score', '62', '81'], ['Files flagged', '13 of 41', '7 of 42'], ['Functions over the limit', '11', '3'], ['Worst function', '46× over', '1.9× over'],
+  ['Longest function (effective lines)', '166', '55'], ['Deeply nested functions', '8', '5'], ['Functions', '111', '129'], ['Lines of source', '3,496', '3,474'],
+  ['garth tests passing', '163', '163'], ['Cost of 5 later feature revisions (one run)', '$0.177', '$0.176'], ['Structure score after those revisions', '—', '74']
+].map((r) => '<tr>' + r.map((c) => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</tbody>';
+const SURVEY = [{"repo": "pallets/flask", "files": 24, "v": 51, "a": 20, "r": 18}, {"repo": "pallets/click", "files": 17, "v": 27, "a": 0, "r": 32}, {"repo": "matin/garth", "files": 41, "v": 73, "a": 48, "r": 0}, {"repo": "pallets/itsdangerous", "files": 8, "v": 45, "a": 29, "r": 17}, {"repo": "pallets/jinja", "files": 25, "v": 19, "a": 6, "r": 17}, {"repo": "psf/requests", "files": 19, "v": 23, "a": 12, "r": 31}, {"repo": "encode/httpx", "files": 23, "v": 27, "a": 16, "r": 33}, {"repo": "Textualize/rich", "files": 100, "v": 49, "a": 38, "r": 21}, {"repo": "pallets-eco/flask-wtf", "files": 10, "v": 42, "a": 32, "r": 14}, {"repo": "hynek/structlog", "files": 21, "v": 19, "a": 14, "r": 28}, {"repo": "pypa/packaging", "files": 22, "v": 35, "a": 33, "r": 37}, {"repo": "tqdm/tqdm", "files": 31, "v": 22, "a": 20, "r": 40}, {"repo": "pallets/markupsafe", "files": 2, "v": 33, "a": 33, "r": 33}, {"repo": "agronholm/anyio", "files": 46, "v": 40, "a": 41, "r": 32}, {"repo": "theskumar/python-dotenv", "files": 8, "v": 33, "a": 36, "r": 27}, {"repo": "python-attrs/attrs", "files": 19, "v": 11, "a": 14, "r": 43}, {"repo": "python-jsonschema/jsonschema", "files": 37, "v": 14, "a": 17, "r": 37}, {"repo": "python-attrs/cattrs", "files": 50, "v": 25, "a": 37, "r": 38}, {"repo": "pallets/werkzeug", "files": 54, "v": 23, "a": 36, "r": 11}, {"repo": "pytest-dev/pluggy", "files": 8, "v": 4, "a": 23, "r": 18}];
+$('surveyTable').innerHTML = '<thead><tr><th>Repository</th><th>Files</th><th>Krypton</th><th>Alphabetical</th><th>Reverse</th><th>Krypton vs alphabetical</th></tr></thead><tbody>' + SURVEY.map((s) => '<tr><td>' + s.repo + '</td><td>' + s.files + '</td><td>' + s.v + '%</td><td>' + s.a + '%</td><td>' + s.r + '%</td><td>' + (s.v >= s.a ? '+' : '−') + Math.abs(s.v - s.a) + ' pts</td></tr>').join('') + '</tbody>';
+$('gateTable').innerHTML = '<thead><tr><th></th><th>Plain</th><th>With the gate</th></tr></thead><tbody>' + [
+  ['Cost of 20 revisions (average of 3)', '$0.92', '$1.49'], ['…of which fix rounds', '—', '$0.41'], ['Worst function at the end', '~1,900× over the limit', '~12× over'],
+  ['Structure score at the end', '55', '72'], ['Revisions done correctly', '60 of 60', '60 of 60']
+].map((r) => '<tr>' + r.map((c) => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</tbody>';
 drawLine(); new ResizeObserver(() => drawLine()).observe($('cacheLine'));
 </script>
 

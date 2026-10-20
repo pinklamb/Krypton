@@ -1,0 +1,3801 @@
+{
+ "meta": {
+  "date": "2026-10-15",
+  "model": "claude-sonnet-5-5",
+  "prices_per_mtok": {
+   "input": 2.0,
+   "output": 10.0,
+   "read": 0.2,
+   "write": 2.5
+  },
+  "repo": "garth_repo",
+  "subdir": "src",
+  "commits": [
+   "88d74029",
+   "51d821f3",
+   "868af845",
+   "c3193587",
+   "adbdcc46",
+   "2fa07d10",
+   "205d3397",
+   "8d8c7688",
+   "3571c55e",
+   "a3bac031",
+   "9760c411",
+   "6c1b5371",
+   "f99159a1"
+  ],
+  "orders": {
+   "volatility": [
+    "garth/data/body_battery/__init__.py",
+    "garth/data/body_battery/daily_stress.py",
+    "garth/stats/training_status/__init__.py",
+    "garth/stats/training_status/daily.py",
+    "garth/stats/training_status/monthly.py",
+    "garth/stats/training_status/weekly.py",
+    "garth/users/__init__.py",
+    "garth/auth_tokens.py",
+    "garth/cli.py",
+    "garth/data/body_battery/readings.py",
+    "garth/data/daily_sleep_data.py",
+    "garth/data/daily_summary.py",
+    "garth/data/fitness_stats.py",
+    "garth/data/heart_rate.py",
+    "garth/data/training_readiness.py",
+    "garth/stats/hydration.py",
+    "garth/stats/intensity_minutes.py",
+    "garth/stats/sleep.py",
+    "garth/stats/steps.py",
+    "garth/stats/stress.py",
+    "garth/data/activity.py",
+    "garth/data/garmin_scores.py",
+    "garth/exc.py",
+    "garth/stats/__init__.py",
+    "garth/users/profile.py",
+    "garth/data/morning_training_readiness.py",
+    "garth/stats/_base.py",
+    "garth/stats/hrv.py",
+    "garth/users/settings.py",
+    "garth/data/_base.py",
+    "garth/utils.py",
+    "garth/data/body_battery/events.py",
+    "garth/data/weight.py",
+    "garth/telemetry.py",
+    "garth/data/hrv.py",
+    "garth/sso.py",
+    "garth/data/sleep.py",
+    "garth/data/__init__.py",
+    "garth/__init__.py",
+    "garth/http.py",
+    "garth/version.py"
+   ],
+   "alphabetical": [
+    "garth/__init__.py",
+    "garth/auth_tokens.py",
+    "garth/cli.py",
+    "garth/data/__init__.py",
+    "garth/data/_base.py",
+    "garth/data/activity.py",
+    "garth/data/body_battery/__init__.py",
+    "garth/data/body_battery/daily_stress.py",
+    "garth/data/body_battery/events.py",
+    "garth/data/body_battery/readings.py",
+    "garth/data/daily_sleep_data.py",
+    "garth/data/daily_summary.py",
+    "garth/data/fitness_stats.py",
+    "garth/data/garmin_scores.py",
+    "garth/data/heart_rate.py",
+    "garth/data/hrv.py",
+    "garth/data/morning_training_readiness.py",
+    "garth/data/sleep.py",
+    "garth/data/training_readiness.py",
+    "garth/data/weight.py",
+    "garth/exc.py",
+    "garth/http.py",
+    "garth/sso.py",
+    "garth/stats/__init__.py",
+    "garth/stats/_base.py",
+    "garth/stats/hrv.py",
+    "garth/stats/hydration.py",
+    "garth/stats/intensity_minutes.py",
+    "garth/stats/sleep.py",
+    "garth/stats/steps.py",
+    "garth/stats/stress.py",
+    "garth/stats/training_status/__init__.py",
+    "garth/stats/training_status/daily.py",
+    "garth/stats/training_status/monthly.py",
+    "garth/stats/training_status/weekly.py",
+    "garth/telemetry.py",
+    "garth/users/__init__.py",
+    "garth/users/profile.py",
+    "garth/users/settings.py",
+    "garth/utils.py",
+    "garth/version.py"
+   ],
+   "reverse": [
+    "garth/version.py",
+    "garth/http.py",
+    "garth/__init__.py",
+    "garth/data/__init__.py",
+    "garth/data/sleep.py",
+    "garth/sso.py",
+    "garth/data/hrv.py",
+    "garth/telemetry.py",
+    "garth/data/weight.py",
+    "garth/data/body_battery/events.py",
+    "garth/utils.py",
+    "garth/data/_base.py",
+    "garth/users/settings.py",
+    "garth/stats/hrv.py",
+    "garth/stats/_base.py",
+    "garth/data/morning_training_readiness.py",
+    "garth/users/profile.py",
+    "garth/stats/__init__.py",
+    "garth/exc.py",
+    "garth/data/garmin_scores.py",
+    "garth/data/activity.py",
+    "garth/stats/stress.py",
+    "garth/stats/steps.py",
+    "garth/stats/sleep.py",
+    "garth/stats/intensity_minutes.py",
+    "garth/stats/hydration.py",
+    "garth/data/training_readiness.py",
+    "garth/data/heart_rate.py",
+    "garth/data/fitness_stats.py",
+    "garth/data/daily_summary.py",
+    "garth/data/daily_sleep_data.py",
+    "garth/data/body_battery/readings.py",
+    "garth/cli.py",
+    "garth/auth_tokens.py",
+    "garth/users/__init__.py",
+    "garth/stats/training_status/weekly.py",
+    "garth/stats/training_status/monthly.py",
+    "garth/stats/training_status/daily.py",
+    "garth/stats/training_status/__init__.py",
+    "garth/data/body_battery/daily_stress.py",
+    "garth/data/body_battery/__init__.py"
+   ]
+  },
+  "max_usd": 17.5,
+  "spent_usd": 9.113098,
+  "reps": 2
+ },
+ "runs": [
+  {
+   "order": "volatility",
+   "strategy": "quartiles",
+   "rep": 0,
+   "nonce": "80f707790c",
+   "anchors": [
+    "garth/data/heart_rate.py",
+    "garth/stats/hrv.py",
+    "garth/telemetry.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39583
+      },
+      "cache_creation_input_tokens": 39583,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.4701008000120055,
+     "cost": 0.0990255
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7601272794027659,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10282
+      },
+      "cache_creation_input_tokens": 10282,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.705528599995887,
+     "cost": 0.0316292
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7586560054120588,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10362
+      },
+      "cache_creation_input_tokens": 10362,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 4.21922640001867,
+     "cost": 0.0318292
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7539028944911298,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10707
+      },
+      "cache_creation_input_tokens": 10707,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.298880399990594,
+     "cost": 0.032691700000000004
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7528835843162851,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10777
+      },
+      "cache_creation_input_tokens": 10777,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.7861925000033807,
+     "cost": 0.0328667
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7528835843162851,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10777
+      },
+      "cache_creation_input_tokens": 10777,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.4745818999945186,
+     "cost": 0.0328667
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7532066530471366,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10757
+      },
+      "cache_creation_input_tokens": 10757,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1565576000139117,
+     "cost": 0.0328167
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7496541543260884,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 11030
+      },
+      "cache_creation_input_tokens": 11030,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2070887000008952,
+     "cost": 0.0334992
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7523854784002385,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10824
+      },
+      "cache_creation_input_tokens": 10824,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.7374617999885231,
+     "cost": 0.0329842
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7522733201654679,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10826
+      },
+      "cache_creation_input_tokens": 10826,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.461046799988253,
+     "cost": 0.032989199999999996
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7497864200282297,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10980
+      },
+      "cache_creation_input_tokens": 10980,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.210273499978939,
+     "cost": 0.0333742
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7493132632985634,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 11020
+      },
+      "cache_creation_input_tokens": 11020,
+      "cache_read_input_tokens": 29281,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2375601999810897,
+     "cost": 0.033474199999999996
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5091264365687191,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20226
+      },
+      "cache_creation_input_tokens": 20226,
+      "cache_read_input_tokens": 20170,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.249895800021477,
+     "cost": 0.054667
+    }
+   ],
+   "complete": true
+  },
+  {
+   "order": "volatility",
+   "strategy": "end",
+   "rep": 0,
+   "nonce": "5f264af483",
+   "anchors": [
+    "garth/data/heart_rate.py",
+    "garth/stats/hrv.py",
+    "garth/telemetry.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39583
+      },
+      "cache_creation_input_tokens": 39583,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.347552799998084,
+     "cost": 0.0990255
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39563
+      },
+      "cache_creation_input_tokens": 39563,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.3658542000048328,
+     "cost": 0.0989755
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39643
+      },
+      "cache_creation_input_tokens": 39643,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.6019781999930274,
+     "cost": 0.0991755
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39988
+      },
+      "cache_creation_input_tokens": 39988,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.3537740999890957,
+     "cost": 0.100038
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40058
+      },
+      "cache_creation_input_tokens": 40058,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6413220000104047,
+     "cost": 0.100213
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40058
+      },
+      "cache_creation_input_tokens": 40058,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.161462299991399,
+     "cost": 0.100213
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40038
+      },
+      "cache_creation_input_tokens": 40038,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 3.47840790002374,
+     "cost": 0.100163
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40311
+      },
+      "cache_creation_input_tokens": 40311,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1593585000082385,
+     "cost": 0.1008455
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40105
+      },
+      "cache_creation_input_tokens": 40105,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2055555999977514,
+     "cost": 0.1003305
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40107
+      },
+      "cache_creation_input_tokens": 40107,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.7326797999849077,
+     "cost": 0.1003355
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40261
+      },
+      "cache_creation_input_tokens": 40261,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2373314999858849,
+     "cost": 0.1007205
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40301
+      },
+      "cache_creation_input_tokens": 40301,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.4566479000204708,
+     "cost": 0.1008205
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40396
+      },
+      "cache_creation_input_tokens": 40396,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.499789099994814,
+     "cost": 0.101058
+    }
+   ],
+   "complete": true
+  },
+  {
+   "order": "alphabetical",
+   "strategy": "quartiles",
+   "rep": 0,
+   "nonce": "0a81f60e92",
+   "anchors": [
+    "garth/data/body_battery/events.py",
+    "garth/data/training_readiness.py",
+    "garth/stats/hydration.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39585
+      },
+      "cache_creation_input_tokens": 39585,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.8073607000114862,
+     "cost": 0.0990305
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5059638684653983,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20198
+      },
+      "cache_creation_input_tokens": 20198,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.191135100001702,
+     "cost": 0.0544364
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5049845436864012,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20278
+      },
+      "cache_creation_input_tokens": 20278,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.0862952999887057,
+     "cost": 0.0546364
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5018207282913165,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20623
+      },
+      "cache_creation_input_tokens": 20623,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6958010999951512,
+     "cost": 0.055498900000000004
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.501142244393678,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20693
+      },
+      "cache_creation_input_tokens": 20693,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6650443999969866,
+     "cost": 0.0556739
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.761126392838827,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 9765
+      },
+      "cache_creation_input_tokens": 9765,
+      "cache_read_input_tokens": 30295,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.445586700021522,
+     "cost": 0.0305395
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.501357288780679,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20673
+      },
+      "cache_creation_input_tokens": 20673,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.129801699978998,
+     "cost": 0.055623900000000004
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.4989926374330359,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20946
+      },
+      "cache_creation_input_tokens": 20946,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.0983613999851514,
+     "cost": 0.0563064
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.500810689925081,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20740
+      },
+      "cache_creation_input_tokens": 20740,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.2291930000064895,
+     "cost": 0.055791400000000005
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5007360339879998,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20742
+      },
+      "cache_creation_input_tokens": 20742,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.58340049997787,
+     "cost": 0.0557964
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.4990806775128148,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20896
+      },
+      "cache_creation_input_tokens": 20896,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.5994656000111718,
+     "cost": 0.0561814
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.4987657299825532,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20936
+      },
+      "cache_creation_input_tokens": 20936,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.792734999995446,
+     "cost": 0.0562814
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40398
+      },
+      "cache_creation_input_tokens": 40398,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.8108504999836441,
+     "cost": 0.101063
+    }
+   ],
+   "complete": true
+  },
+  {
+   "order": "alphabetical",
+   "strategy": "end",
+   "rep": 0,
+   "nonce": "7d8e0f6291",
+   "anchors": [
+    "garth/data/body_battery/events.py",
+    "garth/data/training_readiness.py",
+    "garth/stats/hydration.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39586
+      },
+      "cache_creation_input_tokens": 39586,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1655525999958627,
+     "cost": 0.099033
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39566
+      },
+      "cache_creation_input_tokens": 39566,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.8538177000009455,
+     "cost": 0.098983
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39646
+      },
+      "cache_creation_input_tokens": 39646,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.697702199977357,
+     "cost": 0.099183
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39991
+      },
+      "cache_creation_input_tokens": 39991,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2427406999922823,
+     "cost": 0.1000455
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40061
+      },
+      "cache_creation_input_tokens": 40061,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2231028999958653,
+     "cost": 0.1002205
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40061
+      },
+      "cache_creation_input_tokens": 40061,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6587549999821931,
+     "cost": 0.1002205
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40041
+      },
+      "cache_creation_input_tokens": 40041,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.380087800003821,
+     "cost": 0.1001705
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40314
+      },
+      "cache_creation_input_tokens": 40314,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1989315999962855,
+     "cost": 0.100853
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40108
+      },
+      "cache_creation_input_tokens": 40108,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2217986000177916,
+     "cost": 0.100338
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40110
+      },
+      "cache_creation_input_tokens": 40110,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.236975599982543,
+     "cost": 0.100343
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40264
+      },
+      "cache_creation_input_tokens": 40264,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2969985000090674,
+     "cost": 0.100728
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40304
+      },
+      "cache_creation_input_tokens": 40304,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1998693000059575,
+     "cost": 0.100828
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40399
+      },
+      "cache_creation_input_tokens": 40399,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1139900999842212,
+     "cost": 0.1010655
+    }
+   ],
+   "complete": true
+  },
+  {
+   "order": "reverse",
+   "strategy": "quartiles",
+   "rep": 0,
+   "nonce": "ba251bdbb4",
+   "anchors": [
+    "garth/telemetry.py",
+    "garth/stats/hrv.py",
+    "garth/data/heart_rate.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39585
+      },
+      "cache_creation_input_tokens": 39585,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.8143520999874454,
+     "cost": 0.0990305
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39565
+      },
+      "cache_creation_input_tokens": 39565,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 5.742403499985812,
+     "cost": 0.0989805
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39645
+      },
+      "cache_creation_input_tokens": 39645,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2076900000101887,
+     "cost": 0.0991805
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39990
+      },
+      "cache_creation_input_tokens": 39990,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 5.463291299995035,
+     "cost": 0.100043
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40060
+      },
+      "cache_creation_input_tokens": 40060,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1297604000137653,
+     "cost": 0.100218
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40060
+      },
+      "cache_creation_input_tokens": 40060,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 7.8357025000150315,
+     "cost": 0.100218
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40040
+      },
+      "cache_creation_input_tokens": 40040,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6728390000062063,
+     "cost": 0.100168
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40313
+      },
+      "cache_creation_input_tokens": 40313,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 5.371179400011897,
+     "cost": 0.1008505
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40107
+      },
+      "cache_creation_input_tokens": 40107,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.575814799987711,
+     "cost": 0.1003355
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40109
+      },
+      "cache_creation_input_tokens": 40109,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 6.425267899991013,
+     "cost": 0.1003405
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40263
+      },
+      "cache_creation_input_tokens": 40263,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.45994050000445,
+     "cost": 0.1007255
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40303
+      },
+      "cache_creation_input_tokens": 40303,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6331948000006378,
+     "cost": 0.1008255
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40398
+      },
+      "cache_creation_input_tokens": 40398,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 7.092103800008772,
+     "cost": 0.101063
+    }
+   ],
+   "complete": true
+  },
+  {
+   "order": "reverse",
+   "strategy": "end",
+   "rep": 0,
+   "nonce": "8b2c0c5bf2",
+   "anchors": [
+    "garth/telemetry.py",
+    "garth/stats/hrv.py",
+    "garth/data/heart_rate.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39588
+      },
+      "cache_creation_input_tokens": 39588,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.5595923000073526,
+     "cost": 0.099038
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39568
+      },
+      "cache_creation_input_tokens": 39568,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 5.344927700003609,
+     "cost": 0.098988
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39648
+      },
+      "cache_creation_input_tokens": 39648,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6319750999973621,
+     "cost": 0.099188
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39993
+      },
+      "cache_creation_input_tokens": 39993,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 10.331971900013741,
+     "cost": 0.1000505
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40063
+      },
+      "cache_creation_input_tokens": 40063,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.0693014999851584,
+     "cost": 0.1002255
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40063
+      },
+      "cache_creation_input_tokens": 40063,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.129744200006826,
+     "cost": 0.1002255
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40043
+      },
+      "cache_creation_input_tokens": 40043,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.8440563000040129,
+     "cost": 0.1001755
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40316
+      },
+      "cache_creation_input_tokens": 40316,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 6.609715099999448,
+     "cost": 0.100858
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40110
+      },
+      "cache_creation_input_tokens": 40110,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2811824000091292,
+     "cost": 0.100343
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40112
+      },
+      "cache_creation_input_tokens": 40112,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 5.5446880999952555,
+     "cost": 0.100348
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40266
+      },
+      "cache_creation_input_tokens": 40266,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.671878499997547,
+     "cost": 0.100733
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40306
+      },
+      "cache_creation_input_tokens": 40306,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 7.659797100001015,
+     "cost": 0.100833
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40401
+      },
+      "cache_creation_input_tokens": 40401,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2960781000147108,
+     "cost": 0.1010705
+    }
+   ],
+   "complete": true
+  },
+  {
+   "order": "volatility",
+   "strategy": "quartiles",
+   "rep": 1,
+   "nonce": "1fa0bbdfdd",
+   "anchors": [
+    "garth/data/heart_rate.py",
+    "garth/stats/hrv.py",
+    "garth/telemetry.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39588
+      },
+      "cache_creation_input_tokens": 39588,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 5.963814199989429,
+     "cost": 0.099038
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7601272794027659,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10282
+      },
+      "cache_creation_input_tokens": 10282,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1691346000006888,
+     "cost": 0.031630200000000004
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7586560054120588,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10362
+      },
+      "cache_creation_input_tokens": 10362,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6415083000028972,
+     "cost": 0.0318302
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7539028944911298,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10707
+      },
+      "cache_creation_input_tokens": 10707,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.454908899992006,
+     "cost": 0.0326927
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7528835843162851,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10777
+      },
+      "cache_creation_input_tokens": 10777,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.2966903999913484,
+     "cost": 0.0328677
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7528835843162851,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10777
+      },
+      "cache_creation_input_tokens": 10777,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.4180944999970961,
+     "cost": 0.0328677
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7532066530471366,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10757
+      },
+      "cache_creation_input_tokens": 10757,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1649918999755755,
+     "cost": 0.0328177
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7496541543260884,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 11030
+      },
+      "cache_creation_input_tokens": 11030,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.661778100009542,
+     "cost": 0.033500199999999994
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7523854784002385,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10824
+      },
+      "cache_creation_input_tokens": 10824,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.7213780999882147,
+     "cost": 0.0329852
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7522733201654679,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10826
+      },
+      "cache_creation_input_tokens": 10826,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.7973770000098739,
+     "cost": 0.0329902
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7497864200282297,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 10980
+      },
+      "cache_creation_input_tokens": 10980,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.6419000999885611,
+     "cost": 0.033375199999999994
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.7493132632985634,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 11020
+      },
+      "cache_creation_input_tokens": 11020,
+      "cache_read_input_tokens": 29286,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.2795275999815203,
+     "cost": 0.0334752
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/data/heart_rate.py",
+      "garth/stats/hrv.py",
+      "garth/telemetry.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5091264365687191,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20226
+      },
+      "cache_creation_input_tokens": 20226,
+      "cache_read_input_tokens": 20175,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1984549000044353,
+     "cost": 0.054668
+    }
+   ],
+   "complete": true
+  },
+  {
+   "order": "alphabetical",
+   "strategy": "quartiles",
+   "rep": 1,
+   "nonce": "480f6ac02c",
+   "anchors": [
+    "garth/data/body_battery/events.py",
+    "garth/data/training_readiness.py",
+    "garth/stats/hydration.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39585
+      },
+      "cache_creation_input_tokens": 39585,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1236106999858748,
+     "cost": 0.0990305
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5059638684653983,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20198
+      },
+      "cache_creation_input_tokens": 20198,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.227005699998699,
+     "cost": 0.0544364
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5049845436864012,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20278
+      },
+      "cache_creation_input_tokens": 20278,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.701413999981014,
+     "cost": 0.0546364
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5018207282913165,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20623
+      },
+      "cache_creation_input_tokens": 20623,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.5155712999985553,
+     "cost": 0.055498900000000004
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.501142244393678,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20693
+      },
+      "cache_creation_input_tokens": 20693,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1819498999975622,
+     "cost": 0.0556739
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.761126392838827,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 9765
+      },
+      "cache_creation_input_tokens": 9765,
+      "cache_read_input_tokens": 30295,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.422120500006713,
+     "cost": 0.0305395
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.501357288780679,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20673
+      },
+      "cache_creation_input_tokens": 20673,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.9943579999962822,
+     "cost": 0.055623900000000004
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.4989926374330359,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20946
+      },
+      "cache_creation_input_tokens": 20946,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.4892791000020225,
+     "cost": 0.0563064
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.500810689925081,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20740
+      },
+      "cache_creation_input_tokens": 20740,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.202016299997922,
+     "cost": 0.055791400000000005
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.5007360339879998,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20742
+      },
+      "cache_creation_input_tokens": 20742,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.1847476999973878,
+     "cost": 0.0557964
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.4990806775128148,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20896
+      },
+      "cache_creation_input_tokens": 20896,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.119013999996241,
+     "cost": 0.0561814
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.4987657299825532,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 20936
+      },
+      "cache_creation_input_tokens": 20936,
+      "cache_read_input_tokens": 19367,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.3862379000056535,
+     "cost": 0.0562814
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/data/body_battery/events.py",
+      "garth/data/training_readiness.py",
+      "garth/stats/hydration.py",
+      "garth/version.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40398
+      },
+      "cache_creation_input_tokens": 40398,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.4846985000185668,
+     "cost": 0.101063
+    }
+   ],
+   "complete": true
+  },
+  {
+   "order": "reverse",
+   "strategy": "quartiles",
+   "rep": 1,
+   "nonce": "4362f5b383",
+   "anchors": [
+    "garth/telemetry.py",
+    "garth/stats/hrv.py",
+    "garth/data/heart_rate.py"
+   ],
+   "turns": [
+    {
+     "turn": 0,
+     "chars": 106275,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39584
+      },
+      "cache_creation_input_tokens": 39584,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.3002326000132598,
+     "cost": 0.099028
+    },
+    {
+     "turn": 1,
+     "chars": 106223,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39564
+      },
+      "cache_creation_input_tokens": 39564,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.3203842999937478,
+     "cost": 0.098978
+    },
+    {
+     "turn": 2,
+     "chars": 106429,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39644
+      },
+      "cache_creation_input_tokens": 39644,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.6130162999907043,
+     "cost": 0.099178
+    },
+    {
+     "turn": 3,
+     "chars": 107100,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 39989
+      },
+      "cache_creation_input_tokens": 39989,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.928860900021391,
+     "cost": 0.1000405
+    },
+    {
+     "turn": 4,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40059
+      },
+      "cache_creation_input_tokens": 40059,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.3697268000105396,
+     "cost": 0.1002155
+    },
+    {
+     "turn": 5,
+     "chars": 107245,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40059
+      },
+      "cache_creation_input_tokens": 40059,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.3724195999966469,
+     "cost": 0.1002155
+    },
+    {
+     "turn": 6,
+     "chars": 107199,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40039
+      },
+      "cache_creation_input_tokens": 40039,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 2.286305599991465,
+     "cost": 0.1001655
+    },
+    {
+     "turn": 7,
+     "chars": 107707,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40312
+      },
+      "cache_creation_input_tokens": 40312,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 5.300370300014038,
+     "cost": 0.100848
+    },
+    {
+     "turn": 8,
+     "chars": 107316,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40106
+      },
+      "cache_creation_input_tokens": 40106,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.811973100004252,
+     "cost": 0.100333
+    },
+    {
+     "turn": 9,
+     "chars": 107332,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40108
+      },
+      "cache_creation_input_tokens": 40108,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 6.141289699997287,
+     "cost": 0.100338
+    },
+    {
+     "turn": 10,
+     "chars": 107688,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40262
+      },
+      "cache_creation_input_tokens": 40262,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.856501300004311,
+     "cost": 0.100723
+    },
+    {
+     "turn": 11,
+     "chars": 107756,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40302
+      },
+      "cache_creation_input_tokens": 40302,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 5.40448950001155,
+     "cost": 0.100823
+    },
+    {
+     "turn": 12,
+     "chars": 107983,
+     "breakpoints": [
+      "garth/telemetry.py",
+      "garth/stats/hrv.py",
+      "garth/data/heart_rate.py",
+      "garth/data/body_battery/__init__.py"
+     ],
+     "predicted_read": 0.0,
+     "usage": {
+      "cache_creation": {
+       "ephemeral_1h_input_tokens": 0,
+       "ephemeral_5m_input_tokens": 40397
+      },
+      "cache_creation_input_tokens": 40397,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 14,
+      "output_tokens": 4,
+      "output_tokens_details": {
+       "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard",
+      "speed": "standard"
+     },
+     "reply": "OK",
+     "seconds": 1.3330569000099786,
+     "cost": 0.1010605
+    }
+   ],
+   "complete": true
+  }
+ ]
+}

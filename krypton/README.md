@@ -16,6 +16,22 @@ $ krypton src --top 5
 | components/SearchPanel.jsx | Logic complexity 13400 (threshold ...) in `SearchPanel()` | Semantic Path Logic |
 ```
 
+## What Krypton is
+
+Krypton is a command-line program that reads your source code and scores how structurally heavy it is. It gives every function and file a number, flags the ones that are too tangled to read or change safely, and tells you which block to pull out. It never edits or runs your code, uses no AI, and needs no network.
+
+It exists because AI coding agents write quickly but tend to pile up deeply nested, branch-heavy functions, which are harder to change and cost tokens every time the code is read again.
+
+**Workflow:** scan (`krypton src` gives a 0 to 100 purity score and a ranked list), fix (hand the flagged functions to your agent; hints name the block to split), gate (run it in CI so a touched function over the limit fails the check).
+
+**Three ways to use it:**
+
+- **Keep code clean.** In a 20-revision agent test a CI gate kept the worst function near 12 times the limit instead of about 1,900, for about 62% more cost per run.
+- **Cut the prompt bill.** Order files from most stable to most volatile so providers can cache a long shared prefix. 35% cheaper on garth; a typical gain is about 4 points of cache reuse.
+- **Measure the gap.** Compare AI-assisted code with the rest of your repository in the same size bands. A measurement of difference, not a verdict.
+
+You choose how clean: `--level relaxed`, `standard` or `strict` sets how much tangle is tolerated (only `standard` has been tested with agents). Krypton is not a linter, not an AI, and not a formatter.
+
 ## Install
 
 ```bash
@@ -105,7 +121,18 @@ krypton src --order-by-volatility        # JSON manifest, most stable file first
 krypton src --order-by-volatility --volatility counts.json   # or supply {"path": change_count}
 ```
 
-If your tool re-sends the codebase every turn, put files in this order so the stable ones form a shared prefix a provider can cache. It is a hint from history, not a guarantee, and it does not change any score.
+If your tool re-sends the codebase every turn, put files in this order so the stable ones form a shared prefix a provider can cache. It is a hint from history, not a guarantee, and it does not change any score. How much it saves depends on your repository: on garth it made the same prompts 35% cheaper, but across 20 open-source repositories it beat alphabetical order on 12 and lost on 7 (a typical gain of about 4 points of cache reuse). To predict your own result without spending anything, replay your repository's recent commits with the research tool in `tools/`: `python -m tools.cache_anthropic REPO --dry --no-control`.
+
+### Projected savings for a team
+
+A model, not a measurement of your bill: 50 developers, 100 agent requests each per day, 22 days a month, a 25,000-line repository, list prices, counting only the cost of re-reading the code. Plan on the typical row; the garth-like row is a best case.
+
+| Model | Repository | Monthly, alphabetical | Monthly, Krypton order | Saved a month | Saved a year |
+|---|---|---|---|---|---|
+| Claude Sonnet 5.5 | Typical repository | $61.5K | $58.3K | $3.2K (5%) | $38.4K |
+| Claude Sonnet 5.5 | garth-like best case | $45.2K | $27.3K | $17.9K (40%) | $214.7K |
+| Claude Opus 5.5 | Typical repository | $121.5K | $114.9K | $6.7K (5%) | $80.2K |
+| Claude Opus 5.5 | garth-like best case | $87.4K | $50.0K | $37.3K (43%) | $448.1K |
 
 ### Pre-commit or CI
 

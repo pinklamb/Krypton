@@ -44,16 +44,39 @@
   <div class="card"><h3>Save</h3><p>An ordering of your files, most stable first, keeps a long shared prefix that providers can cache between turns.</p></div>
 </div>
 
+<h2 id="what">What Krypton is</h2>
+<p>Krypton is a command-line program that reads your source code and scores how structurally heavy it is. It gives every function and file a number, flags the ones that are too tangled to read or change safely, and tells you which block to pull out. That is all it does to your code. It never edits or runs it, it uses no AI, and it needs no network.</p>
+<p>It exists because AI coding agents write quickly but tend to pile up deeply nested, branch-heavy functions. Those are harder for people and for the next agent run to change, and they cost tokens every time the code is read again. Krypton gives you, and the agent, an objective number to hold that code to.</p>
+
+<h3>How it fits into your workflow</h3>
+<ol>
+<li><b>Scan.</b> Run <code>krypton src</code>. You get a purity score from 0 to 100 and a ranked list of the heaviest functions.</li>
+<li><b>Fix.</b> Hand the flagged functions to your coding agent, or to a person. The hints name the deepest decision and the block to split out.</li>
+<li><b>Gate.</b> Run it in CI or before each commit. A function you touched that is over the limit fails the check, so the agent is sent back to fix it. A progress log shows whether each run improved things.</li>
+</ol>
+
+<h3>Three ways to use it</h3>
+<div class="cards">
+  <div class="card"><h3>Keep code clean</h3><p>Score the code and gate changes. In a 20-revision agent test the gate kept the worst function near 12 times the limit instead of about 1,900 times, and cost about 62% more per run.</p></div>
+  <div class="card"><h3>Cut the prompt bill</h3><p>Order your files from most stable to most volatile so providers can cache a long shared prefix. The saving depends on your repository: 35% on garth, but a typical gain is about 4 points of cache reuse.</p></div>
+  <div class="card"><h3>Measure the gap</h3><p>Compare the structure of AI-assisted code with the rest of your repository, in the same size bands. It reports a difference, not a verdict. On garth and the MCP reference servers there was no per-size difference.</p></div>
+</div>
+<p><b>You choose how clean.</b> The strictness setting (<code>--level relaxed</code>, <code>standard</code> or <code>strict</code>) sets how much tangle is tolerated. A relaxed setting lets agent code stay cheaper to produce. A strict one asks for cleaner code and costs more fix rounds. Only the standard setting has been tested with agents.</p>
+
+<h3>What it is not</h3>
+<p>It is not a linter, so run yours too. It is not an AI and it does not rewrite code. It is not a formatter. It is a measurement you can act on.</p>
+
 <h2 id="why">Why it exists</h2>
 <p>A coding agent re-reads your codebase on every turn, so what the code costs to read is paid again and again. Heavy, tangled functions also make the agent more likely to break something. Krypton is built to sit next to the agent: after each change it runs, shows what got heavy, and the agent splits it before the weight turns into tokens and mistakes.</p>
 <p>It is not a linter. Run yours too.</p>
 
 <h2 id="results">What we measured</h2>
-<p>Tested on <b>garth</b>, an open-source Garmin client whose recent commits are mostly AI-written. These are results from one repository and one run per arm, so read them as estimates.</p>
+<p>Tested on <b>garth</b>, an open-source Garmin client whose recent commits are mostly AI-written, and for caching on 19 more open-source repositories. Read these as estimates: they come from small numbers of runs.</p>
 <div class="stats">
-  <div><b>79%</b><span>of prompt tokens cached with Krypton's file order, against 58% alphabetical</span></div>
-  <div><b>9 → 0</b><span>logic-complexity flags after a Krypton-guided refactor, all 163 tests still passing</span></div>
-  <div><b>47</b><span>change tasks to repay the one-time refactor; after that, every change costs 5.3% fewer tokens</span></div>
+  <div><b>71%</b><span>of prompt tokens cached with Krypton's file order on garth, against 47% alphabetical (35% cheaper). Across 20 repositories it beat alphabetical on 12 and lost on 7: a typical gain of about 4 points</span></div>
+  <div><b>62 → 81</b><span>garth's structure score after an agent rebuilt its worst functions first with Krypton, all 163 tests still passing; the cost of later changes did not change</span></div>
+  <div><b>1,900× → 12×</b><span>how far over the limit garth's worst function ended after 20 agent revisions, without and with a Krypton CI gate; the gate cost about 62% more</span></div>
+  <div><b>66</b><span>change tasks, on average, to repay the one-time cleanup (runs ranged from 16 to never); after that, every change costs 16.9% less on average, about 6% for the typical run</span></div>
 </div>
 <p><a href="prompt-caching.html">See the full results and caveats →</a></p>
 

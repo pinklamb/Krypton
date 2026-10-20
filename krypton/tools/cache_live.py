@@ -44,9 +44,12 @@ def commits(repo: Path, subdir: str, turns: int) -> list[str]:
     return newest_first[::-1]
 
 
+SUFFIXES = (".py",)   # which files are sent; cache_anthropic's --ext replaces it (for example ".ts")
+
+
 def tree(repo: Path, commit: str, subdir: str) -> dict[str, str]:
-    """{path relative to subdir: text} of every .py file under `subdir` at `commit`."""
-    names = [n for n in git(repo, "ls-tree", "-r", "--name-only", commit, "--", subdir).splitlines() if n.endswith(".py")]
+    """{path relative to subdir: text} of every file ending in one of SUFFIXES under `subdir` at `commit`."""
+    names = [n for n in git(repo, "ls-tree", "-r", "--name-only", commit, "--", subdir).splitlines() if n.endswith(SUFFIXES)]
     return {n[len(subdir) + 1:]: git(repo, "show", f"{commit}:{n}") for n in names}
 
 

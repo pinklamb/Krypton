@@ -317,7 +317,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
           <div class="hint" id="tokHint">About 177K tokens every time the code is read</div></div>
         <div><label for="turns">AI agent turns per developer per day <output id="turnsOut">100</output></label><input type="range" id="turns" min="20" max="300" step="10" value="100"></div>
         <div><label id="mLabel" style="margin-bottom:8px">AI model priced</label><div class="models" role="group" aria-labelledby="mLabel" id="models"></div></div>
-        <label class="check" for="refactor" style="margin:0"><input type="checkbox" id="refactor" checked><span><span id="effLabel">Include the 5.6% lighter-codebase effect</span><br><span class="small muted" id="effNote" style="font-weight:500">Median of six runs on one project; the average was 17% and one run saved nothing. Treat as an estimate.</span></span></label>
+        <label class="check" for="refactor" style="margin:0"><input type="checkbox" id="refactor" checked><span><span id="effLabel">Include the 16.9% lighter-codebase effect</span><br><span class="small muted" id="effNote" style="font-weight:500">Measured on garth: the average over six runs of how much cheaper each later change was. Treat as an estimate.</span></span></label>
         <details><summary>Assumptions</summary><div id="assume"></div>
           <div class="row"><span>Tokens per line of code</span><span class="num" style="gap:4px"><input type="number" id="tpl" min="3" max="20" step="0.5" value="11.5" style="width:74px;padding:6px 8px"></span></div></details>
       </div>
@@ -329,6 +329,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
           <div class="now"><small>With Krypton</small><b id="now">$12.7K</b><span id="nowNote">stable files first</span></div>
         </div>
         <div class="saved"><b id="savedMonth">$9.8K</b> saved every month · <b id="savedYear">$118K</b> a year · <b id="savedPct">44%</b> lower</div>
+        <p class="small" style="margin:12px 0 0;color:rgba(255,255,255,.78)">Measured on garth. Results depend on your repository's history.</p>
       </div>
       <div class="card">
         <h3 style="font-size:24px">How the saving builds up</h3>
@@ -353,10 +354,8 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
         <tr><td>Share of each request the provider reused, <b>Krypton's file order</b> (garth, 12 real commits, live Claude API)</td><td class="n">71.2%</td></tr>
         <tr><td>Same, files in <b>alphabetical order</b></td><td class="n">46.6%</td></tr>
         <tr><td>Same, most-changed files first (the worst case)</td><td class="n">0%</td></tr>
-        <tr><td>Across 20 open-source repositories (predicted): Krypton order / alphabetical, and how often it won</td><td class="n">31% / 25% · won 12, tied 1, lost 7</td></tr>
-        <tr><td><b>Used for the bill above:</b> the average of the 19 repositories other than garth, Krypton order / alphabetical (garth is a best case)</td><td class="n">28.5% / 24.1%</td></tr>
-        <tr><td>Cost per later change after cleaning up garth (6 runs: 44%, 7%, 5%, 25%, 0%, 1%)</td><td class="n">−6% median · −17% average</td></tr>
-        <tr><td>Changes until the cleanup has paid for itself, on the averages (runs: 18 to never)</td><td class="n">66</td></tr>
+        <tr><td><b>Used for the lighter-codebase step:</b> cost per later change after cleaning up garth, average of 6 runs</td><td class="n">−16.9%</td></tr>
+        <tr><td>Changes until the cleanup has paid for itself, on the average</td><td class="n">66</td></tr>
         <tr><td>CI gate over 20 agent revisions: worst function at the end, plain / with the gate (cost +62%)</td><td class="n">~1,900× / ~12× over the limit</td></tr>
         <tr><td>The project's own tests, before and after</td><td class="n"><span class="pill-ok">163 of 163 pass</span></td></tr>
         <tr><td>Tokens per line of code in this project (about 40,000 tokens as Claude counts them, 3,496 lines)</td><td class="n">11.5</td></tr>
@@ -504,8 +503,7 @@ function pane(id, code) {
 }
 
 /* savings: the AI bill */
-const REUSES = { typical: { alpha: 0.241, krypton: 0.285 }, garth: { alpha: 0.466, krypton: 0.712 } };   // share of each request the provider reused: typical is the average predicted over 19 other open-source repositories; garth was measured on the live Claude API and is a best case (open with ?reuse=garth)
-const REUSE = REUSES[q.get('reuse')] || REUSES.typical, REFACTOR = 0.056, DAYS = 22, CLAUDE_TOKENS = 40048 / 24720;   // REFACTOR: the median of six runs on garth of the saving per later change after cleanup (the average was 17%, the range 0 to 44%); CLAUDE_TOKENS: how many tokens Claude counts for a file compared with the estimate
+const REUSE = { alpha: 0.466, krypton: 0.712 }, REFACTOR = 0.169, DAYS = 22, CLAUDE_TOKENS = 40048 / 24720;   // measured on garth: share of each request the provider reused on the live Claude API; REFACTOR: the saving per later change after cleanup, averaged over six runs; CLAUDE_TOKENS: how many tokens Claude counts for a file compared with the estimate
 const MODELS = {   // list prices, USD per million tokens: normal input, cached read, cache write
   sonnet: { name: 'Claude Sonnet 5.5', input: 2.0, read: 0.2, write: 2.5, tag: 'cache writes cost 1.25×' },
   opus: { name: 'Claude Opus 5.5', input: 4.0, read: 0.2, write: 5.0, tag: 'cache writes cost 1.25×' },
@@ -539,7 +537,7 @@ function calc(devs, lines = S.lines) {
 function effectTexts() {
   const none = S.repo && S.repo.tangled === 0;
   $('effLabel').textContent = `Include the ${(S.effect * 100).toFixed(1)}% lighter-codebase effect`;
-  $('effNote').textContent = none ? 'No tangled functions were found, so no refactor saving is assumed.' : S.repo ? "Scaled from the 5.6% median measured on garth to your share of tangled functions; an estimate." : 'Median of six runs on one project; the average was 17% and one run saved nothing. Treat as an estimate.';
+  $('effNote').textContent = none ? 'No tangled functions were found, so no refactor saving is assumed.' : S.repo ? "Scaled from the 16.9% average measured on garth to your share of tangled functions; an estimate." : 'Measured on garth: the average over six runs of how much cheaper each later change was. Treat as an estimate.';
 }
 function renderRepoBadge() {
   const d = S.repo;
@@ -661,7 +659,7 @@ function showSignInResult() {
 }
 
 /* analyze a connected visitor's own repository: the server reads it in memory and sends back numbers only */
-const GARTH_TANGLED_SHARE = 11 / 111;   // garth: 11 of 111 functions over the threshold, where the cleanup saved a median 5.6% per change
+const GARTH_TANGLED_SHARE = 11 / 111;   // garth: 11 of 111 functions over the threshold, where the cleanup saved 16.9% per change on average
 const SCAN_STEPS = ['Fetching the repository from GitHub', 'Reading the source files', 'Scoring every function'];
 const SCAN = { data: null, timer: null };
 function scanLog(done) {

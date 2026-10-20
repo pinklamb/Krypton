@@ -45,7 +45,7 @@
 </div>
 
 <h2 id="what">What Krypton is</h2>
-<p>Krypton is a command-line program that reads your source code and scores how structurally heavy it is. It gives every function and file a number, flags the ones that are too tangled to read or change safely, and tells you which block to pull out. That is all it does to your code. It never edits or runs it, it uses no AI, and it needs no network.</p>
+<p><b>Krypton keeps AI-written code from getting tangled as agents keep editing it.</b> In a 20-revision test, code held to Krypton's standard stayed within about 12 times the limit while unchecked code grew to about 1,900 times, and cleaned-up code was cheaper to change later (16.9% on average over six runs). It is a command-line program that reads your source code and scores how structurally heavy it is. It gives every function and file a number, flags the ones that are too tangled to read or change safely, and tells you which block to pull out. That is all it does to your code. It never edits or runs it, it uses no AI, and it needs no network.</p>
 <p>It exists because AI coding agents write quickly but tend to pile up deeply nested, branch-heavy functions. Those are harder for people and for the next agent run to change, and they cost tokens every time the code is read again. Krypton gives you, and the agent, an objective number to hold that code to.</p>
 
 <h3>How it fits into your workflow</h3>
@@ -57,7 +57,7 @@
 
 <h3>Three ways to use it</h3>
 <div class="cards">
-  <div class="card"><h3>Keep code clean</h3><p>Score the code and gate changes. In a 20-revision agent test the gate kept the worst function near 12 times the limit instead of about 1,900 times, and cost about 62% more per run.</p></div>
+  <div class="card"><h3>Keep code clean</h3><p>Score the code and gate changes. In a 20-revision agent test the gate kept the worst function near 12 times the limit instead of about 1,900 times, at about 62% more cost per run. A guided refactor took logic-complexity flags from 9 to 0 with every test still passing.</p></div>
   <div class="card"><h3>Cut the prompt bill</h3><p>Order your files from most stable to most volatile so providers can cache a long shared prefix. The saving depends on your repository: 35% on garth, but a typical gain is about 4 points of cache reuse.</p></div>
   <div class="card"><h3>Measure the gap</h3><p>Compare the structure of AI-assisted code with the rest of your repository, in the same size bands. It reports a difference, not a verdict. On garth and the MCP reference servers there was no per-size difference.</p></div>
 </div>

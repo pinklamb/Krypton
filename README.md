@@ -21,7 +21,7 @@ docker run --rm -v "$PWD:/repo" krypton .
 
 ## What Krypton is
 
-Krypton is a command-line program that reads your source code and scores how structurally heavy it is. It gives every function and file a number, flags the ones that are too tangled to read or change safely, and tells you which block to pull out. It never edits or runs your code, uses no AI, and needs no network.
+**Krypton keeps AI-written code from getting tangled as agents keep editing it.** In a 20-revision test, code held to Krypton's standard stayed within about 12 times the limit while unchecked code grew to about 1,900 times, and cleaned-up code was cheaper to change later (16.9% on average over six runs). It is a command-line program that reads your source code and scores how structurally heavy it is. It gives every function and file a number, flags the ones that are too tangled to read or change safely, and tells you which block to pull out. It never edits or runs your code, uses no AI, and needs no network.
 
 It exists because AI coding agents write quickly but tend to pile up deeply nested, branch-heavy functions, which are harder to change and cost tokens every time the code is read again.
 
@@ -58,14 +58,12 @@ Full results, tables and caveats are on the [prompt caching page](https://pinkla
 
 ## Projected savings for a team
 
-A model, not a measurement of your bill: 50 developers, 100 agent requests each per day, 22 days a month, a 25,000-line repository, list prices, counting only the cost of re-reading the code. Plan on the typical row; the garth-like row is a best case.
+A model, not a measurement of your bill: 50 developers, 100 agent requests each per day, 22 days a month, a 25,000-line repository, list prices, counting only the cost of re-reading the code. It applies Krypton's file order (reuse rates measured on garth) and the cheaper later changes after a cleanup (16.9% on average over six runs).
 
-| Model | Repository | Monthly, alphabetical | Monthly, Krypton order | Saved a month | Saved a year |
-|---|---|---|---|---|---|
-| Claude Sonnet 5.5 | Typical repository | $61.5K | $58.3K | $3.2K (5%) | $38.4K |
-| Claude Sonnet 5.5 | garth-like best case | $45.2K | $27.3K | $17.9K (40%) | $214.7K |
-| Claude Opus 5.5 | Typical repository | $121.5K | $114.9K | $6.7K (5%) | $80.2K |
-| Claude Opus 5.5 | garth-like best case | $87.4K | $50.0K | $37.3K (43%) | $448.1K |
+| Model | Repository | Monthly, alphabetical | With file order | Saved by file order | Saved a month with cleanup too | Saved a year |
+|---|---|---|---|---|---|---|
+| Claude Sonnet 5.5 | garth, measured | $45.2K | $27.3K | $17.9K | **$22.5K** (50%) | $270.0K |
+| Claude Opus 5.5 | garth, measured | $87.4K | $50.0K | $37.3K | **$45.8K** (52%) | $549.6K |
 
 ## Documentation
 

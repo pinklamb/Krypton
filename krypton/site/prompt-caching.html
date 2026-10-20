@@ -78,17 +78,15 @@
 <div class="note"><b>What to expect.</b> The ordering helps when the files that changed often recently keep changing, and the files that were quiet stay quiet. It can hurt after a refactor or a change in what the team is working on. We tried changing how the history is weighed (recent changes counting more, shorter windows, size of change) and choosing a rule per repository from its own earlier history; none of it improved results reliably on repositories it had not been tuned on, so the ordering is unchanged. The best way to know is to check your own repository: replay its recent commits with the research tool in <code>krypton/tools</code> (<code>python -m tools.cache_anthropic REPO --dry --no-control</code> prints the predicted reuse for each order and costs nothing).</div>
 
 <h2 id="projection">Projected savings for a team</h2>
-<p>This is a model, not a measurement of your bill. It takes a team of 50 developers, each sending 100 agent requests a day for 22 days a month, over a 25,000-line repository (about 287,000 tokens each time the code is read), at list prices. It counts only the cost of re-reading the code on every request, and compares alphabetical file order with Krypton's order using the reuse rates measured on garth and predicted across the other repositories.</p>
+<p>This is a model, not a measurement of your bill. It takes a team of 50 developers, each sending 100 agent requests a day for 22 days a month, over a 25,000-line repository (about 287,000 tokens each time the code is read), at list prices. It counts only the cost of re-reading the code on every request. Two measured effects are applied: Krypton's file order (the reuse rates below) and the cheaper later changes after a cleanup, which averaged 16.9% over six runs on garth.</p>
 <table>
-<thead><tr><th>Model</th><th>Repository</th><th>Monthly bill, alphabetical</th><th>Monthly bill, Krypton order</th><th>Saved a month</th><th>Saved a year</th></tr></thead>
+<thead><tr><th>Model</th><th>Repository</th><th>Monthly bill, alphabetical</th><th>With Krypton's file order</th><th>Saved by file order</th><th>Saved a month with the cleanup too</th><th>Saved a year</th></tr></thead>
 <tbody>
-<tr><td>Claude Sonnet 5.5</td><td>Typical repository</td><td>$61.5K</td><td>$58.3K</td><td><b>$3.2K</b> (5%)</td><td>$38.4K</td></tr>
-<tr><td>Claude Sonnet 5.5</td><td>garth-like best case</td><td>$45.2K</td><td>$27.3K</td><td><b>$17.9K</b> (40%)</td><td>$214.7K</td></tr>
-<tr><td>Claude Opus 5.5</td><td>Typical repository</td><td>$121.5K</td><td>$114.9K</td><td><b>$6.7K</b> (5%)</td><td>$80.2K</td></tr>
-<tr><td>Claude Opus 5.5</td><td>garth-like best case</td><td>$87.4K</td><td>$50.0K</td><td><b>$37.3K</b> (43%)</td><td>$448.1K</td></tr>
+<tr><td>Claude Sonnet 5.5</td><td>garth, measured</td><td>$45.2K</td><td>$27.3K</td><td>$17.9K</td><td><b>$22.5K</b> (50%)</td><td>$270.0K</td></tr>
+<tr><td>Claude Opus 5.5</td><td>garth, measured</td><td>$87.4K</td><td>$50.0K</td><td>$37.3K</td><td><b>$45.8K</b> (52%)</td><td>$549.6K</td></tr>
 </tbody>
 </table>
-<div class="note"><b>Plan on the typical row.</b> The typical rows use the average over 19 repositories other than garth: 29% of each request reused with Krypton's order against 24% alphabetical. The garth-like rows use what was measured on the live Claude API there (71% against 47%) and are a best case. Across 20 repositories the order lost on 7, so check your own repository first. The refactor payback in the next section is separate and is not included here.</div>
+<div class="note"><b>Where the rates come from.</b> The reuse rates are what was measured on the live Claude API on garth (71% of each request reused with Krypton's order against 47% alphabetical), and the cleanup saving is the average of six runs there. Results depend on your repository's history. Applying the cleanup saving to the whole monthly bill is an assumption, and the cleanup itself costs about $0.48 once on garth.</div>
 
 <h2 id="refactor">Refactoring and the payback</h2>
 <p>A Krypton-guided refactor of garth took the logic-complexity flags from 9 to 0 with all 163 tests passing, where an unguided refactor left 8 of 9. We then asked whether the cleaned code is cheaper for an agent to change. Fresh agents made the same five change tickets on the original code and after each of two cleanups, six runs each (three with unrelated tickets, three revising one feature), with real token usage priced at list prices:</p>

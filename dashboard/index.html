@@ -355,6 +355,27 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
         <h3 style="font-size:17px;margin-top:22px">Bigger codebase, bigger saving</h3><p class="muted small" id="sizeTxt" style="margin:4px 0 4px"></p><div id="sizes"></div></div>
     </div>
 
+    <div class="card" id="gateCard">
+      <h3>Keeping the gate from getting stuck</h3>
+      <p class="muted small" style="margin:6px 0 12px">A gate that is too strict can send an agent round and round on the same function. Here is what an agent did across 60 tickets under a Krypton CI gate on garth, and the controls that keep it from looping.</p>
+      <div class="scanfacts">
+        <div class="sbox"><b>33 of 60</b><span>tickets passed the gate first time</span></div>
+        <div class="sbox"><b>26</b><span>needed one fix round</span></div>
+        <div class="sbox"><b>1</b><span>needed two rounds</span></div>
+        <div class="sbox"><b>0</b><span>were left stuck</span></div>
+        <div class="sbox"><b>$0.046</b><span>average cost of a fix round</span></div>
+      </div>
+      <div class="scroll" style="margin-top:16px"><table class="src"><thead><tr><th>Control</th><th>What it does</th><th>Where it works today</th></tr></thead><tbody>
+        <tr><td><b>Strictness</b><br>relaxed, standard, strict</td><td>Sets how much tangle is tolerated. On garth, 3, 11 and 21 functions are over the limit.</td><td>Command line</td></tr>
+        <tr><td><b>Only what the change touched</b></td><td>The gate checks the functions a change touched, so old tangle never blocks an agent. In the test, garth's worst old function stayed about 12× over for all 20 revisions and never triggered a fix.</td><td>Command line (<code>--base</code>)</td></tr>
+        <tr><td><b>No worse than before</b> <span class="tag good">new</span></td><td>A function that is over the limit passes if it is no heavier than it was at the base ref, so an agent is not sent back to fix tangle it did not make. It is listed as exempt in the report.</td><td>Command line (<code>--base --no-worse</code>)</td></tr>
+        <tr><td><b>Waivers</b> <span class="tag good">new</span></td><td>A <code>krypton: ignore -- reason</code> comment above a function lets it through, for code that is complex on purpose. Every waiver is listed with its reason.</td><td>Command line, any run</td></tr>
+        <tr><td><b>Hand off a stalled function</b> <span class="tag good">new</span></td><td>When a function has not improved by 10% in three runs, the gate stops blocking on it and lists it for a person instead of retrying. The 60-ticket test used a simpler cap of two fix rounds per ticket; it was reached once and still cleared.</td><td>Command line (<code>--history --handoff-stalled</code>)</td></tr>
+        <tr><td><b>Specific hints</b></td><td>Each flagged function names the block to pull out and the predicted score after, so a fix converges quickly.</td><td>Command line</td></tr>
+      </tbody></table></div>
+      <p class="muted small" style="margin-top:10px">One project and one model. The three controls marked new were added after the 60-ticket test, so that test did not use them; harder code may need more rounds.</p>
+    </div>
+
     <div class="card">
       <h3>Where the numbers come from</h3>
       <p class="muted small" style="margin:6px 0 12px">Measured on garth, an open-source Garmin library (MIT license) where most recent changes were AI-assisted. Prices are list prices; the bill estimate applies the measured reuse rates to them.</p>

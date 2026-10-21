@@ -9,6 +9,9 @@
 - New documentation site (getting started, how it works, command reference, integrations, prompt caching, FAQ).
 - Public documentation describes what Krypton measures and why. The scoring and ordering algorithms are not published.
 
+### Gate flexibility
+- Three ways to stop an agent looping on a function the gate keeps blocking: `--no-worse` (with `--base`) passes a function that is over the limit but no heavier than at the base ref; a `krypton: ignore -- reason` comment waives a function (`allow_waivers = false` turns it off); `--handoff-stalled` (with `--history`) stops blocking on a function that has stalled and lists it for a person. Exempt functions are listed in the report with the reason, show `exempt_reason` in the JSON, and do not count toward flags or the score.
+
 ### Bundled libraries
 - Copies of libraries that were committed into a repository (bootstrap, jQuery, lodash, bundler output, minified files) are no longer scored as your code. The engine now skips more dependency and build folders, minified and bundled file names, well-known library files by name and content, and anything `.gitattributes` marks `linguist-vendored` or `linguist-generated`; skipped files carry a reason, and `detect_vendored_content = false` turns the content check off. The hosted demo lists what it left out. Scores for repositories without committed libraries are unchanged.
 

@@ -35,6 +35,9 @@
 <h3>Can I make it less strict while I clean up?</h3>
 <p>Yes: <code>--level relaxed</code>, or <code>--base origin/main</code> to score only what changed on your branch.</p>
 
+<h3>What if the gate keeps sending my agent back to the same function?</h3>
+<p>There are four ways to stop a loop. <code>--no-worse</code> with <code>--base</code> lets a function that is over the limit pass when it is no heavier than before. A <code>krypton: ignore -- reason</code> comment (<code>#</code> in Python, <code>//</code> in JavaScript) above a function waives it, and the report lists every waiver with its reason. <code>--handoff-stalled</code> with <code>--history</code> stops blocking on a function that has not improved after several runs and lists it for a person. And <code>--level relaxed</code> raises the limit for everything. Exempt functions stay visible in the report and do not count toward the score.</p>
+
 <h3>Will it find bugs?</h3>
 <p>No. Heavy code is more likely to hide bugs, but Krypton only measures structure.</p>
 

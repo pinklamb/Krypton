@@ -9,6 +9,7 @@ from krypton.schemas import EngineResult, FileFinding
 
 NEWLINE = chr(10)
 MAX_PR_HINTS = 5
+MAX_EXEMPT_SHOWN = 8
 RULE_NAMES = {
     "concentration_rule": "Concentration Rule",
     "coupling_hotspot": "Coupling Hotspot",
@@ -49,7 +50,7 @@ def _flagged_table(result: EngineResult, cfg: EngineConfig, worst_function: dict
 
 def _notices(result: EngineResult) -> list[str]:
     """Fragmentation, skipped files and ignored generated markers, each as a short paragraph."""
-    notes = [_fragmentation_note(result), _skipped_note(result), _markers_note(result)]
+    notes = [_fragmentation_note(result), _skipped_note(result), _exempt_note(result), _markers_note(result)]
     return list(chain.from_iterable(("", note) for note in notes if note))
 
 
@@ -65,6 +66,15 @@ def _skipped_note(result: EngineResult) -> str | None:
     if not result.skipped_files:
         return None
     return "Skipped: " + ", ".join(f"{skip.filename} ({skip.reason.replace('_', ' ')})" for skip in result.skipped_files) + "."
+
+
+def _exempt_note(result: EngineResult) -> str | None:
+    """Functions the gate was told to ignore, with the reason each one gives."""
+    rows = [f"{finding.filename}:{function.start_line} {function.name} ({function.exempt_reason})" for finding in result.findings for function in finding.functions if function.exempt_reason]
+    if not rows:
+        return None
+    shown = ", ".join(rows[:MAX_EXEMPT_SHOWN])
+    return f"Exempt from the gate: {shown}{f' and {len(rows) - MAX_EXEMPT_SHOWN} more' if len(rows) > MAX_EXEMPT_SHOWN else ''}."
 
 
 def _markers_note(result: EngineResult) -> str | None:
@@ -95,13 +105,17 @@ def _issue(finding: FileFinding, cfg: EngineConfig, function_name: str) -> str:
 
 def _distance_line(result: EngineResult) -> str:
     """How many functions are over the flag threshold, and how far over the worst one is."""
-    functions = [function for finding in result.findings for function in finding.functions]
-    ratings = [function.rating_nesting if result.rating_mode == "nesting" else function.rating_master for function in functions]
-    ratings += _module_ratings(result)
+    ratings = _function_ratings(result) + _module_ratings(result)
     over = [rating for rating in ratings if rating > result.threshold > 0]
     if not over:
         return f"All {len(ratings)} functions are under the threshold ({result.threshold:g})."
     return f"{len(over)} of {len(ratings)} functions are over the threshold ({result.threshold:g}); the worst is {max(over) / result.threshold:.1f}x over."
+
+
+def _function_ratings(result: EngineResult) -> list[float]:
+    """Every named function's rating in the active mode, leaving out the ones the gate was told to ignore."""
+    functions = [function for finding in result.findings for function in finding.functions if function.exempt_reason is None]
+    return [function.rating_nesting if result.rating_mode == "nesting" else function.rating_master for function in functions]
 
 
 def _module_ratings(result: EngineResult) -> list[float]:
@@ -112,7 +126,7 @@ def _module_ratings(result: EngineResult) -> list[float]:
 
 def _heaviest_function(finding: FileFinding, mode: str) -> float:
     """The largest rating among a file's named functions in the active rating mode."""
-    ratings = [function.rating_nesting if mode == "nesting" else function.rating_master for function in finding.functions]
+    ratings = [function.rating_nesting if mode == "nesting" else function.rating_master for function in finding.functions if function.exempt_reason is None]
     return max(ratings, default=0.0)
 
 

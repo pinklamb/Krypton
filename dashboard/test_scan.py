@@ -234,6 +234,10 @@ class BundledLibraryTests(GitHubCase):
         self.assertEqual(data["excluded"]["count"], 2)
         self.assertEqual(set(data["excluded"]["examples"]), {"public/js/bootstrap.js", "legacy/old.py"})
 
+    def test_a_function_with_a_waiver_comment_is_not_counted_as_tangled(self):
+        data = scanner.run_worker(extract_sources(_tar({"src/app.py": "# krypton: ignore -- legacy" + NL + TANGLED})))
+        self.assertEqual(data["tangled"], 0)
+
     def test_a_repository_without_libraries_reports_nothing_left_out(self):
         data = scanner.run_worker(extract_sources(_tar({"src/app.py": TANGLED})))
         self.assertEqual(data["excluded"], {"count": 0, "examples": []})

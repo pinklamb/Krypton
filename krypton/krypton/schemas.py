@@ -39,6 +39,7 @@ class FunctionFinding(BaseModel):
     rating_nesting: float  # §10.4
     nested: bool  # max_depth >= 3
     saturated: bool = False  # score hit SCORE_CAP (B3)
+    exempt_reason: Optional[str] = None  # why the gate ignores this function: a waiver, no worse than before, or handed off
 
 
 class FileFinding(BaseModel):

@@ -73,7 +73,7 @@ def _function_row(filename: str, function: FunctionFinding) -> str:
     return (
         f"{function.score:>7} {function.branches:>8} {function.max_depth:>5} {function.effective_lines:>6} "
         f"{function.rating_master:>10.1f} {function.rating_nesting:>10.1f}  {flags or '-':<17} "
-        f"{filename}:{function.start_line}  {function.name}"
+        f"{filename}:{function.start_line}  {function.name}{f'  [exempt: {function.exempt_reason}]' if function.exempt_reason else ''}"
     )
 
 

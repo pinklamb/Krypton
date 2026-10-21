@@ -16,7 +16,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from krypton import history, progress, report, runlog
+from krypton import gate, history, progress, report, runlog
 from krypton.calibration import calibrated_module, calibration_csv, calibration_report, fit_thresholds, read_csv
 from krypton.engine.config import LEVELS, EngineConfig, apply_level
 from krypton.engine.languages import SUPPORTED_EXTENSIONS
@@ -53,6 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     result = run_local(sources, altered, cfg, frequency)
     if args.history:
         result = _log_progress(result, sources, args, cfg)
+    result = _apply_gate_rules(args, result, (sources, altered, cfg, frequency))
     if args.order_by_volatility:
         sizes = {name: len(data.decode("utf-8", errors="replace")) for name, data in sources.items()}
         print(json.dumps(manifest(result.findings, sizes), indent=2))
@@ -65,8 +66,40 @@ def main(argv: list[str] | None = None) -> int:
     return EXIT_FAILURE if result.check_conclusion == "failure" else EXIT_SUCCESS
 
 
+def _apply_gate_rules(args, result, run_args):
+    """--no-worse and --handoff-stalled: mark functions the gate lets through and score again without them."""
+    sources, altered, cfg, frequency = run_args
+    exempt = _no_worse_rules(args, result, sources, cfg) if args.no_worse else {}
+    if args.handoff_stalled:
+        exempt.update(gate.stalled(result, cfg))
+    if not exempt:
+        return result
+    return run_local(sources, altered, cfg, frequency, exempt).model_copy(update={"progress": result.progress})
+
+
+def _no_worse_rules(args, result, sources, cfg):
+    """The functions over the limit that are no heavier than at the base ref."""
+    scored = sorted(sources.keys() & {finding.filename for finding in result.findings})
+    ratings = gate.base_ratings(_base_reader(args.base, _scan_root(args.paths)), scored, cfg)
+    return gate.no_worse(result, args.base, ratings, cfg)
+
+
+def _base_reader(base: str, root: Path):
+    """A function that returns a file's text at the base ref, or None for a file that did not exist there."""
+    return lambda name: _git(root, "show", f"{base}:./{name}")
+
+
+def _check_gate_flags(args) -> None:
+    """The two gate flags each need the option they build on."""
+    if args.no_worse and not args.base:
+        raise UsageError("--no-worse compares with a base ref: add --base REF")
+    if args.handoff_stalled and not args.history:
+        raise UsageError("--handoff-stalled reads the run log: add --history FILE.jsonl")
+
+
 def _scan_inputs(args) -> tuple[dict[str, Path], dict[str, set[int]] | None, EngineConfig]:
     """Files to score, their altered lines (None = all) and the config; UsageError if none."""
+    _check_gate_flags(args)
     if not args.paths:
         raise UsageError("give at least one file or folder to scan")
     root = _scan_root(args.paths)
@@ -116,6 +149,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--volatility", type=Path, metavar="FILE.json", help="path -> change count, used instead of git history")
     parser.add_argument("--level", choices=list(LEVELS), default="standard", help="how strict the flag threshold is: relaxed (3x), standard, strict (0.5x)")
     parser.add_argument("--history", type=Path, metavar="FILE.jsonl", help="log this run there and report progress since the last one (the file is created)")
+    parser.add_argument("--no-worse", action="store_true", help="with --base: let a function over the limit pass if it is no heavier than it was at REF")
+    parser.add_argument("--handoff-stalled", action="store_true", help="with --history: stop blocking on a function that has not improved for several runs; list it for a person")
     parser.add_argument("--calibrate", action="store_true", help="add the calibration report")
     parser.add_argument("--calibrate-out", type=Path, metavar="FILE.csv", help="one row per function")
     parser.add_argument(

@@ -107,6 +107,7 @@ class EngineConfig(BaseModel):
         "**/*.bundle.js",
         "**/*.chunk.js",
     )
+    allow_waivers: bool = True  # honor `krypton: ignore` comments (engine/exemptions.py)
     detect_vendored_content: bool = True  # also leave out JavaScript that looks like a bundled library (engine/vendored.py)
     generated_markers: tuple[str, ...] = ("@generated", "DO NOT EDIT", "auto-generated")
     test_path_globs: tuple[str, ...] = TEST_PATH_GLOBS  # §6.1

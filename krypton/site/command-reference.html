@@ -31,6 +31,8 @@
 <tr><td><code>--json</code></td><td>Print the full result as JSON and nothing else.</td></tr>
 <tr><td><code>--level relaxed|standard|strict</code></td><td>How strict the flag limit is. Default <code>standard</code>.</td></tr>
 <tr><td><code>--history FILE.jsonl</code></td><td>Log this run there (the file is created) and report progress since the last one.</td></tr>
+<tr><td><code>--no-worse</code></td><td>With <code>--base</code>: a function over the limit passes if it is no heavier than it was at that ref, so an agent is not sent back to fix tangle it did not make. Listed in the report as exempt.</td></tr>
+<tr><td><code>--handoff-stalled</code></td><td>With <code>--history</code>: stop blocking on a function that has not improved by 10% for several runs, and list it for a person to look at.</td></tr>
 <tr><td><code>--order-by-volatility</code></td><td>Print a JSON manifest of files, most stable first, instead of the report.</td></tr>
 <tr><td><code>--volatility FILE.json</code></td><td>Use a map of path to change count instead of git history.</td></tr>
 </table></div>

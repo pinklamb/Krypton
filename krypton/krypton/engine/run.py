@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from krypton.engine.ast_counters import AstMetrics, FunctionStats, TooWide, analyze_tree
 from krypton.engine.config import DEFAULT_CONFIG, EngineConfig, matches_any
 from krypton.engine.coupling import coupling_links, coupling_weights, namespace_edges, partners
+from krypton.engine.exemptions import Exemptions, mark_exempt
 from krypton.engine.hints import Hint, file_hints, function_hints
 from krypton.engine.imports import resolve_imports
 from krypton.engine.languages import decode_source, language_for, parse_source
@@ -63,6 +64,7 @@ def run_local(
     altered: dict[str, set[int]] | None = None,
     cfg: EngineConfig = DEFAULT_CONFIG,
     change_frequency: Mapping[str, float] | None = None,
+    exemptions: Exemptions | None = None,
 ) -> EngineResult:
     """altered maps a path to its altered line numbers; None means every line is altered.
 
@@ -83,7 +85,7 @@ def run_local(
         if _has_generated_marker(text, cfg):
             markers.append(filename)
         lines = None if altered is None else frozenset(altered.get(filename, ()))
-        item = _analyze_file(filename, files[filename], text, lines, cfg)
+        item = _analyze_file(filename, files[filename], text, lines, cfg, exemptions)
         if isinstance(item, list):
             unchecked.extend(item)
         else:
@@ -177,7 +179,7 @@ def _imports_of(filename: str, metrics: AstMetrics | None, scanned: frozenset[st
 
 
 def _analyze_file(
-    filename: str, source: bytes, text: str, altered: frozenset[int] | None, cfg: EngineConfig
+    filename: str, source: bytes, text: str, altered: frozenset[int] | None, cfg: EngineConfig, exemptions: Exemptions | None = None
 ) -> _Analyzed | list[Unchecked]:
     """Not checked if too big (a list of refusals); fail closed if unparseable; else analyze and flag."""
     longest = _longest_line(text)
@@ -193,8 +195,9 @@ def _analyze_file(
         return [Unchecked(filename, NODE_TOO_WIDE, len(source), longest)]
     weights = metrics.line_weights
     functions = [_function_finding(stats, weights, altered) for stats in metrics.functions]
+    functions = mark_exempt(functions, filename, text.splitlines() if cfg.allow_waivers else [], exemptions)
     module = _function_finding(metrics.module, weights, altered)
-    rated = [*functions, module]
+    rated = _scored(functions, module)
     worst = max(rated, key=lambda function: _active_rating(function, cfg))
     finding = FileFinding(
         filename=filename,
@@ -218,6 +221,11 @@ def _analyze_file(
     )
     hints = tuple(function_hints(filename, metrics, rated, cfg))
     return _Analyzed(_with_flags(finding, cfg, rated), metrics, worst.name, hints)
+
+
+def _scored(functions: list[FunctionFinding], module: FunctionFinding) -> list[FunctionFinding]:
+    """The rows that count toward flags and hints: every function that is not exempt, plus the module's own code."""
+    return [*(function for function in functions if function.exempt_reason is None), module]
 
 
 def _wrapper_fields(functions: list[FunctionFinding], cfg: EngineConfig) -> dict:

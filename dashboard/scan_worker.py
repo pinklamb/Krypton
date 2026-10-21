@@ -36,7 +36,7 @@ def rating_of(function, mode: str) -> float:
 def tangled_functions(result) -> list[tuple[float, str, str, int]]:
     """(times over the threshold, file, function, first line) for every function at or over it, worst first."""
     limit = result.threshold or 1.0
-    over = [(rating_of(fn, result.rating_mode) / limit, file.filename, fn.name, fn.start_line) for file in result.findings for fn in file.functions]
+    over = [(rating_of(fn, result.rating_mode) / limit, file.filename, fn.name, fn.start_line) for file in result.findings for fn in file.functions if fn.exempt_reason is None]
     return sorted((row for row in over if row[0] >= 1.0), reverse=True)
 
 

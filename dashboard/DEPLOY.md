@@ -40,6 +40,8 @@ docker run --rm -p 8080:8080 --env-file dashboard/.env krypton-dashboard
 
 Check `/healthz` (should say `ok`) and `/api/session` (`"configured": true` once the variables are set).
 
+If `/api/session` still says `"configured": false` after you add the variables, the running deployment has not picked them up: variables only reach a service when it is redeployed, and they must be on the service that serves your domain. The deploy log prints `GitHub sign-in: on` or `off (...)` once at startup.
+
 ## 4. What the analysis does with a repository
 
 The server downloads the repository archive into memory using the visitor's own GitHub token, scores the Python, JavaScript and TypeScript files in a separate process, and returns numbers only. Nothing is written to disk or run, and nothing is stored. Limits: 40 MB download, 3,000 source files, 20 MB of source; two analyses at a time, one per visitor every 15 seconds.

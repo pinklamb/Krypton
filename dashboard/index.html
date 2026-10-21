@@ -290,6 +290,14 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
     </div>
   </section>
 
+  <!-- your repository: what Krypton would clean up and save -->
+  <section class="screen" id="s-yours" aria-labelledby="h-yours">
+    <div class="cmphead"><div style="display:flex;flex-direction:column;gap:8px"><span class="eyebrow">Your repository</span><h2 id="h-yours">What Krypton would do for your code</h2>
+      <p class="lede">From a real scan of your code. Nothing was changed, run or stored.</p></div><button class="btn" id="yoursSave" type="button">Adjust and see the savings →</button></div>
+    <div id="yoursOut" style="display:flex;flex-direction:column;gap:16px"></div>
+    <div class="cta" style="margin-top:16px"><button class="btn link" id="yoursBack" type="button">← Pick another repository</button></div>
+  </section>
+
   <!-- 3 · compare -->
   <section class="screen" id="s-compare" aria-labelledby="h-cmp">
     <div class="cmphead"><div style="display:flex;flex-direction:column;gap:8px"><span class="eyebrow">Result</span><h2 id="h-cmp">The hardest function, before and after</h2>
@@ -312,8 +320,8 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
 
     <div class="bigcalc">
       <div class="card ctl2">
-        <div><label for="devs">Developers <output id="devsOut">50</output></label><input type="range" id="devs" min="5" max="500" step="5" value="50"></div>
-        <div><label for="lines">Codebase size <output id="linesOut">25,000 lines</output></label><input type="range" id="lines" min="2000" max="100000" step="1000" value="25000">
+        <div><label for="devs">Developers <output id="devsOut">50</output></label><input type="range" id="devs" min="1" max="500" step="1" value="50"></div>
+        <div><label for="lines">Codebase size <output id="linesOut">25,000 lines</output></label><input type="range" id="lines" min="1000" max="300000" step="1000" value="25000">
           <div class="hint" id="tokHint">About 177K tokens every time the code is read</div></div>
         <div><label for="turns">AI agent turns per developer per day <output id="turnsOut">100</output></label><input type="range" id="turns" min="20" max="300" step="10" value="100"></div>
         <div><label id="mLabel" style="margin-bottom:8px">AI model priced</label><div class="models" role="group" aria-labelledby="mLabel" id="models"></div></div>
@@ -376,11 +384,13 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
 <script>
 const CODE = {"before": "@classmethod\ndef get(\n    cls,\n    day: str | date | None = None,\n    *,\n    client: http.Client | None = None,\n) -> builtins.list[Self]:\n    \"\"\"Get Body Battery events for a specific date.\"\"\"\n    client = client or http.client\n    day = format_end_date(day)\n\n    path = f\"/wellness-service/wellness/bodyBattery/events/{day}\"\n    try:\n        response = client.connectapi(path)\n    except Exception as e:\n        logging.warning(f\"Failed to fetch Body Battery events: {e}\")\n        return []\n\n    if not isinstance(response, list):\n        return []\n\n    events = []\n    for item in response:\n        try:\n            # Parse event data with validation\n            event_data = item.get(\"event\")\n\n            # Validate event_data exists before accessing properties\n            if event_data is None:\n                logging.warning(f\"Missing event data in item: {item}\")\n                event = None\n            else:\n                # Validate and parse datetime with explicit error handling\n                event_start_time_str = event_data.get(\"eventStartTimeGmt\")\n                if not event_start_time_str:\n                    logging.error(\n                        f\"Missing eventStartTimeGmt in event data: \"\n                        f\"{event_data}\"\n                    )\n                    raise ValueError(\n                        \"eventStartTimeGmt is required but missing\"\n                    )\n\n                try:\n                    event_start_time_gmt = datetime.fromisoformat(\n                        event_start_time_str.replace(\"Z\", \"+00:00\")\n                    )\n                except (ValueError, AttributeError) as e:\n                    logging.error(\n                        f\"Invalid datetime format \"\n                        f\"'{event_start_time_str}': {e}\"\n                    )\n                    raise ValueError(\n                        f\"Invalid eventStartTimeGmt format: \"\n                        f\"{event_start_time_str}\"\n                    ) from e\n\n                # Validate numeric fields\n                timezone_offset = event_data.get(\"timezoneOffset\", 0)\n                if not isinstance(timezone_offset, int | float):\n                    logging.warning(\n                        f\"Invalid timezone_offset type: \"\n                        f\"{type(timezone_offset)}, using 0\"\n                    )\n                    timezone_offset = 0\n\n                duration_ms = event_data.get(\"durationInMilliseconds\", 0)\n                if not isinstance(duration_ms, int | float):\n                    logging.warning(\n                        f\"Invalid durationInMilliseconds type: \"\n                        f\"{type(duration_ms)}, using 0\"\n                    )\n                    duration_ms = 0\n\n                battery_impact = event_data.get(\"bodyBatteryImpact\", 0)\n                if not isinstance(battery_impact, int | float):\n                    logging.warning(\n                        f\"Invalid bodyBatteryImpact type: \"\n                        f\"{type(battery_impact)}, using 0\"\n                    )\n                    battery_impact = 0\n\n                event = BodyBatteryEvent(\n                    event_type=event_data.get(\"eventType\", \"\"),\n                    event_start_time_gmt=event_start_time_gmt,\n                    timezone_offset=int(timezone_offset),\n                    duration_in_milliseconds=int(duration_ms),\n                    body_battery_impact=int(battery_impact),\n                    feedback_type=event_data.get(\"feedbackType\", \"\"),\n                    short_feedback=event_data.get(\"shortFeedback\", \"\"),\n                )\n\n            # Validate data arrays\n            stress_values = item.get(\"stressValuesArray\")\n            if stress_values is not None and not isinstance(\n                stress_values, list\n            ):\n                logging.warning(\n                    f\"Invalid stressValuesArray type: \"\n                    f\"{type(stress_values)}, using None\"\n                )\n                stress_values = None\n\n            battery_values = item.get(\"bodyBatteryValuesArray\")\n            if battery_values is not None and not isinstance(\n                battery_values, list\n            ):\n                logging.warning(\n                    f\"Invalid bodyBatteryValuesArray type: \"\n                    f\"{type(battery_values)}, using None\"\n                )\n                battery_values = None\n\n            # Validate average_stress\n            avg_stress = item.get(\"averageStress\")\n            if avg_stress is not None and not isinstance(\n                avg_stress, int | float\n            ):\n                logging.warning(\n                    f\"Invalid averageStress type: \"\n                    f\"{type(avg_stress)}, using None\"\n                )\n                avg_stress = None\n\n            events.append(\n                cls(\n                    event=event,\n                    activity_name=item.get(\"activityName\"),\n                    activity_type=item.get(\"activityType\"),\n                    activity_id=item.get(\"activityId\"),\n                    average_stress=avg_stress,\n                    stress_values_array=stress_values,\n                    body_battery_values_array=battery_values,\n                )\n            )\n\n        except ValueError as e:\n            # Re-raise validation errors with context\n            logging.error(\n                f\"Data validation error for Body Battery event item \"\n                f\"{item}: {e}\"\n            )\n            continue\n        except Exception as e:\n            # Log unexpected errors with full context\n            logging.error(\n                f\"Unexpected error parsing Body Battery event item \"\n                f\"{item}: {e}\",\n                exc_info=True,\n            )\n            continue\n\n    # Log summary of data quality issues\n    total_items = len(response)\n    parsed_events = len(events)\n    if parsed_events < total_items:\n        skipped = total_items - parsed_events\n        logging.info(\n            f\"Body Battery events parsing: {parsed_events}/{total_items} \"\n            f\"successful, {skipped} skipped due to data issues\"\n        )\n\n    return events", "after": "def _parse_event_time(event_data: dict) -> datetime:\n    value = event_data.get(\"eventStartTimeGmt\")\n    if not value:\n        logging.error(f\"Missing eventStartTimeGmt in event data: {event_data}\")\n        raise ValueError(\"eventStartTimeGmt is required but missing\")\n    try:\n        return datetime.fromisoformat(value.replace(\"Z\", \"+00:00\"))\n    except (ValueError, AttributeError) as e:\n        logging.error(f\"Invalid datetime format '{value}': {e}\")\n        raise ValueError(f\"Invalid eventStartTimeGmt format: {value}\") from e\n\ndef _number_or(item: dict, key: str, default: int | None) -> Any:\n    \"\"\"Return item[key] if numeric (or None when default is None).\"\"\"\n    value = item.get(key, default)\n    if value is None and default is None:\n        return None\n    if isinstance(value, int | float):\n        return value\n    logging.warning(f\"Invalid {key} type: {type(value)}, using {default}\")\n    return default\n\ndef _list_or_none(item: dict, key: str) -> list | None:\n    value = item.get(key)\n    if value is None or isinstance(value, list):\n        return value\n    logging.warning(f\"Invalid {key} type: {type(value)}, using None\")\n    return None\n\ndef _parse_event(item: dict) -> BodyBatteryEvent | None:\n    event_data = item.get(\"event\")\n    if event_data is None:\n        logging.warning(f\"Missing event data in item: {item}\")\n        return None\n    start_time = _parse_event_time(event_data)\n    return BodyBatteryEvent(\n        event_type=event_data.get(\"eventType\", \"\"),\n        event_start_time_gmt=start_time,\n        timezone_offset=int(_number_or(event_data, \"timezoneOffset\", 0)),\n        duration_in_milliseconds=int(\n            _number_or(event_data, \"durationInMilliseconds\", 0)\n        ),\n        body_battery_impact=int(_number_or(event_data, \"bodyBatteryImpact\", 0)),\n        feedback_type=event_data.get(\"feedbackType\", \"\"),\n        short_feedback=event_data.get(\"shortFeedback\", \"\"),\n    )\n\ndef _fetch_events(client: http.Client, day: date) -> list:\n    path = f\"/wellness-service/wellness/bodyBattery/events/{day}\"\n    try:\n        response = client.connectapi(path)\n    except Exception as e:\n        logging.warning(f\"Failed to fetch Body Battery events: {e}\")\n        return []\n    return response if isinstance(response, list) else []\n\ndef _log_parse_summary(parsed: int, total: int) -> None:\n    if parsed < total:\n        logging.info(\n            f\"Body Battery events parsing: {parsed}/{total} \"\n            f\"successful, {total - parsed} skipped due to data issues\"\n        )\n\n@classmethod\ndef get(\n    cls,\n    day: str | date | None = None,\n    *,\n    client: http.Client | None = None,\n) -> builtins.list[Self]:\n    \"\"\"Get Body Battery events for a specific date.\"\"\"\n    client = client or http.client\n    day = format_end_date(day)\n\n    response = _fetch_events(client, day)\n    events = [\n        event\n        for event in (cls._parse_item(item) for item in response)\n        if event is not None\n    ]\n    _log_parse_summary(len(events), len(response))\n    return events\n\n@classmethod\ndef _parse_item(cls, item: dict) -> Self | None:\n    \"\"\"Parse one response item; log and return None if it is invalid.\"\"\"\n    try:\n        return cls(\n            event=_parse_event(item),\n            activity_name=item.get(\"activityName\"),\n            activity_type=item.get(\"activityType\"),\n            activity_id=item.get(\"activityId\"),\n            average_stress=_number_or(item, \"averageStress\", None),\n            stress_values_array=_list_or_none(item, \"stressValuesArray\"),\n            body_battery_values_array=_list_or_none(\n                item, \"bodyBatteryValuesArray\"\n            ),\n        )\n    except ValueError as e:\n        logging.error(\n            f\"Data validation error for Body Battery event item \"\n            f\"{item}: {e}\"\n        )\n    except Exception as e:\n        logging.error(\n            f\"Unexpected error parsing Body Battery event item \"\n            f\"{item}: {e}\",\n            exc_info=True,\n        )\n    return None"};
 
+const SCAN_PLAN = ['Fetching the repository from GitHub', 'Reading the source files', 'Scoring every function', 'Finding the most tangled functions', 'Planning where to split them', 'Estimating the savings'];
 const STEPS = ['Reading 41 files', 'Scoring every function (111)', 'Finding the 11 most tangled functions', 'Splitting them into small pieces', 'Running the project\'s 163 tests', 'All 163 tests still pass'];
 function $(id) { return document.getElementById(id); }
 function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 const q = new URLSearchParams(location.search);
+const OPT = { repo: null };   // set while a connected repository is being analyzed
 
 
 /* flow */
@@ -388,7 +398,7 @@ const ORDER = ['start', 'optimizing', 'compare', 'savings'];
 let reached = 0, timer = null;
 function go(name) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('show', s.id === 's-' + name));
-  const at = ORDER.indexOf(name === 'repo' ? 'optimizing' : name); reached = Math.max(reached, at);
+  const at = ORDER.indexOf(name === 'repo' ? 'optimizing' : name === 'yours' ? 'compare' : name); reached = Math.max(reached, at);
   document.querySelectorAll('#steps li').forEach((li, i) => { li.classList.toggle('on', i === at); li.classList.toggle('done', i < at); });
   if (name === 'optimizing') runOptimizer(); else clearInterval(timer);
   if (name === 'savings') renderSavings();
@@ -469,10 +479,12 @@ function setDfs(p) {
 }
 function setProgress(p) {
   $('pct').textContent = Math.round(p) + '%'; $('barfill').style.width = p + '%'; $('bar').setAttribute('aria-valuenow', Math.round(p)); setDfs(p);
-  const done = Math.floor(p / (100 / STEPS.length));
-  $('tasks').innerHTML = STEPS.map((t, i) => `<li class="${i < done ? 'ok' : i === done ? 'now' : ''}"><span class="tick">✓</span>${t}</li>`).join('');
+  const list = OPT.steps || STEPS;
+  const done = Math.floor(p / (100 / list.length));
+  $('tasks').innerHTML = list.map((t, i) => `<li class="${i < done ? 'ok' : i === done ? 'now' : ''}"><span class="tick">✓</span>${t}</li>`).join('');
 }
 function runOptimizer() {
+  if (OPT.repo) return;   // a connected repository drives its own progress
   const fixed = q.get('p');
   if (fixed !== null) return setProgress(+fixed);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, total = reduce ? 600 : 8000, t0 = performance.now();
@@ -578,9 +590,9 @@ function renderStairs(b) {
 }
 function teamRow(devs) {
   const b = calc(devs).bill, saved = b.orig - b.full;
-  return `<div class="teamrow"><div class="who">${devs} developers<small>${money(saved * 12)} a year</small></div><div class="bars"><div class="b1"></div><div class="b2" style="width:${100 * b.full / b.orig}%"></div><div class="nums"><span><s>${money(b.orig)}</s> → <b>${money(b.full)}</b> a month</span><em>${pct(b.orig, b.full)}% lower</em></div></div></div>`;
+  return `<div class="teamrow"><div class="who">${devs} developer${devs === 1 ? '' : 's'}<small>${money(saved * 12)} a year</small></div><div class="bars"><div class="b1"></div><div class="b2" style="width:${100 * b.full / b.orig}%"></div><div class="nums"><span><s>${money(b.orig)}</s> → <b>${money(b.full)}</b> a month</span><em>${pct(b.orig, b.full)}% lower</em></div></div></div>`;
 }
-function renderTeams() { $('teams').innerHTML = [10, 50, 200, 500].map(teamRow).join(''); }
+function renderTeams() { $('teams').innerHTML = [1, 10, 50, 200, 500].map(teamRow).join(''); }
 function renderReads(r) {
   $('readTxt').textContent = `One read of a ${fmt(S.lines)}-line codebase is about ${tokK(r.C)} tokens. At ${r.m.name} prices, it costs:`;
   const cards = [['Without caching', r.per.none], ['Default file order', r.per.orig], ['With Krypton', r.per.full]];
@@ -593,7 +605,7 @@ function sizeRow(lines) {
 }
 function renderSizes() {
   $('sizeTxt').textContent = `Same ${fmt(S.devs)} developers and model; only the codebase changes.`;
-  $('sizes').innerHTML = [5000, 25000, 100000].map(sizeRow).join('');
+  $('sizes').innerHTML = [5000, 25000, 100000, 300000].map(sizeRow).join('');
 }
 function renderSavings() {
   const r = calc(S.devs);
@@ -658,6 +670,37 @@ function showSignInResult() {
   if (key) history.replaceState(null, '', location.pathname);
 }
 
+/* a connected repository: the animation runs while the server reads it, then the result screen shows what Krypton would clean up and save */
+function setOptMode(repo) {
+  OPT.repo = repo; OPT.steps = repo ? SCAN_PLAN : null;
+  document.querySelector('#s-optimizing .eyebrow').textContent = repo ? 'Analyzing ' + repo : 'Optimizing garth';
+  $('h-opt').textContent = repo ? 'Finding what to untangle…' : 'Untangling the code…';
+  document.querySelector('#steps li[data-s="compare"]').textContent = repo ? '3 · Results' : '3 · Compare';
+}
+function plural(n, one, many) { return `${fmt(n)} ${n === 1 ? one : many}`; }
+function realSteps(d) {
+  return [SCAN_PLAN[0], `Reading ${plural(d.files, 'file', 'files')}`, `Scoring every function (${fmt(d.functions)})`,
+    d.tangled ? `Finding the ${plural(d.tangled, 'most tangled function', 'most tangled functions')}` : 'Checking for tangled functions (none over the limit)', SCAN_PLAN[4], SCAN_PLAN[5]];
+}
+function renderYours(d) {
+  const b = calc(S.devs).bill, saved = b.orig - b.full, worst = d.worst[0];
+  $('h-yours').textContent = `What Krypton would do for ${d.repo}`;
+  const facts = [statBox(fmt(d.files), 'source files'), statBox(fmt(d.lines), 'lines of code'), statBox('~' + tokK(d.tokens * CLAUDE_TOKENS), 'tokens each time an agent reads it'), statBox(d.purity + ' / 100', 'structure score')];
+  const clean = d.tangled === 0
+    ? '<p class="notice">Already clean: no function is over the limit, so there is little to untangle. Krypton would mainly keep it that way as agents keep editing, and order your files for caching.</p>'
+    : `<p><b>${plural(d.tangled, 'function', 'functions')} of ${fmt(d.functions)}</b> too tangled${worst ? `, the hardest ${worst.times}× over the limit` : ''}. Krypton would have your agent split these first:</p>${worstTable(d)}
+       <p class="small muted" style="margin-top:10px">On garth, a Krypton-guided cleanup cleared every logic-complexity flag (9 → 0) with all 163 tests passing, and cut the functions over the limit from 11 to 3. For your code this is an estimate until you run it.</p>`;
+  $('yoursOut').innerHTML = `<div class="card"><div class="scanfacts">${facts.join('')}</div></div>
+      <div class="card hero2" aria-live="polite"><span class="eyebrow">What it could save on your AI bill</span>
+        <div class="vs"><div class="was"><small>Today</small><b>${money(b.orig)}</b><span>a month, files in default order</span></div><div class="arrow" aria-hidden="true">→</div><div class="now"><small>With Krypton</small><b>${money(b.full)}</b><span>${d.tangled ? 'stable files first, cleaner code' : 'stable files first'}</span></div></div>
+        <div class="saved"><b>${money(saved)}</b> saved every month · <b>${money(saved * 12)}</b> a year · <b>${pct(b.orig, b.full)}%</b> lower</div>
+        <p class="small" style="margin:12px 0 0;color:rgba(255,255,255,.78)">Priced for ${plural(S.devs, 'developer', 'developers')} sending ${S.turns} requests a day on ${MODELS[S.model].name} at list prices, from your ${fmt(d.lines)} lines. The rates are the ones measured on garth, so your result depends on your repository's history.</p></div>
+      <div class="card"><h3>What would be cleaned up</h3>${clean}
+        <p class="small" style="margin-top:12px"><b>And it stays clean.</b> In a 20-revision agent test, a Krypton CI gate kept the worst function near 12× the limit, while unchecked code grew to about 1,900×.</p></div>
+    `;
+}
+function showYours(d) { applyScan(d); renderYours(d); go('yours'); }
+
 /* analyze a connected visitor's own repository: the server reads it in memory and sends back numbers only */
 const GARTH_TANGLED_SHARE = 11 / 111;   // garth: 11 of 111 functions over the threshold, where the cleanup saved 16.9% per change on average
 const SCAN_STEPS = ['Fetching the repository from GitHub', 'Reading the source files', 'Scoring every function'];
@@ -702,9 +745,17 @@ function renderScan(d) {
 async function analyzeRepo() {
   const repo = AUTH.picked;
   if (!repo) return;
-  resetScanView(repo); go('repo'); startScanLog();
-  try { SCAN.data = await postScan(repo); } catch (error) { stopScanLog(); return showScanError(error.message); }
-  stopScanLog(); renderScan(SCAN.data);
+  resetScanView(repo); setOptMode(repo); go('optimizing');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, minMs = reduce ? 600 : 6500, t0 = performance.now();
+  let data = null, failure = null, p = 0;
+  postScan(repo).then((d) => { data = { repo, ...d }; OPT.steps = realSteps(data); }, (error) => { failure = error; });
+  clearInterval(timer); setProgress(0);
+  timer = setInterval(() => {
+    if (failure) { clearInterval(timer); setOptMode(null); go('repo'); return showScanError(failure.message); }
+    p = Math.min(data ? 100 : 88, p + (data ? 2.5 : 0.9), 100 * (performance.now() - t0) / minMs);
+    setProgress(p);
+    if (p >= 100) { clearInterval(timer); SCAN.data = data; setTimeout(() => showYours(data), 700); }
+  }, 60);
 }
 function effectFor(d) {
   const share = d.functions ? d.tangled / d.functions : 0;
@@ -713,14 +764,15 @@ function effectFor(d) {
 function applyScan(d) {
   const tokensPerLine = Math.min(20, Math.max(1, Math.round(10 * d.tokens * CLAUDE_TOKENS / Math.max(1, d.lines)) / 10));
   Object.assign(S, { devs: 5, lines: d.lines, tpl: tokensPerLine, effect: effectFor(d), refactor: d.tangled > 0, repo: d });
-  Object.assign($('lines'), { min: Math.min(2000, d.lines), max: Math.max(100000, d.lines), step: d.lines < 5000 ? 100 : 1000, value: S.lines });
+  Object.assign($('lines'), { min: Math.min(1000, d.lines), max: Math.max(300000, d.lines), step: d.lines < 5000 ? 100 : 1000, value: S.lines });
   $('devs').value = S.devs; $('tpl').value = S.tpl; $('refactor').checked = S.refactor;
   renderSavings();
 }
 
 /* wire up */
 function bindFlow() {
-  $('go').onclick = () => go('optimizing'); $('analyze').onclick = analyzeRepo; $('scanBack').onclick = () => go('start'); $('scanSave').onclick = () => { applyScan(SCAN.data); go('savings'); }; $('tosave').onclick = () => go('savings'); $('again').onclick = () => go('start');
+  $('go').onclick = () => { setOptMode(null); go('optimizing'); }; $('analyze').onclick = analyzeRepo; $('scanBack').onclick = () => { setOptMode(null); go('start'); }; $('scanSave').onclick = () => { applyScan(SCAN.data); go('savings'); }; $('tosave').onclick = () => go('savings'); $('again').onclick = () => { setOptMode(null); go('start'); };
+  $('yoursSave').onclick = () => go('savings'); $('yoursBack').onclick = () => { setOptMode(null); go('start'); };
   $('gh2').onclick = connectGithub; $('mOk').onclick = closeNotice;
   $('veil').addEventListener('click', (e) => { if (e.target === $('veil')) closeNotice(); });
 }

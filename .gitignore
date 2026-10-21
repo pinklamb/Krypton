@@ -48,3 +48,10 @@ REPORT.md
 *BENCHMARK*.md
 krypton/docs/
 krypton/calibration/
+
+# raw results of the live API experiments (regenerate with the tools in krypton/tools)
+cache_anthropic_results/
+krypton/cache_anthropic_results/
+
+# local editor settings
+.vscode/

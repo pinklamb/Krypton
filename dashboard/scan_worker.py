@@ -13,6 +13,8 @@ from collections import Counter
 
 CHARS_PER_TOKEN = 3.5  # the same rough estimate the engine uses for its file manifest
 WORST = 8
+EXAMPLES = 6
+EXCLUDED_REASONS = ("vendored_path", "vendored_name", "vendored_content", "generated_path")   # files the engine left out as libraries or generated code
 
 
 def limit_resources() -> None:
@@ -57,20 +59,31 @@ def totals(result) -> dict:
     }
 
 
+def excluded(result) -> dict:
+    """How many files were left out as bundled libraries or generated code, with a few example paths."""
+    names = sorted(skip.filename for skip in result.skipped_files if skip.reason in EXCLUDED_REASONS)
+    return {"count": len(names), "examples": names[:EXAMPLES]}
+
+
 def summarize(result, sources: dict[str, str]) -> dict:
     """The numbers the page shows; no source text."""
     tangled = tangled_functions(result)
     characters = sum(len(sources[file.filename]) for file in result.findings)
-    return {**totals(result), "tokens": round(characters / CHARS_PER_TOKEN), "tangled": len(tangled), "worst": worst_rows(tangled)}
+    return {**totals(result), "tokens": round(characters / CHARS_PER_TOKEN), "tangled": len(tangled), "worst": worst_rows(tangled), "excluded": excluded(result)}
 
 
 def main() -> int:
     """stdin JSON in, summary JSON out."""
     limit_resources()
     sources = json.load(sys.stdin)
+    attributes = sources.pop(".gitattributes", "")
+    from krypton.engine.config import DEFAULT_CONFIG
     from krypton.engine.run import run_local
+    from krypton.engine.vendored import linguist_globs
 
-    result = run_local({name: text.encode("utf-8") for name, text in sources.items()})
+    vendored, generated = linguist_globs(attributes)
+    cfg = DEFAULT_CONFIG.model_copy(update={"vendored_path_globs": DEFAULT_CONFIG.vendored_path_globs + vendored, "generated_path_globs": DEFAULT_CONFIG.generated_path_globs + generated})
+    result = run_local({name: text.encode("utf-8") for name, text in sources.items()}, cfg=cfg)
     json.dump(summarize(result, sources), sys.stdout)
     return 0
 

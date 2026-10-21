@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 
 import auth
-from repo_fetch import Limits, ScanError, fetch_sources
+from repo_fetch import GITATTRIBUTES, Limits, ScanError, fetch_sources
 
 WORKER = Path(__file__).with_name("scan_worker.py")
 WORKER_SECONDS = 60
@@ -48,7 +48,7 @@ def run_worker(sources: dict[str, str], seconds: int = WORKER_SECONDS) -> dict:
 def analyze(cfg: auth.Config, token: str, full_name: str, limits: Limits = Limits()) -> dict:
     """Fetch and score a repository; the summary numbers, or ScanError."""
     sources = fetch_sources(cfg, token, full_name, limits)
-    if not sources:
+    if not any(name != GITATTRIBUTES for name in sources):
         raise ScanError(422, "No Python, JavaScript or TypeScript source files were found in that repository.")
     return {"repo": full_name, **run_worker(sources)}
 

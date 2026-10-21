@@ -682,6 +682,12 @@ function realSteps(d) {
   return [SCAN_PLAN[0], `Reading ${plural(d.files, 'file', 'files')}`, `Scoring every function (${fmt(d.functions)})`,
     d.tangled ? `Finding the ${plural(d.tangled, 'most tangled function', 'most tangled functions')}` : 'Checking for tangled functions (none over the limit)', SCAN_PLAN[4], SCAN_PLAN[5]];
 }
+function leftOutNote(d) {
+  const x = d.excluded;
+  if (!x || !x.count) return '';
+  const more = x.count > 3 ? ` and ${fmt(x.count - 3)} more` : '';
+  return `<p class="small muted" style="margin-top:12px">Left out ${plural(x.count, 'file', 'files')} of bundled libraries or generated code, for example ${x.examples.slice(0, 3).map(esc).join(', ')}${more}. They are not your code, so they are not scored.</p>`;
+}
 function renderYours(d) {
   const b = calc(S.devs).bill, saved = b.orig - b.full, worst = d.worst[0];
   $('h-yours').textContent = `What Krypton would do for ${d.repo}`;
@@ -690,7 +696,7 @@ function renderYours(d) {
     ? '<p class="notice">Already clean: no function is over the limit, so there is little to untangle. Krypton would mainly keep it that way as agents keep editing, and order your files for caching.</p>'
     : `<p><b>${plural(d.tangled, 'function', 'functions')} of ${fmt(d.functions)}</b> too tangled${worst ? `, the hardest ${worst.times}× over the limit` : ''}. Krypton would have your agent split these first:</p>${worstTable(d)}
        <p class="small muted" style="margin-top:10px">On garth, a Krypton-guided cleanup cleared every logic-complexity flag (9 → 0) with all 163 tests passing, and cut the functions over the limit from 11 to 3. For your code this is an estimate until you run it.</p>`;
-  $('yoursOut').innerHTML = `<div class="card"><div class="scanfacts">${facts.join('')}</div></div>
+  $('yoursOut').innerHTML = `<div class="card"><div class="scanfacts">${facts.join('')}</div>${leftOutNote(d)}</div>
       <div class="card hero2" aria-live="polite"><span class="eyebrow">What it could save on your AI bill</span>
         <div class="vs"><div class="was"><small>Today</small><b>${money(b.orig)}</b><span>a month, files in default order</span></div><div class="arrow" aria-hidden="true">→</div><div class="now"><small>With Krypton</small><b>${money(b.full)}</b><span>${d.tangled ? 'stable files first, cleaner code' : 'stable files first'}</span></div></div>
         <div class="saved"><b>${money(saved)}</b> saved every month · <b>${money(saved * 12)}</b> a year · <b>${pct(b.orig, b.full)}%</b> lower</div>

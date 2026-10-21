@@ -203,5 +203,41 @@ class GateTests(unittest.TestCase):
         gate.finish()
 
 
+def _tar(files: dict[str, str]) -> bytes:
+    """A GitHub-style archive: everything under one `owner-repo-sha` folder."""
+    import io
+    import tarfile
+
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+        for name, text in files.items():
+            data = text.encode()
+            info = tarfile.TarInfo(f"owner-repo-abc123/{name}")
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return buffer.getvalue()
+
+
+NL = chr(10)
+TANGLED = "def tangled(x):" + NL + "".join("    " * (i + 1) + f"if x > {i}:" + NL for i in range(12)) + "    " * 13 + "return x" + NL
+BOOTSTRAP = NL.join(["/*!", " * Bootstrap v5.3.2", " * Licensed under MIT", " */"] + [f"function f{i}(a) {{ if (a) {{ return {i}; }} return 0; }}" for i in range(60)]) + NL
+
+
+class BundledLibraryTests(GitHubCase):
+    def test_bundled_libraries_are_left_out_and_reported(self):
+        files = {"src/app.py": TANGLED, "public/js/bootstrap.js": BOOTSTRAP, "legacy/old.py": TANGLED, ".gitattributes": "legacy/ linguist-vendored" + NL}
+        sources = extract_sources(_tar(files))
+        self.assertIn(".gitattributes", sources)
+        data = scanner.run_worker(sources)
+        self.assertEqual(data["files"], 1)                                   # only src/app.py is scored
+        self.assertEqual(data["tangled"], 1)
+        self.assertEqual(data["excluded"]["count"], 2)
+        self.assertEqual(set(data["excluded"]["examples"]), {"public/js/bootstrap.js", "legacy/old.py"})
+
+    def test_a_repository_without_libraries_reports_nothing_left_out(self):
+        data = scanner.run_worker(extract_sources(_tar({"src/app.py": TANGLED})))
+        self.assertEqual(data["excluded"], {"count": 0, "examples": []})
+
+
 if __name__ == "__main__":
     unittest.main()

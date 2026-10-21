@@ -26,7 +26,9 @@ import auth
 
 REPO_NAME = re.compile(r"^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$")
 SOURCE_SUFFIXES = (".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts")
-SKIP_DIRS = frozenset({".git", "node_modules", "vendor", "third_party", "dist", "build", "__pycache__", "site-packages", ".venv", "venv"})
+SKIP_DIRS = frozenset({".git", "node_modules", "vendor", "third_party", "third-party", "dist", "build", "__pycache__", "site-packages", ".venv", "venv", "bower_components", "jspm_packages", ".tox", "__pypackages__"})
+GITATTRIBUTES = ".gitattributes"   # the repository root's file is kept so the engine can honor its linguist-vendored / linguist-generated lines
+ATTRIBUTES_BYTES = 64 * 1024
 DOWNLOAD_HOST = "codeload.github.com"
 REDIRECTS = (301, 302, 303, 307, 308)
 CHUNK = 64 * 1024
@@ -141,6 +143,11 @@ def _is_source(parts: tuple[str, ...]) -> bool:
     return parts[-1].lower().endswith(SOURCE_SUFFIXES) and not any(part in SKIP_DIRS for part in parts[:-1])
 
 
+def _is_root_attributes(member: tarfile.TarInfo) -> bool:
+    """The repository root's .gitattributes, as a plain file."""
+    return not _unsafe_member(member) and PurePosixPath(member.name).parts[1:] == (GITATTRIBUTES,)
+
+
 def _clean_name(member: tarfile.TarInfo) -> str | None:
     """The repo-relative path of a regular source file in an allowed place, else None."""
     if _unsafe_member(member):
@@ -175,6 +182,9 @@ def extract_sources(archive: bytes, limits: Limits = Limits()) -> dict[str, str]
         with tarfile.open(fileobj=io.BytesIO(archive), mode="r|gz") as tar:
             for member in tar:
                 budget.declare(member.size)
+                if _is_root_attributes(member) and member.size <= ATTRIBUTES_BYTES:
+                    sources[GITATTRIBUTES] = tar.extractfile(member).read(ATTRIBUTES_BYTES).decode("utf-8", errors="replace")
+                    continue
                 name = _clean_name(member)
                 if name is not None and member.size <= limits.file_bytes:
                     payload = tar.extractfile(member).read(limits.file_bytes + 1)

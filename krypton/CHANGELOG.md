@@ -9,6 +9,9 @@
 - New documentation site (getting started, how it works, command reference, integrations, prompt caching, FAQ).
 - Public documentation describes what Krypton measures and why. The scoring and ordering algorithms are not published.
 
+### Bundled libraries
+- Copies of libraries that were committed into a repository (bootstrap, jQuery, lodash, bundler output, minified files) are no longer scored as your code. The engine now skips more dependency and build folders, minified and bundled file names, well-known library files by name and content, and anything `.gitattributes` marks `linguist-vendored` or `linguist-generated`; skipped files carry a reason, and `detect_vendored_content = false` turns the content check off. The hosted demo lists what it left out. Scores for repositories without committed libraries are unchanged.
+
 ### Measurements and research tools
 - New `tools.ai_human_gap`: compares the structure of AI-credited code with the rest of a repository, in size bands (measured on garth and the MCP reference servers: no per-size difference). `tools.cache_anthropic` gained `--ext` for TypeScript and other suffixes; a live replay on the MCP filesystem server reused 38% with Krypton's order against 31% alphabetical.
 - The docs home page now starts with a plain-language "What Krypton is", and the benchmarks page opens with a one-line-per-question summary.

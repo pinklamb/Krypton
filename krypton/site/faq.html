@@ -39,7 +39,7 @@
 <p>No. Heavy code is more likely to hide bugs, but Krypton only measures structure.</p>
 
 <h3>What happens to minified or generated files?</h3>
-<p>Generated and vendored paths are skipped. Files that are too large or have extremely long lines are not analyzed; they are left out of the score and listed, with the setting that would include them.</p>
+<p>Generated and vendored paths are skipped, including minified files, bundles and copies of libraries such as bootstrap or jQuery that were committed into the repository, so they are not scored as your code. Files that are too large or have extremely long lines are not analyzed; they are left out of the score and listed, with the setting that would include them.</p>
 
 <h3>Does it work with my coding agent?</h3>
 <p>Any agent that can run a command can use it. See <a href="integrations.html#agents">Integrations</a>.</p>

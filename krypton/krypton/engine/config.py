@@ -72,6 +72,27 @@ class EngineConfig(BaseModel):
         "**/.next/**",
         "**/coverage/**",
         "**/vendor/**",
+        "**/vendors/**",
+        "**/vendored/**",
+        "**/_vendor/**",
+        "**/third_party/**",
+        "**/third-party/**",
+        "**/bower_components/**",
+        "**/jspm_packages/**",
+        "**/site-packages/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/.tox/**",
+        "**/__pypackages__/**",
+        "**/.nuxt/**",
+        "**/.output/**",
+        "**/.svelte-kit/**",
+        "**/.angular/**",
+        "**/storybook-static/**",
+        "**/wwwroot/lib/**",
+        "**/static/**/vendor*/**",
+        "**/public/**/vendor*/**",
+        "**/assets/**/vendor*/**",
     )
     generated_path_globs: tuple[str, ...] = (
         "**/*.d.ts",
@@ -79,7 +100,14 @@ class EngineConfig(BaseModel):
         "**/*_pb2.py",
         "**/*_pb2_grpc.py",
         "**/*.generated.*",
+        "**/*.min.js",
+        "**/*.min.mjs",
+        "**/*.min.cjs",
+        "**/*-min.js",
+        "**/*.bundle.js",
+        "**/*.chunk.js",
     )
+    detect_vendored_content: bool = True  # also leave out JavaScript that looks like a bundled library (engine/vendored.py)
     generated_markers: tuple[str, ...] = ("@generated", "DO NOT EDIT", "auto-generated")
     test_path_globs: tuple[str, ...] = TEST_PATH_GLOBS  # §6.1
     python_source_roots: tuple[str, ...] = (".", "src")

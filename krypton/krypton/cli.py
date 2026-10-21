@@ -21,6 +21,7 @@ from krypton.calibration import calibrated_module, calibration_csv, calibration_
 from krypton.engine.config import LEVELS, EngineConfig, apply_level
 from krypton.engine.languages import SUPPORTED_EXTENSIONS
 from krypton.engine.run import run_local
+from krypton.engine.vendored import linguist_globs
 from krypton.engine.volatility import change_frequency, manifest
 
 EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = 0, 1, 2
@@ -335,9 +336,22 @@ def _load_config(config_file: Path | None, root: Path) -> EngineConfig:
     for name, value in _tsconfig_paths(root).items():
         overrides.setdefault(name, value)  # an explicit --config value wins
     try:
-        return EngineConfig(**overrides)
+        cfg = EngineConfig(**overrides)
     except ValidationError as error:
         raise UsageError(f"invalid config: {error}") from error
+    return _with_linguist_rules(cfg, root)
+
+
+def _with_linguist_rules(cfg: EngineConfig, root: Path) -> EngineConfig:
+    """Add the paths the repository's .gitattributes marks linguist-vendored or linguist-generated."""
+    try:
+        text = (root / ".gitattributes").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return cfg
+    vendored, generated = linguist_globs(text)
+    if not (vendored or generated):
+        return cfg
+    return cfg.model_copy(update={"vendored_path_globs": cfg.vendored_path_globs + vendored, "generated_path_globs": cfg.generated_path_globs + generated})
 
 
 def _tsconfig_paths(root: Path) -> dict:

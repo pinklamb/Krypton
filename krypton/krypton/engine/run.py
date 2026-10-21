@@ -31,6 +31,7 @@ from krypton.engine.rules import (
 )
 from krypton.engine.summary import build_summary_markdown
 from krypton.engine.unchecked import FILE_TOO_LARGE, LINE_TOO_LONG, NODE_TOO_WIDE, Unchecked, build_errors
+from krypton.engine.vendored import looks_vendored
 from krypton.schemas import FLAG_PRIORITY, EngineResult, FileFinding, FunctionFinding, SkippedFile
 
 MARKER_LINES = 5
@@ -75,6 +76,10 @@ def run_local(
             skipped.append(skip)
             continue
         text = decode_source(files[filename])
+        reason = looks_vendored(filename, text) if cfg.detect_vendored_content else None
+        if reason is not None:
+            skipped.append(SkippedFile(filename=filename, reason=reason))
+            continue
         if _has_generated_marker(text, cfg):
             markers.append(filename)
         lines = None if altered is None else frozenset(altered.get(filename, ()))

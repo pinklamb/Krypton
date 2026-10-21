@@ -74,7 +74,7 @@ class SkippedFile(BaseModel):
     """A file that was not analyzed, and why."""
 
     filename: str
-    reason: Literal["generated_path", "vendored_path", "unsupported_extension"]
+    reason: Literal["generated_path", "vendored_path", "vendored_name", "vendored_content", "unsupported_extension"]
 
 
 class EngineResult(BaseModel):

@@ -67,7 +67,7 @@ coupling_weight_threshold = 25  # example value: how many linked files make a ho
 <ul>
 <li><code>.js .jsx .mjs .cjs .ts .tsx .mts .cts .py</code></li>
 <li>Inside a git repository, anything <code>.gitignore</code> ignores is skipped.</li>
-<li>Vendored and generated paths are skipped by default.</li>
+<li>Vendored and generated paths are skipped by default: dependency and build folders, minified and bundled files, and copies of well-known libraries such as bootstrap or jQuery, found by their name and content. Anything a repository's <code>.gitattributes</code> marks <code>linguist-vendored</code> or <code>linguist-generated</code> is skipped too. Skipped files are listed with the reason, and <code>detect_vendored_content = false</code> in a config file turns off the content check.</li>
 <li>Files whose real path leaves the scanned folder (symlinks) are dropped.</li>
 </ul>
 

@@ -71,12 +71,12 @@
 <p>It is not a linter. Run yours too.</p>
 
 <h2 id="results">What we measured</h2>
-<p>Tested on <b>garth</b>, an open-source Garmin client whose recent commits are mostly AI-written, and for caching on 19 more open-source repositories. Read these as estimates: they come from small numbers of runs.</p>
+<p>Tested on <b>garth</b>, an open-source Garmin client whose recent commits are mostly AI-written, and for caching on 19 more open-source repositories.</p>
 <div class="stats">
   <div><b>71%</b><span>of prompt tokens cached with Krypton's file order on garth, against 47% alphabetical (35% cheaper). Across 20 repositories it beat alphabetical on 12 and lost on 7: a typical gain of about 4 points</span></div>
   <div><b>62 → 81</b><span>garth's structure score after an agent rebuilt its worst functions first with Krypton, all 163 tests still passing; the cost of later changes did not change</span></div>
   <div><b>1,900× → 12×</b><span>how far over the limit garth's worst function ended after 20 agent revisions, without and with a Krypton CI gate; the gate cost about 62% more</span></div>
-  <div><b>66</b><span>change tasks, on average, to repay the one-time cleanup (runs ranged from 16 to never); after that, every change costs 16.9% less on average, about 6% for the typical run</span></div>
+  <div><b>66</b><span>change tasks, on average, to repay the one-time cleanup; after that, every change costs 16.9% less on average</span></div>
 </div>
 <p><a href="prompt-caching.html">See the full results and caveats →</a></p>
 

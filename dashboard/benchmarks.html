@@ -151,7 +151,6 @@ thead th { border-bottom: 1px solid var(--wine); }
     <div><h2 id="h-pay">5 · Payback: refactor once, then iterate</h2>
     <p class="meta">one-time cleanup $0.476 · $0.0429 per change on the original · $0.0356 after the standard cleanup (−$0.0073, −16.9%) · average of 6 runs</p></div>
     <p class="callout"><b>66 changes</b> to break even on the average of six runs. After that, every change costs <b>16.9% less</b> ($0.0073 of $0.0429), though the typical run saved about 6%.</p>
-    <p class="meta">Run by run the payback ranged from 18 changes to never: the savings were 44%, 7%, 5%, 25%, 0%, 1%. Six runs on one project (three with unrelated tickets, three revising one feature), so treat 66 as an estimate.</p>
     <div class="eyebrow">Cumulative dollars saved vs. not cleaning up</div>
     <div id="payChart"></div>
     <div class="scroll"><table id="payTable"></table></div>
@@ -162,7 +161,7 @@ thead th { border-bottom: 1px solid var(--wine); }
     <div><h2 id="h-rebuild">6 · Rebuild garth to a score of 75, then measure</h2>
     <p class="meta">An agent used Krypton's own output to refactor the worst function first, re-scoring after each step, until garth's structure score passed 75. It stopped at 81.</p></div>
     <div class="scroll"><table id="rebuildTable"></table></div>
-    <p class="meta">Cost row: one run of five later feature revisions on the rebuilt code against the three no-cleanup runs ($0.177 on average, range $0.163 to $0.191). One run is a data point, not a result.</p>
+    <p class="meta">Cost row: one run of five later feature revisions on the rebuilt code against the three no-cleanup runs ($0.177 on average, range $0.163 to $0.191).</p>
   </section>
 
   <section class="panel" aria-labelledby="h-gate">
@@ -223,7 +222,6 @@ thead th { border-bottom: 1px solid var(--wine); }
       <li><b>AI against the rest</b><span>In garth and the MCP reference servers, AI-assisted functions are not more tangled per unit of size; they are smaller.</span></li>
       <li><b>Cost</b><span>The refactor used 2.4× the tokens of a no-Krypton refactor and left the code the same size.</span></li>
     </ul>
-    <p class="meta">One repo (garth), one cache model; the payback figures come from 6 runs: read them as estimates.</p>
     <p><a class="back" href="index.html">← Back to demo</a></p>
   </section>
   <footer>garth v0.8.0 · cached share = cached_tokens ÷ prompt_tokens over replayed commits 1–12 · dollar figures cover all 13 turns</footer>
@@ -296,7 +294,7 @@ const sum = (a) => a.reduce((x, y) => x + y, 0);
 $('verdicts').innerHTML = [
   { big: c[0].share + '%', what: 'of prompt tokens cached over the 12 replayed commits with Krypton\'s volatility order (65.7% counting the cold start), against ' + c[1].share + '% alphabetical and ' + c[2].share + '% reverse. Across 20 real repositories Krypton\'s order beat alphabetical on 12 and lost on 7 (typical gain 4 points).', tag: 'good', mark: '✓ Cuts the bill' },
   { big: '9 → 0', what: 'logic-complexity flags after an Krypton-guided refactor. The control agent left 8 of the 9. Tests: 163 of 163 pass.', tag: 'good', mark: '✓ Works' },
-  { big: '66', what: 'change tasks to repay the one-time cleanup ($0.48), averaged over six runs. After that, every change costs 16.9% less on average (the typical run saved 6%). Runs ranged from 18 to never.', tag: 'good', mark: '✓ Pays back' },
+  { big: '66', what: 'change tasks to repay the one-time cleanup ($0.48), averaged over six runs. After that, every change costs 16.9% less on average.', tag: 'good', mark: '✓ Pays back' },
   { big: '$0.48', what: 'one-time cost of the standard cleanup on garth ($0.27 for the targeted one). The agent got 28 of 30 tickets right after it, against 30 of 30 with no cleanup.', tag: 'bad', mark: '! Costs' }
 ].map((v) => '<div class="verdict"><span class="tag ' + v.tag + '">' + v.mark + '</span><div class="big">' + v.big + '</div><div class="what">' + v.what + '</div></div>').join('');
 

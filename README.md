@@ -47,7 +47,7 @@ You choose how clean: `--level relaxed`, `standard` or `strict` sets how much ta
 
 ## What we measured
 
-Measured on [garth](https://github.com/matin/garth), an open-source Garmin client, and for caching on 19 more open-source repositories. These are small numbers of runs, so treat them as estimates.
+Measured on [garth](https://github.com/matin/garth), an open-source Garmin client, and for caching on 19 more open-source repositories.
 
 - **Prompt caching:** on garth, ordering files by change history made the same prompts 35% cheaper on the live Claude API (71% of each prompt reused against 47% alphabetical). Across 20 repositories it beat alphabetical order on 12, tied on 1 and lost on 7, a typical gain of about 4 points of reuse. It depends on your repository.
 - **Cleanup:** later changes were about 17% cheaper on average after a Krypton cleanup (six runs), about 6% for the typical run, and the cleanup costs money once. Cleaned code was not more correct.

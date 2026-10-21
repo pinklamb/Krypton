@@ -117,7 +117,8 @@ class Handler(BaseHTTPRequestHandler):
         if not self._same_origin():
             return self._text(403, "forbidden")
         self.sessions.delete(self._cookies())
-        self._text(200, "ok", [auth.clear_cookie(self.cfg, auth.SESSION_COOKIE)])
+        headers = {**NO_STORE, "Clear-Site-Data": '"cookies"'}   # ask the browser to drop every cookie for this site, not only ours
+        self._send(200, b"ok", "text/plain; charset=utf-8", headers, [auth.clear_cookie(self.cfg, auth.SESSION_COOKIE)], self.command != "HEAD")
 
     def _repo_from_body(self) -> str | None:
         """The `repo` field of a small JSON body, or None if it is missing or malformed."""

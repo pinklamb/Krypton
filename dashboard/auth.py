@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from http.cookies import SimpleCookie
 
 SESSION_COOKIE, FLOW_COOKIE = "krypton_session", "krypton_oauth"
-SESSION_TTL, FLOW_TTL, MAX_SESSIONS = 8 * 3600, 600, 500
+SESSION_TTL, FLOW_TTL, MAX_SESSIONS = 3600, 600, 500   # the sign-in cookie itself ends when the browser closes; the server also forgets a session after an hour
 API_HEADERS = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "krypton-demo"}
 
 
@@ -97,9 +97,10 @@ def parse_cookies(header: str | None) -> dict[str, str]:
     return {name: morsel.value for name, morsel in jar.items()}
 
 
-def set_cookie(cfg: Config, name: str, value: str, max_age: int) -> str:
-    """A Set-Cookie header value: HttpOnly, SameSite=Lax, Secure on https."""
-    flags = ["HttpOnly", "SameSite=Lax", "Path=/", f"Max-Age={max_age}"] + (["Secure"] if cfg.secure else [])
+def set_cookie(cfg: Config, name: str, value: str, max_age: int | None) -> str:
+    """A Set-Cookie header value: HttpOnly, SameSite=Lax, Secure on https; no Max-Age (None) makes it a browser-session cookie."""
+    age = [] if max_age is None else [f"Max-Age={max_age}"]
+    flags = ["HttpOnly", "SameSite=Lax", "Path=/", *age] + (["Secure"] if cfg.secure else [])
     return f"{name}={value}; " + "; ".join(flags)
 
 
@@ -122,7 +123,7 @@ def code_challenge(verifier: str) -> str:
 
 def authorize_url(cfg: Config, state: str, verifier: str) -> str:
     """Where to send the browser to sign in."""
-    query = {"client_id": cfg.client_id, "redirect_uri": cfg.redirect_uri, "scope": cfg.scopes, "state": state, "code_challenge": code_challenge(verifier), "code_challenge_method": "S256"}
+    query = {"client_id": cfg.client_id, "redirect_uri": cfg.redirect_uri, "scope": cfg.scopes, "state": state, "code_challenge": code_challenge(verifier), "code_challenge_method": "S256", "prompt": "select_account"}
     return f"{cfg.oauth_base}/login/oauth/authorize?{urllib.parse.urlencode(query)}"
 
 
@@ -184,7 +185,7 @@ class Sessions:
         with self._lock:
             self._purge()
             self._items[sid] = {"user": user, "token": token, "expires": time.time() + SESSION_TTL}
-        return set_cookie(self.cfg, SESSION_COOKIE, sign(self.cfg.secret, sid), SESSION_TTL)
+        return set_cookie(self.cfg, SESSION_COOKIE, sign(self.cfg.secret, sid), None)
 
     def get(self, cookies: dict[str, str]) -> dict | None:
         """The live session for a request's cookies, or None."""

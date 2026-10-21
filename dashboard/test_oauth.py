@@ -92,6 +92,7 @@ class SignInTests(unittest.TestCase):
         self.assertEqual(query["client_id"], ["cid"])
         self.assertEqual(query["code_challenge_method"], ["S256"])
         self.assertEqual(query["scope"], ["read:user repo"])
+        self.assertEqual(query["prompt"], ["select_account"])                       # GitHub shows its account chooser instead of silently reusing the last sign-in
         cookie = reply.getheader("Set-Cookie")
         self.assertIn("HttpOnly", cookie)
         self.assertIn("SameSite=Lax", cookie)
@@ -130,6 +131,20 @@ class SignInTests(unittest.TestCase):
         FakeGitHub.fail_exchange = True
         reply, _ = self.finish_login("code-2")
         self.assertEqual(reply.getheader("Location"), "/?github=error")
+
+    def test_the_sign_in_cookie_ends_with_the_browser_session(self):
+        reply, _ = self.finish_login()
+        session = [c for c in reply.headers.get_all("Set-Cookie") if c.startswith(auth.SESSION_COOKIE + "=") and not c.startswith(auth.SESSION_COOKIE + "=;")][0]
+        self.assertNotIn("Max-Age", session)
+        self.assertNotIn("Expires", session)
+        self.assertIn("HttpOnly", session)
+
+    def test_logging_out_clears_the_cookies(self):
+        self.finish_login()
+        reply, _ = self.me.call("POST", "/auth/logout", {"X-Requested-With": "krypton"})
+        self.assertEqual(reply.getheader("Clear-Site-Data"), '"cookies"')
+        self.assertIn("Max-Age=0", reply.getheader("Set-Cookie"))
+        self.assertNotIn(auth.SESSION_COOKIE, self.me.cookies)
 
     def test_logout_needs_the_header_and_ends_the_session(self):
         self.finish_login()

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy | Krypton</title>
+<meta name="description" content="What Krypton sees of your code: the command line, the demo and hosted scoring, and what is and is not sent.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html" aria-current="page">Privacy</a></nav></div></header>
+<div class="wrap single">
+
+<main id="content">
+<div class="eyebrow">Privacy</div>
+<h1>What Krypton sees of your code</h1>
+<p class="lede">Krypton is built so that scoring never needs your source files. This page says exactly what each way of running it reads, and what it does not.</p>
+
+<h2 id="ways">Two ways to run Krypton</h2>
+<div class="scroll"><table>
+<tr><th>Way</th><th>Where your code goes</th><th>Status</th></tr>
+<tr><td><b>Command line (<code>krypton</code>)</b></td><td>Your machine reads the code and sends the server only a description of its structure. <b>The server never receives your source files.</b> <code>krypton wire</code> prints exactly what would be sent.</td><td>Available</td></tr>
+<tr><td><b>The hosted demo</b></td><td>The repository you connect is fetched from GitHub by the demo's server with <i>your</i> GitHub access (GitHub authenticates you; Krypton keeps no accounts), read in memory and turned into a syntax tree there; only the tree goes on to the scoring server. Nothing is written to disk, run or kept after the scan, and your GitHub token is forgotten when you sign out or after an hour. <b>The demo does read your code.</b></td><td>Live</td></tr>
+</table></div>
+<p>The rest of this page is about the command line, because it is the one built to keep your code private.</p>
+
+<h2 id="two-grids">Two grids, no source</h2>
+<p>A small program on your machine parses your files and sends the server two things.</p>
+<div class="cards">
+<div class="card"><h3>1 · The structure grid</h3><p>Every node of each file's syntax tree, in order: what kind of node it is (a function, an <code>if</code>, a bracket), where it sits, how it nests, and where it starts and ends. Nothing is left out, so the structure the server scores is exactly your code's structure.</p></div>
+<div class="card"><h3>2 · The shape grid</h3><p>For each line: how long it is and where its visible characters are. That keeps line widths and indentation, so size is measured correctly, without saying what any character is.</p></div>
+</div>
+<p>The server rebuilds a tree from these and scores it exactly as if it had parsed the file itself. It then answers with the score and the advice, and your machine puts the real names back into the report.</p>
+
+<h2 id="sent">What is sent, and what stays on your machine</h2>
+<div class="scroll"><table>
+<tr><th>Sent to the server</th><th>Stays on your machine</th></tr>
+<tr><td>Tree structure and positions of every node</td><td>The source text itself</td></tr>
+<tr><td>Names as short fingerprints (a hash), so the server can tell "the same name" from "a different name"</td><td>The names in readable form, and the map from fingerprint back to name</td></tr>
+<tr><td>For expressions it only needs to compare (a returned value, the object a method is called on): a fingerprint</td><td>The text of those expressions</td></tr>
+<tr><td>Per line: length and where the visible characters are</td><td>Every string, number and comment, and the words in them</td></tr>
+<tr><td>Which of your files import which, as file paths</td><td>The import statements as written</td></tr>
+<tr><td>File path, language and size</td><td>Waiver comments and their reasons (the server learns only that a waiver exists, and a fingerprint of its reason)</td></tr>
+</table></div>
+
+<h2 id="limits">The honest limits</h2>
+<div class="note">
+<p><b>Fingerprints are not encryption.</b> A name is replaced by a hash. Someone who could guess a name could hash the guess and compare, but nobody can read a name they cannot guess.</p>
+<p><b>File paths are visible.</b> They are sent and they appear in the results, so folder and file names are not private from the server.</p>
+<p><b>Structure and layout are visible.</b> The server can see how many functions a file has, how large they are and how deeply they nest, and how long your lines are. That is what it needs to score them.</p>
+<p><b>The demo is different.</b> It fetches and reads the repository you connect. It does not keep it, but it does see it.</p>
+<p><b>Nothing is stored.</b> The scoring server keeps no tree, no result and no log of what it scored; it counts requests per address for a minute to enforce its rate limit.</p>
+</div>
+
+<h2 id="check">How we check it</h2>
+<p>This is not left to review. An automated test takes real files, collects every word their code contains (names, string contents, comment text, import paths, waiver reasons) and fails if any of those words appears anywhere in the request or in the server's answer. It runs on more than 60 real files, and the same check run on the Rust program's output across 240 files found none. A deliberate leak is planted in a test to prove the check can fail.</p>
+<p>Requests are not stored. The server keeps no copy of a tree, and its logs record a request id, never code.</p>
+
+<div class="pager"><a href="faq.html">← FAQ</a><a href="architecture.html">Architecture →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture | Krypton</title>
+<meta name="description" content="How Krypton is built: the local walker, the tree on the wire, the scoring server, and what each side can see.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.path { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 14px; align-items: stretch; margin: 18px 0 26px; }
+.path .side { border: 1px solid var(--wine); background: var(--surface); padding: 16px 18px; }
+.path .side h3 { margin: 0 0 8px; font: 700 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--wine); }
+.path .side ul { margin: 0; padding-left: 18px; }
+.path .wire { display: flex; flex-direction: column; justify-content: center; gap: 14px; font: 600 12px var(--mono); color: var(--muted); text-align: center; }
+.path .wire b { color: var(--wine); display: block; }
+@media (max-width: 860px) { .path { grid-template-columns: minmax(0, 1fr); } .path .wire { flex-direction: row; justify-content: space-around; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html" aria-current="page">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#overview">Overview</a></li><li><a href="#components">Components</a></li><li><a href="#flow">The path of a file</a></li><li><a href="#visibility">What each side sees</a></li><li><a href="#server">The scoring server</a></li><li><a href="#checks">How it is checked</a></li><li><a href="#modes">Ways to run it</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">Architecture</div>
+<h1>How Krypton is put together</h1>
+<p class="lede">Krypton has a local half that reads your code and a scoring half that only receives its structure. This page covers both, the format between them, and what each side can see.</p>
+
+<h2 id="overview">Overview</h2>
+<p>A file is parsed into a <b>syntax tree</b> on your machine, and only that is scored. Where the scorer needs a name it gets a short fingerprint, and the real name stays in a local book. The scorer returns numbers and hints, and your machine puts the names back.</p>
+
+<h2 id="components">Components</h2>
+<div class="scroll"><table>
+<tr><th>Component</th><th>Where it runs</th><th>What it does</th></tr>
+<tr><td><b>Client</b> (<code>krypton</code>)</td><td>Your machine</td><td>Parses each file (Python, JavaScript, TypeScript, TSX), writes the request, posts it, and keeps the names book.</td></tr>
+<tr><td><b>Wire format</b></td><td>Between the two</td><td>The request body: flat arrays for the tree, fingerprints for names, line shapes. See <a href="wire-format.html">Wire format</a>.</td></tr>
+<tr><td><b>Scoring server</b></td><td>Hosted</td><td>Validates the tree, scores it, returns JSON. Stateless: nothing from a request is stored. See <a href="api.html">API reference</a>.</td></tr>
+<tr><td><b>Engine</b></td><td>The scoring server</td><td>Counts decisions and nesting, applies the thresholds, raises flags, writes hints and the purity score. What it measures is in <a href="how-it-works.html">How it works</a>; the scoring maths is not published.</td></tr>
+<tr><td><b>Names book</b></td><td>Your machine</td><td>A map from fingerprint to name. It never leaves, and it is how the answer gets its names back.</td></tr>
+<tr><td><b>Order</b></td><td>Your machine</td><td>Reads git history locally and sends only file names, token counts and which files each commit touched; the server decides whether a different file order would reuse more of a prompt cache. See <a href="order.html">file ordering</a>.</td></tr>
+</table></div>
+
+<h2 id="flow">The path of a file</h2>
+<div class="path">
+<div class="side"><h3>Your machine</h3><ul><li>read the file</li><li>parse it</li><li>fingerprint the names</li><li>keep the names book</li><li>restore names in the answer</li></ul></div>
+<div class="wire"><div><b>HTTPS</b>structure and fingerprints &rarr;</div><div>&larr; numbers and hints</div></div>
+<div class="side"><h3>Scoring server</h3><ul><li>validate the tree</li><li>count and score</li><li>build hints</li><li>return JSON</li><li>store nothing</li></ul></div>
+</div>
+<p>Only the middle column crosses the network, over HTTPS.</p>
+
+<h2 id="visibility">What each side sees</h2>
+<div class="scroll"><table>
+<tr><th>Item</th><th>Stays on your machine</th><th>Sent to the scoring server</th></tr>
+<tr><td>Source text</td><td>Always</td><td>Never</td></tr>
+<tr><td>Identifiers and strings</td><td>The real text, and the names book</td><td>A 16-character fingerprint where a name is needed</td></tr>
+<tr><td>Structure</td><td>The full parse</td><td>Type, parent and position of every node</td></tr>
+<tr><td>Lines</td><td>The lines themselves</td><td>Each line's length and where its visible characters are</td></tr>
+<tr><td>Imports</td><td>The import text</td><td>Candidate file paths that exist in the same request</td></tr>
+<tr><td>Waiver comments</td><td>The comment</td><td>Whether the line is a comment by itself, and a fingerprint of the reason</td></tr>
+<tr><td>Credentials, repository</td><td>Always</td><td>Never</td></tr>
+</table></div>
+<div class="note"><b>The limits.</b> The server still sees file paths, the shape of every tree, line lengths and file sizes. Fingerprints are not salted, so a very common name could be recovered by hashing it. Two equal names have equal fingerprints, which is what lets the server compare them without reading them.</div>
+
+<h2 id="server">The scoring server</h2>
+<ul>
+<li><b>Stateless.</b> A request is scored and answered; no tree and no result is stored.</li>
+<li><b>Open, with a rate limit.</b> There are no accounts or keys; each address is limited to a few requests a minute, and nothing is stored.</li>
+<li><b>Strict input.</b> A request is untrusted. Array lengths, parent order, ranges and unknown kinds are checked before anything is scored, and unknown fields are refused so a client typo cannot change a score.</li>
+<li><b>No client-set thresholds.</b> A client can change file selection and conventions, not the limits or weights, so it cannot read a hidden rating by moving a threshold and watching a flag flip.</li>
+<li><b>Bounded.</b> There are limits on body size, files per request and nodes per file. See <a href="api.html#limits">Limits</a>.</li>
+</ul>
+
+<h2 id="checks">How it is checked</h2>
+<ul>
+<li>The server's answer is required to equal the command line's answer for the same source, on the engine's own files plus edge cases: Unicode, Windows line endings, byte-order marks, syntax errors, waivers, very deep and very wide files.</li>
+<li>The walker's output is required to equal a reference implementation's, array by array, on 240 files in four languages.</li>
+<li>A test fails if any word of source appears in a request or in the server's answer before the names are put back.</li>
+<li>400 randomly damaged requests are sent to the server; none may cause a server error.</li>
+</ul>
+
+<h2 id="modes">Ways to run it</h2>
+<div class="scroll"><table>
+<tr><th>Mode</th><th>Where code is read</th><th>Network</th><th>Status</th></tr>
+<tr><td><b>Command line</b> (<code>krypton</code>)</td><td>Your machine; the server gets the structure only</td><td>HTTPS to the server</td><td>Available</td></tr>
+<tr><td><b>Demo</b></td><td>The repository you connect is read on the demo's server, in memory, then dropped</td><td>HTTPS to GitHub and the server</td><td>Live: it builds the trees itself and uses the same server</td></tr>
+</table></div>
+
+<div class="pager"><a href="how-it-works.html">&larr; How it works</a><a href="wire-format.html">Wire format &rarr;</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

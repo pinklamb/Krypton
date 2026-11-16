@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command reference | Krypton</title>
+<meta name="description" content="Every Krypton client command: scan, order and wire, with their options, token counting and exit codes.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html" aria-current="page">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#scan">scan</a></li><li><a href="#order">order</a></li><li><a href="#wire">wire</a></li><li><a href="#exit">Exit codes</a></li><li><a href="#scanned">What gets scanned</a></li><li><a href="#notyet">Not in version 2 yet</a></li><li><a href="#examples">Examples</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">Command reference</div>
+<h1>Command reference</h1>
+<p class="lede">Everything the <code>krypton</code> client can do. Every command that talks to a server uses <code>--server URL</code>, or the <code>KRYPTON_SERVER</code> environment variable.</p>
+
+<h2 id="scan">krypton scan</h2>
+<pre><code>krypton scan REPO [options]</code></pre>
+<p>Builds the syntax tree of every source file under REPO on this machine, sends only the trees, and prints the server's review.</p>
+<div class="scroll"><table>
+<tr><th>Option</th><th>What it does</th></tr>
+<tr><td><code>--level relaxed|standard|strict</code></td><td>How strict the flag limit is. Default <code>standard</code>.</td></tr>
+<tr><td><code>--base REF</code></td><td>Score only files and lines changed since a git ref (new files count in full).</td></tr>
+<tr><td><code>--names</code></td><td>Put your real function names back into the review. They never left your machine.</td></tr>
+<tr><td><code>--json</code></td><td>Print the server's result as JSON instead of the review.</td></tr>
+<tr><td><code>--save FILE</code></td><td>Also write the server's whole answer to a file.</td></tr>
+<tr><td><code>--server URL</code></td><td>The server. Default: <code>KRYPTON_SERVER</code>, else <code>http://localhost:8080</code>.</td></tr>
+</table></div>
+
+<h2 id="order">krypton order</h2>
+<pre><code>krypton order REPO [options]</code></pre>
+<p>Reads the repository's git history on this machine and builds a request that holds only file names, token counts and which files each recent commit touched. With <code>--post</code> (or <code>--server</code>) it sends the request and prints the server's decision: <code>keep</code> (send your request unchanged) or <code>reorder</code> with the order to use. Without them it prints the request. See <a href="order.html">file ordering</a>.</p>
+<div class="scroll"><table>
+<tr><th>Option</th><th>What it does</th></tr>
+<tr><td><code>--subdir DIR</code>, <code>--ext .py,.ts</code></td><td>Which folder and file suffixes go in the prompt. Default: the whole repository, <code>.py</code>.</td></tr>
+<tr><td><code>--files LIST</code></td><td>The request's files, one per line, in your order (<code>-</code> reads standard input). Without it, every matching file in alphabetical order stands in for your order.</td></tr>
+<tr><td><code>--model NAME</code></td><td>Which model the prompt is for, so file sizes are counted in that model's tokens. See <a href="#tokens">Token counts</a>.</td></tr>
+<tr><td><code>--tokenizer o200k_base|cl100k_base|estimate</code></td><td>Choose the tokenizer directly.</td></tr>
+<tr><td><code>--tokens-from FILE.json</code></td><td>Counts you computed yourself: <code>{"path": tokens}</code>.</td></tr>
+<tr><td><code>--post</code>, <code>--server URL</code></td><td>Send the request and print the decision.</td></tr>
+<tr><td><code>--json</code></td><td>Print the decision as JSON.</td></tr>
+</table></div>
+
+<h3 id="tokens">Token counts</h3>
+<p>The order decision compares how much of a prompt a cache would keep, so file sizes should be counted in the tokens of the model the prompt is for. Krypton is not in the path of your model calls, so it cannot read the model from them; you name it with <code>--model</code> (or set <code>KRYPTON_MODEL</code> once, or have your agent harness pass it).</p>
+<div class="scroll"><table>
+<tr><th>Model</th><th>How it is counted</th></tr>
+<tr><td><code>gpt-4o</code>, <code>gpt-4.1</code>, <code>gpt-5</code>, <code>o1</code>, <code>o3</code>, <code>o4</code></td><td>Here, offline, with the real <code>o200k_base</code> vocabulary.</td></tr>
+<tr><td><code>gpt-4</code>, <code>gpt-3.5</code></td><td>Here, offline, with <code>cl100k_base</code>.</td></tr>
+<tr><td><code>claude-...</code></td><td>With Anthropic's own token counter, using your <code>ANTHROPIC_API_KEY</code>. This sends each file's text to Anthropic (your model provider), never to Krypton, and only when you name a Claude model. Answers are cached by content in <code>.krypton/tokens.json</code>.</td></tr>
+<tr><td>no model</td><td>An estimate of 3.5 characters per token. The command says so.</td></tr>
+</table></div>
+
+<h2 id="wire">krypton wire</h2>
+<pre><code>krypton wire FILE... [--root DIR] [--level L] [--config FILE.json]
+krypton wire --stdin-json &lt; files.json</code></pre>
+<p>Prints the request body instead of sending it, so you can read exactly what would leave your machine. <code>--stdin-json</code> takes <code>{"path": "source text"}</code> on standard input, so a program that holds code in memory never writes it to disk. A <code>.gitattributes</code> entry adds its <code>linguist-vendored</code> and <code>linguist-generated</code> patterns. <code>--names-out FILE</code> writes the table that maps fingerprints back to your names.</p>
+
+<h2 id="exit">Exit codes</h2>
+<div class="scroll"><table>
+<tr><th>Code</th><th>Meaning</th></tr>
+<tr><td><code>0</code></td><td>Success.</td></tr>
+<tr><td><code>1</code></td><td>The review failed, or a file could not be read, or the server could not be reached or refused the request (the message says which).</td></tr>
+<tr><td><code>2</code></td><td>Usage error: a missing folder or a bad option.</td></tr>
+</table></div>
+
+<h2 id="scanned">What gets scanned</h2>
+<ul>
+<li><code>.js .jsx .mjs .cjs .ts .tsx .mts .cts .py</code></li>
+<li>Dependency and build folders (<code>node_modules</code>, <code>dist</code>, <code>build</code>, <code>.git</code>, virtual environments and the like) are never read.</li>
+<li>The server also leaves out vendored and generated code by path and by name (minified and bundled files, copies of well-known libraries such as bootstrap or jQuery, anything <code>.gitattributes</code> marks <code>linguist-vendored</code> or <code>linguist-generated</code>), and lists each with the reason.</li>
+<li>A <code>krypton: ignore -- reason</code> comment above a function waives it. The review lists every waiver with its reason.</li>
+</ul>
+
+<h2 id="notyet">Not in version 2 yet</h2>
+<p>These options of the earlier Python command line have not been rebuilt: <code>--top</code>, <code>--history</code>, <code>--no-worse</code>, <code>--handoff-stalled</code>, <code>--config</code> on <code>scan</code>, and the loading animation. <code>--base</code> and <code>--json</code> are back. See the <a href="https://github.com/pinklamb/Krypton/blob/main/CHANGELOG.md">changelog</a>.</p>
+
+<h2 id="examples">Examples</h2>
+<pre><code><span class="c"># everything on this branch, for CI (exit code 1 on failure)</span>
+krypton scan . --base origin/main
+
+<span class="c"># be gentle while cleaning up</span>
+krypton scan src --level relaxed
+
+<span class="c"># exactly what would be sent</span>
+krypton wire src/app.py &gt; request.json
+
+<span class="c"># should I reorder this prompt? count in GPT-4o tokens</span>
+krypton order . --subdir src --ext .py,.ts --model gpt-4o --post</code></pre>
+
+<div class="pager"><a href="how-it-works.html">← How it works</a><a href="integrations.html">Integrations →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

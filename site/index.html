@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Krypton, the compiler for AI agents</title>
+<meta name="description" content="Krypton measures how structurally heavy code is, so coding agents can keep it small and your prompt cache stays warm.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html" aria-current="page">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<div class="wrap single">
+
+<main id="content">
+<div class="hero">
+<div>
+<div class="eyebrow">The compiler for AI agents</div>
+<h1>Keep AI-written code small enough to read, edit and pay for.</h1>
+<p class="lede">Krypton measures how structurally heavy code is, tells a coding agent exactly what to split, and orders files so your model provider can reuse the prompt cache. A small client on your machine parses your code; only the syntax tree, never your source, goes to the scoring server.</p>
+<div class="cta"><a class="btn" href="getting-started.html">Get started</a><a class="btn ghost" href="how-it-works.html">How it works</a></div>
+</div>
+<div class="herocard" aria-label="At a glance">
+<div class="eyebrow">At a glance</div>
+<h2>What Krypton does</h2>
+<ul>
+<li><b>Measures</b> every function and file for decisions, nesting, size and coupling</li>
+<li><b>Flags</b> what is too tangled and says what to try</li>
+<li><b>Tracks</b> whether each run improved it</li>
+<li><b>Orders</b> your files for prompt-cache friendly requests</li>
+</ul>
+<p class="meta">JavaScript, TypeScript and Python · parses on your machine · source never sent</p>
+</div>
+</div>
+<pre><code><span class="p">$</span> krypton scan src
+<span class="c"># ranks the heaviest functions, flags what is too tangled, and says what to try</span>
+### Krypton Structural Review -- Purity Score: 59/100
+| components/SearchPanel.jsx | Logic complexity 13400 (threshold ...) in `SearchPanel()` | Semantic Path Logic |</code></pre>
+
+<div class="cards">
+  <div class="card"><h3>Measure</h3><p>Scores every function and file for decisions, nesting, size, coupling and trivial wrappers, in JavaScript, TypeScript and Python.</p></div>
+  <div class="card"><h3>Guide</h3><p>Hints name the deepest decision and the block to pull out. A progress log shows what improved and what stalled.</p></div>
+  <div class="card"><h3>Save</h3><p>An ordering of your files, most stable first, keeps a long shared prefix that providers can cache between turns.</p></div>
+</div>
+
+<h2 id="what">What Krypton is</h2>
+<p><b>Krypton keeps AI-written code from getting tangled as agents keep editing it.</b> In a 20-revision test, code held to Krypton's standard stayed within about 12 times the limit while unchecked code grew to about 1,900 times, and cleaned-up code was cheaper to change later (16.9% on average over six runs). It is a small command-line program that parses your source code on your machine and sends only the syntax tree, never the code, to a Krypton server that scores how structurally heavy it is. It gives every function and file a number, flags the ones that are too tangled to read or change safely, and tells you which block to pull out. That is all it does to your code. It never edits or runs it, and it uses no AI.</p>
+<p>It exists because AI coding agents write quickly but tend to pile up deeply nested, branch-heavy functions. Those are harder for people and for the next agent run to change, and they cost tokens every time the code is read again. Krypton gives you, and the agent, an objective number to hold that code to.</p>
+
+<h3>How it fits into your workflow</h3>
+<ol>
+<li><b>Scan.</b> Run <code>krypton scan src</code>. You get a purity score from 0 to 100 and a ranked list of the heaviest functions.</li>
+<li><b>Fix.</b> Hand the flagged functions to your coding agent, or to a person. The hints name the deepest decision and the block to split out.</li>
+<li><b>Gate.</b> Run it in CI or before each commit. A function you touched that is over the limit fails the check, so the agent is sent back to fix it. A progress log shows whether each run improved things.</li>
+</ol>
+
+<h3>Three ways to use it</h3>
+<div class="cards">
+  <div class="card"><h3>Keep code clean</h3><p>Score the code and gate changes. In a 20-revision agent test the gate kept the worst function near 12 times the limit instead of about 1,900 times, at about 62% more cost per run. A guided refactor took logic-complexity flags from 9 to 0 with every test still passing.</p></div>
+  <div class="card"><h3>Cut the prompt bill</h3><p>Order your files from most stable to most volatile so providers can cache a long shared prefix. The saving depends on your repository: 35% on garth, but a typical gain is about 4 points of cache reuse.</p></div>
+  <div class="card"><h3>Measure the gap</h3><p>Compare the structure of AI-assisted code with the rest of your repository, in the same size bands. It reports a difference, not a verdict. On garth and the MCP reference servers there was no per-size difference.</p></div>
+</div>
+<p><b>You choose how clean.</b> The strictness setting (<code>--level relaxed</code>, <code>standard</code> or <code>strict</code>) sets how much tangle is tolerated. A relaxed setting lets agent code stay cheaper to produce. A strict one asks for cleaner code and costs more fix rounds. Only the standard setting has been tested with agents.</p>
+
+<h3>What it is not</h3>
+<p>It is not a linter, so run yours too. It is not an AI and it does not rewrite code. It is not a formatter. It is a measurement you can act on.</p>
+
+<h2 id="why">Why it exists</h2>
+<p>A coding agent re-reads your codebase on every turn, so what the code costs to read is paid again and again. Heavy, tangled functions also make the agent more likely to break something. Krypton is built to sit next to the agent: after each change it runs, shows what got heavy, and the agent splits it before the weight turns into tokens and mistakes.</p>
+<p>It is not a linter. Run yours too.</p>
+
+<h2 id="results">What we measured</h2>
+<p>Tested on <b>garth</b>, an open-source Garmin client whose recent commits are mostly AI-written, and for caching on 19 more open-source repositories.</p>
+<div class="stats">
+  <div><b>71%</b><span>of prompt tokens cached with Krypton's file order on garth, against 47% alphabetical (35% cheaper). Across 20 repositories it beat alphabetical on 12 and lost on 7: a typical gain of about 4 points</span></div>
+  <div><b>62 → 81</b><span>garth's structure score after an agent rebuilt its worst functions first with Krypton, all 163 tests still passing; the cost of later changes did not change</span></div>
+  <div><b>1,900× → 12×</b><span>how far over the limit garth's worst function ended after 20 agent revisions, without and with a Krypton CI gate; the gate cost about 62% more</span></div>
+  <div><b>66</b><span>change tasks, on average, to repay the one-time cleanup; after that, every change costs 16.9% less on average</span></div>
+</div>
+<p><a href="prompt-caching.html">See the full results and caveats →</a></p>
+
+<h2 id="builders">If you build agents</h2>
+<p>If your agent or pipeline assembles its own prompt, the order of the files in it decides how much of every request your model provider can reuse from its cache. Krypton reads your repository's history and tells you the order that would have kept more of the prompt cached, or tells you to keep yours. It sends nothing but file names, token counts and which files each commit touched, and it runs no model to decide.</p>
+<pre><code><span class="p">$</span> krypton order . --subdir src --ext .py,.ts --model gpt-4o --post
+<span class="c"># REORDER or KEEP, why, and the order to send the files in</span></code></pre>
+<p><a href="order.html">How the decision works and what it measured →</a></p>
+
+<h2 id="private">Your code stays yours</h2>
+<p>The command line parses your code on your machine and sends the server only the structure of the tree and fingerprints of names. Your source files never reach it. <a href="privacy.html">What is sent and what is not</a></p>
+
+<h2 id="engineers">For engineers</h2>
+<div class="cards">
+<div class="card"><h3><a href="architecture.html">Architecture</a></h3><p>The local walker, the tree on the wire, the scoring server, and what each side can see.</p></div>
+<div class="card"><h3><a href="wire-format.html">Wire format</a></h3><p>The request body, field by field, with a worked example of one function as a tree.</p></div>
+<div class="card"><h3><a href="api.html">API reference</a></h3><p>Endpoints, authentication, errors and limits of the scoring server.</p></div>
+<div class="card"><h3><a href="order.html">File ordering</a></h3><p>Reorders a request's files for prompt caching only when Krypton would win. Otherwise it does nothing.</p></div>
+</div>
+
+
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

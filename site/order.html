@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>File ordering | Krypton</title>
+<meta name="description" content="krypton order reorders a request's files for prompt caching only when Krypton's order would have beaten yours. Otherwise it does nothing.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html" aria-current="page">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#idea">The idea</a></li><li><a href="#use">Using it</a></li><li><a href="#decision">How it decides</a></li><li><a href="#output">The answer</a></li><li><a href="#results">Measured results</a></li><li><a href="#store">What it keeps</a></li><li><a href="#limits">Limits</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">File ordering</div>
+<h1>Reorder only when Krypton would win</h1>
+<p class="lede">Before a request, <code>krypton order</code> asks the server to check whether Krypton's file order would have reused more of a prompt cache than yours. If it would not, it does nothing: your request goes out exactly as you built it.</p>
+
+<div class="note"><b>The rule.</b> Krypton never intervenes on a guess. It replays your repository's own history, and only a clear, repeated win changes the order. In every other case the answer is <code>keep</code>.</div>
+
+<h2 id="idea">The idea</h2>
+<p>Providers cache the longest identical prefix of a request, so files that rarely change belong at the front. <a href="prompt-caching.html">Prompt caching</a> shows that this helps a lot on some repositories and can hurt on others, for example after a refactor. A tool that always reorders would sometimes make a request worse. <code>krypton order</code> is built so that it cannot do that on evidence: it tests the order against your history first.</p>
+
+<h2 id="use">Using it</h2>
+<pre><code><span class="p">$</span> krypton order . --subdir src --ext .py,.ts --files request.txt --model gpt-4o --post
+<span class="c"># request.txt: the files in this request, one per line, in your current order</span></code></pre>
+<p>The client reads git on your machine and sends the server <b>only file names, token counts, and which files each recent commit touched</b>: no source, no commit messages, no authors. The server decides and answers; it stores nothing.</p>
+<div class="scroll"><table>
+<tr><th>Option</th><th>What it does</th></tr>
+<tr><td><code>REPO</code></td><td>A git repository. Its history is the evidence.</td></tr>
+<tr><td><code>--subdir DIR</code></td><td>The folder whose files go in the prompt. Default: the repository root.</td></tr>
+<tr><td><code>--ext .py,.ts</code></td><td>Which file suffixes count. Default <code>.py</code>.</td></tr>
+<tr><td><code>--files FILE</code></td><td>The files in this request, one per line, in your order. <code>-</code> reads standard input. Without it, all matching files in alphabetical order stand in for your order.</td></tr>
+<tr><td><code>--model NAME</code>, <code>--tokenizer</code>, <code>--tokens-from FILE</code></td><td>How file sizes are counted: in the tokens of the model the prompt is for. See <a href="command-reference.html#tokens">Token counts</a>.</td></tr>
+<tr><td><code>--post</code>, <code>--server URL</code></td><td>Send the request and print the decision (without them, the request itself is printed).</td></tr>
+<tr><td><code>--json</code></td><td>Print the full decision as JSON, for an agent harness or a tool.</td></tr>
+</table></div>
+<p>The exit code is <code>0</code> whenever the server answered; read the <code>action</code> field. It is <code>1</code> when it could not be asked or refused the request, and <code>2</code> for a usage error, with a message saying what to do.</p>
+
+<h2 id="decision">How it decides</h2>
+<p>For each past change that touched files in the request, Krypton builds its order from the commits <em>before</em> that change only, and measures how much of the prompt each order, yours and Krypton's, would have kept in a cache when that change landed. Each order is judged on a change it could not have seen. The answer is <b>keep</b> unless all of these hold:</p>
+<ul>
+<li>Enough past changes touched the files in this request: enough evidence.</li>
+<li>Krypton's order is different from yours.</li>
+<li>On average it would have kept clearly more of the prompt.</li>
+<li>It was ahead in <b>more changes than it was behind</b>, among the changes where the two orders differ.</li>
+</ul>
+<p>Uncommitted files go last, since they are the ones in flux. The ordering itself is not published, and it never changes a score.</p>
+
+<h2 id="output">The answer</h2>
+<pre><code><span class="c"># when Krypton would not win (illustrative numbers)</span>
+KEEP: only 5 past changes touched these files: too little history
+  12 files; backtest over 5 past changes: yours kept 41.2% of the prompt, Krypton's 44.0%
+  send the request unchanged.
+
+<span class="c"># when it would (illustrative numbers)</span>
+REORDER: Krypton's order would have kept +13.4% more of the prompt, ahead in 9 of 11 differing changes
+  send the files in this order:
+    src/config.py
+    src/models.py
+    ...</code></pre>
+<p>With <code>--json</code>:</p>
+<pre><code>{
+  "action": "keep",              <span class="c">// or "reorder"</span>
+  "reason": "...",
+  "order": ["..."],              <span class="c">// your order when keep, Krypton's when reorder</span>
+  "backtest": { "changes": 5, "differing": 3, "wins": 1, "losses": 2,
+                "gain": 0.028, "baseline_kept": 0.412, "krypton_kept": 0.44 }
+}</code></pre>
+<p>When the answer is <code>keep</code>, <code>order</code> is your own order, so a caller can always send <code>order</code> as is.</p>
+<p>Token counts come from the model you name (see <a href="command-reference.html#tokens">Token counts</a>); without a model they are a stated estimate, and the command says so on standard error.</p>
+
+<h2 id="results">Measured results</h2>
+<p>We tested the decision on <b>garth</b> without peeking: the decision is made from history alone, then the next 12 commits are replayed with exact token prefixes. This was repeated from 14 starting points, and for three kinds of caller order.</p>
+<div class="scroll"><table>
+<tr><th>Your order</th><th class="n">Reordered</th><th class="n">Gain when reordered</th><th class="n">Reordered and worse</th><th class="n">Kept but would have gained</th></tr>
+<tr><td>Alphabetical</td><td class="n">13 of 14</td><td class="n">+13.4 points</td><td class="n">1</td><td class="n">1</td></tr>
+<tr><td>Shuffled</td><td class="n">10 of 14</td><td class="n">+27.1 points</td><td class="n">0</td><td class="n">4</td></tr>
+<tr><td>Worst case (most volatile first)</td><td class="n">14 of 14</td><td class="n">+47.9 points</td><td class="n">0</td><td class="n">0</td></tr>
+</table></div>
+<p>Two things to read from it. When your order is already poor, it reorders and the gain is large. When it hesitates, it keeps, which in the shuffled case means missing some gains: the guard is deliberately conservative, because a missed gain costs nothing and a bad reorder does.</p>
+<div class="note"><b>What this does not show.</b> This is one repository. The <a href="prompt-caching.html#survey">20-repository survey</a> shows that Krypton's order beat alphabetical on 12 and lost on 7, which is exactly why the guard exists. A live check against measured provider cache reads is planned and has not been run.</div>
+
+<h2 id="store">What it keeps</h2>
+<p>The server keeps nothing. On your machine, only if you name a Claude model, token counts from Anthropic's counter are cached by content hash in <code>.krypton/tokens.json</code> (numbers, no file names or source), so a second run asks for nothing. If you name a Claude model, each file's text goes to Anthropic to be counted, with your own API key; it never goes to Krypton.</p>
+
+<h2 id="limits">Limits</h2>
+<ul>
+<li>It needs a git repository with history for the files in the request. With too little, the honest answer is <code>keep</code>.</li>
+<li>It judges a file order, not a prompt. How much a reordering saves also depends on where your provider's cache breakpoints sit; with a single breakpoint at the end of the prompt no order helped in our replays.</li>
+<li>An agent or editor integration (an MCP tool) is planned. Today it is a command and its JSON output. An agent harness that knows the model can pass it with <code>--model</code>; Krypton cannot see which model your agent calls.</li>
+</ul>
+
+<div class="pager"><a href="api.html">&larr; API reference</a><a href="command-reference.html">Command reference &rarr;</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

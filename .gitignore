@@ -1,0 +1,23 @@
+# Rust build output
+target/
+
+# Python caches (the demo and its tests are Python)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# the client's local token-count cache (krypton order --model claude-...)
+.krypton/
+
+# demo design scratch and local notes
+dashboard/previews/
+*.local.md
+
+# local editor and agent state
+.claude/
+.vscode/

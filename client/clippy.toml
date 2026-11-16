@@ -1,0 +1,9 @@
+# Keeps functions from tangling. Run: cargo clippy --all-targets -- -W clippy::cognitive_complexity
+cognitive-complexity-threshold = 8
+too-many-lines-threshold = 40
+too-many-arguments-threshold = 6
+excessive-nesting-threshold = 4
+type-complexity-threshold = 120
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true

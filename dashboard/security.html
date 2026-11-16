@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How Krypton keeps your code safe | Krypton</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+/* Layout: headline, then two lanes read left to right (the demo today, then the translated way), each three boxes joined by arrows, with a lock marking the encrypted road and a verdict chip under the last box. Dark violet, the same palette as the tree page it links to; one look by choice. */
+:root{
+  --bg:#150f27; --bg-2:#1d1536; --card:#1d1536; --line:#4a3a86; --ink:#f1ebff; --ink2:#cbbfee; --muted:#a99cd6;
+  --accent:#9b7bff; --soft:#2a1f4d; --hero:#2f2170; --good:#7fd6ae; --good-soft:#12352a; --bad:#f08a93; --bad-soft:#3b1723;
+  --sans:"Plus Jakarta Sans",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);padding-block:36px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.w{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+h1{margin:0;font-size:clamp(32px,5vw,50px);line-height:1.05;font-weight:800;letter-spacing:-.025em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+p{margin:0}
+.lede{font-size:18px;color:var(--ink2);max-width:60ch;margin-top:14px}.back{margin-bottom:14px}
+.eyebrow{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.lane{display:flex;flex-direction:column;gap:12px}
+.lane h2{margin:0;font-size:18px;font-weight:800;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tag{font:600 11px var(--mono);padding:3px 9px;border-radius:99px;white-space:nowrap}
+.tag.red{background:var(--bad-soft);color:var(--bad)} .tag.green{background:var(--good-soft);color:var(--good)}
+.row{display:grid;grid-template-columns:1fr 74px 1fr 74px 1fr;gap:6px;align-items:stretch}
+@media(max-width:820px){.row{grid-template-columns:1fr}}
+.box{background:var(--card);border:2px solid var(--line);border-radius:14px;box-shadow:5px 5px 0 rgba(0,0,0,.45);padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.box b{font-size:15px}
+.box span{color:var(--ink2);font-size:14px}
+.box code{font:400 12px/1.5 var(--mono);background:var(--soft);border-radius:6px;padding:6px 8px;display:block;white-space:pre;overflow-x:auto;color:var(--ink)}
+.box.warn{background:var(--bad-soft);border-color:var(--bad);box-shadow:5px 5px 0 var(--bad)}
+.box.warn b{color:var(--bad)}
+.box.safe{background:var(--good-soft);border-color:var(--good);box-shadow:5px 5px 0 var(--good)}
+.box.safe b{color:var(--good)}
+.arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:600 11px var(--mono);color:var(--ink2);text-align:center}
+.arrow i{font-style:normal;font-size:22px;line-height:1;color:var(--accent)}
+@media(max-width:820px){.arrow{flex-direction:row;justify-content:center;padding:2px 0}.arrow i{transform:rotate(90deg)}}
+.verdict{font-size:15px;color:var(--ink2);max-width:75ch}
+.verdict b{color:var(--ink)}
+.punch{background:var(--hero);color:#fff;border-radius:14px;padding:20px 22px;font-size:clamp(20px,2.6vw,26px);font-weight:800;letter-spacing:-.015em;line-height:1.25;text-wrap:balance}
+.punch span{color:#c9bdea}
+.limits{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--ink2);font-size:14px}
+.limits b{color:var(--ink)}
+.back{font-size:14px}.back a{color:var(--accent);font-weight:600}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.more{display:flex;flex-wrap:wrap;align-items:center;gap:16px;border:2px solid var(--line);border-radius:14px;padding:18px 20px;background:var(--card)}
+.more p{flex:1 1 280px;color:var(--ink2);font-size:15px}
+.more p b{color:var(--ink)}
+.btn{display:inline-block;background:var(--accent);color:#120a29;font-weight:800;text-decoration:none;border-radius:10px;padding:12px 18px;min-height:44px}
+.btn:hover{background:#b79cff}
+</style>
+
+<div class="w">
+<header>
+  <p class="back"><a href="/">← Back to the demo</a> &nbsp;·&nbsp; <a href="https://pinklamb.github.io/Krypton/" target="_blank" rel="noopener">Docs ↗</a></p>
+  <div class="eyebrow">Krypton · security</div>
+  <h1>HTTPS protects the road. <em>Translating protects the destination.</em></h1>
+  <p class="lede">A secure connection stops anyone listening on the way. It does not change what the receiver ends up holding. Here is what each path leaves on our server.</p>
+</header>
+
+<section class="lane" aria-labelledby="la">
+  <h2 id="la">The demo today <span class="tag red">server reads your files</span></h2>
+  <div class="row">
+    <div class="box"><b>Your repository</b><span>On GitHub. You allow our app to read it, and only read.</span></div>
+    <div class="arrow"><i>→</i>encrypted (HTTPS)</div>
+    <div class="box warn"><b>Our server</b><span>The files arrive decrypted, because the demo's server has to open them to build the tree. Held in memory; only the tree goes on to the scoring server.</span><code>def total(cart, tax):
+    if cart.items: …</code></div>
+    <div class="arrow"><i>→</i>numbers</div>
+    <div class="box"><b>Your screen</b><span>Scores and hints. The copy is dropped; nothing is written, run or kept.</span></div>
+  </div>
+  <p class="verdict"><b>GitHub does not scramble it for us.</b> It lets our server download the repository over an encrypted connection. The lock ends at our door.</p>
+</section>
+
+<section class="lane" aria-labelledby="lb">
+  <h2 id="lb">The translated way <span class="tag green">server never sees code</span></h2>
+  <div class="row">
+    <div class="box safe"><b>Your machine</b><span>A small program on your machine turns each file into a tree of node types and name fingerprints.</span><code>function_definition
+  identifier 11239872d178729a</code></div>
+    <div class="arrow"><i>→</i>encrypted, translation only</div>
+    <div class="box"><b>Our server</b><span>Scores the tree. It cannot read "total", only a fingerprint. No source text arrives to be read.</span></div>
+    <div class="arrow"><i>→</i>numbers</div>
+    <div class="box safe"><b>Back on your machine</b><span>The names book, which never left, turns fingerprints back into names.</span></div>
+  </div>
+  <p class="verdict"><b>The translation happens before anything is sent</b>, so there is no moment when our server holds your code. Tests send 240 real files through it and fail if any word of source shows up in the request.</p>
+</section>
+
+<div class="punch">Encryption stops eavesdroppers. <span>Translation stops us.</span></div>
+
+<div class="more"><p><b>Want the detail?</b> The engineering docs cover the architecture, the exact wire format with a worked example of one function as a tree, and the API.</p><a class="btn" href="https://pinklamb.github.io/Krypton/architecture.html" target="_blank" rel="noopener">Read the engineering docs →</a></div>
+
+<div class="limits"><b>Where this stops.</b> Even translated, the server sees file paths, the shape of each tree, line lengths and sizes. Fingerprints are not salted, so a very common name could be guessed by hashing it. The command line and the translated path do not need GitHub at all; they read the folders you point them at. <b>Status.</b> In the demo, the translation happens on the demo's own server before anything reaches the scoring server, so the scoring server never holds your code. The demo's server does read the repository you connect, in memory, with your own GitHub access: GitHub does the authenticating, Krypton keeps no accounts, and your GitHub token is forgotten when you sign out or after an hour.</div>
+</div>
+</html>

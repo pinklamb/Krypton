@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integrations | Krypton</title>
+<meta name="description" content="Use Krypton with coding agents, CI, Docker and the hosted demo.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html" aria-current="page">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#agents">Coding agents</a></li><li><a href="#ci">Pre-commit and CI</a></li><li><a href="#docker">Docker</a></li><li><a href="#demo">Hosted demo</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">Integrations</div>
+<h1>Use Krypton where your agent and your team already work</h1>
+
+<h2 id="agents">Coding agents</h2>
+<p>Any agent that can run a command can use Krypton. Add the rules from <a href="getting-started.html#agent">Getting started</a> to <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your tool's rules file. Use <code>--json</code> if a hook needs structured output.</p>
+
+<h2 id="ci">Pre-commit and CI</h2>
+<pre><code>krypton scan . --base origin/main || { echo "Krypton: structure check failed"; exit 1; }</code></pre>
+<p>A GitHub Actions job (build the client once and cache it, or keep a built <code>krypton</code> in your image):</p>
+<pre><code>name: Krypton
+on: pull_request
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    env:
+      KRYPTON_SERVER: ${{ secrets.KRYPTON_SERVER }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: cargo build --release --manifest-path path/to/client/Cargo.toml
+      - run: path/to/client/target/release/krypton scan . --base origin/${{ github.base_ref }}</code></pre>
+<p>The client sends only the tree of the changed files, so the job needs a route to the Krypton server and nothing else from your repository leaves the runner.</p>
+
+<h2 id="docker">Docker</h2>
+<pre><code>docker run --rm -v "$PWD:/work" -w /work rust:1 cargo build --release     # in client
+docker run --rm -e KRYPTON_SERVER -v "$PWD:/repo:ro" -v krypton_target:/target:ro \
+  debian:bookworm-slim /target/release/krypton scan /repo</code></pre>
+
+<h2 id="demo">The hosted demo</h2>
+<p>The repository includes a small web app that shows what a codebase costs to read and what a refactor could save.</p>
+<ol class="steps">
+<li>Visitors <b>sign in with GitHub</b>. GitHub does the authenticating and decides which repositories they may read; Krypton keeps no accounts.</li>
+<li>The server <b>reads the chosen repository in memory</b> with the visitor's own access, builds the syntax trees, and sends only the trees to the Krypton server. Nothing from the repository is run or stored, and the visitor's GitHub token is forgotten when they sign out or after an hour.</li>
+<li>The page shows <b>files, lines, tokens per read, structure score and the hardest functions</b>, then a savings view built from the real size.</li>
+</ol>
+<p>The savings use the rates measured on one repository (see <a href="prompt-caching.html">Prompt caching</a>), scaled to the visitor's repository, so treat them as estimates. Deployment steps (Docker and Railway) are in <a href="https://github.com/pinklamb/Krypton/blob/main/dashboard/DEPLOY.md">dashboard/DEPLOY.md</a>.</p>
+
+<div class="pager"><a href="command-reference.html">← Command reference</a><a href="prompt-caching.html">Prompt caching →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API reference | Krypton</title>
+<meta name="description" content="The Krypton scoring server's HTTP API: authentication, endpoints, request and response, errors and limits.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html" aria-current="page">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#overview">Overview</a></li><li><a href="#auth">Access</a></li><li><a href="#health">GET /v1/health</a></li><li><a href="#capabilities">GET /v1/capabilities</a></li><li><a href="#score">POST /v1/score</a></li><li><a href="#order">POST /v1/order</a></li><li><a href="#response">The response</a></li><li><a href="#errors">Errors</a></li><li><a href="#limits">Limits</a></li><li><a href="#versioning">Versioning</a></li><li><a href="#notyet">Not built yet</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">API reference</div>
+<h1>The scoring server API</h1>
+<p class="lede">A small JSON API: send the trees of your files, get back a score, flags and refactoring hints. The server never receives source text.</p>
+<div class="note"><b>No accounts, no keys.</b> The server answers anyone, rate limits each address, and stores nothing. Examples use <code>YOUR-SERVER</code> where the address goes.</div>
+
+<h2 id="overview">Overview</h2>
+<div class="scroll"><table>
+<tr><th>Method and path</th><th>Purpose</th></tr>
+<tr><td><code>GET /v1/health</code></td><td>Liveness for a host or load balancer.</td></tr>
+<tr><td><code>GET /v1/capabilities</code></td><td>What this server accepts, so a client can check compatibility before sending.</td></tr>
+<tr><td><code>POST /v1/score</code></td><td>Trees in, result out. Synchronous and stateless.</td></tr>
+<tr><td><code>POST /v1/order</code></td><td>File names, token counts and recent history in; the order to send the files in, or the order you already have, out.</td></tr>
+</table></div>
+<p>Requests and responses are JSON. A request body may be gzip-compressed. Every response carries an <code>X-Request-Id</code> header, repeated as <code>request_id</code> in the body, to quote when asking for support. The server stores nothing from a request: no tree and no result.</p>
+
+<h2 id="auth">Access</h2>
+<p>There are no accounts or keys. Every request counts against its sender's address, which is limited to a few requests a minute; over that the answer is <code>429</code> with a <code>Retry-After</code>. A client that sends a <code>Authorization</code> header is not refused, and the header is ignored.</p>
+
+<h2 id="health">GET /v1/health</h2>
+<pre><code>curl https://YOUR-SERVER/v1/health
+<span class="c"># {"status": "ok"}</span></code></pre>
+
+<h2 id="capabilities">GET /v1/capabilities</h2>
+<p>Returns what the server accepts, for a client to check before sending anything.</p>
+<pre><code>curl https://YOUR-SERVER/v1/capabilities</code></pre>
+<pre><code>{
+  "server_version": "0.1.0",
+  "wire_versions": [1],
+  "languages": { "python": [".py"], "javascript": [".js", ".jsx", ".mjs", ".cjs"], "typescript": [".ts", ".mts", ".cts"], "tsx": [".tsx"] },
+  "levels": ["relaxed", "standard", "strict"],
+  "detail_levels": ["summary"],
+  "allowed_config": ["allow_waivers", "detect_vendored_content", "vendored_path_globs", "generated_path_globs",
+                     "generated_markers", "test_path_globs", "python_source_roots", "ts_path_aliases", "ts_base_url"],
+  "limits": { "max_body_bytes": 20971520, "max_files": 2000, "max_nodes_per_file": 500000, "max_nodes_per_request": 3000000 },
+  "policy": { <span class="c">/* which nodes carry a fingerprint or a mask; see Wire format */</span> }
+}</code></pre>
+<p><code>detail_levels</code> lists what <em>this server</em> serves. <code>allowed_config</code> lists the only settings a request may override: file selection and conventions. Thresholds, weights and caps are not on the list, so a client cannot change them.</p>
+
+<h2 id="score">POST /v1/score</h2>
+<p>Headers:</p>
+<div class="scroll"><table>
+<tr><th>Header</th><th>Value</th></tr>
+<tr><td><code>Content-Type</code></td><td><code>application/json</code></td></tr>
+<tr><td><code>Content-Encoding</code></td><td>Optional: <code>gzip</code>. Any other encoding is refused.</td></tr>
+</table></div>
+<p>The body is described in <a href="wire-format.html">Wire format</a>. A minimal call, with the request already built and compressed:</p>
+<pre><code>curl -sS https://YOUR-SERVER/v1/score \
+  -H "Content-Type: application/json" \
+  -H "Content-Encoding: gzip" \
+  --data-binary @request.json.gz</code></pre>
+<p>A request of about 65,000 lines is roughly 26 MB as JSON and 4.5 MB gzipped, so compress anything large.</p>
+
+<h2 id="order">POST /v1/order</h2>
+<p>Decides whether sending a prompt's files in Krypton's order would reuse more of a provider's prompt cache than your order, judged on the repository's own history. The client reads git on your machine and sends only <strong>file names, token counts and which files each recent commit touched</strong>: no source text, commit messages or authors.</p>
+<pre><code>{ "wire_version": 1,
+  "files":   [ { "path": "src/config.py", "tokens": 812 }, ... ],   // your order
+  "history": [ ["src/a.py", "src/b.py"], ["src/a.py"], ... ],        // one list per commit, oldest first
+  "in_flux": ["src/b.py"] }                                          // uncommitted files (optional)</code></pre>
+<p>The answer's <code>result</code> has <code>action</code> (<code>keep</code> or <code>reorder</code>), <code>reason</code>, <code>order</code> (yours when <code>keep</code>, the new one when <code>reorder</code>, so a caller can always send <code>order</code> as is) and a <code>backtest</code> summary. Like scoring, it is stateless: nothing is stored.</p>
+
+<h2 id="response">The response</h2>
+<p>Scoring a file that cannot be scored is not an HTTP error: files too large, too wide or unparseable appear in <code>errors</code> and <code>skipped_files</code> and are left out of the score, exactly as the command line does.</p>
+<pre><code>{
+  "request_id": "9f2c1e04",
+  "server_version": "0.1.0",
+  "wire_version": 1,
+  "usage": { "files": 1, "nodes": 21, "ms": 18 },
+  "result": {
+    "purity_score": 100,
+    "check_conclusion": "success",
+    "flagged_file_count": 0,
+    "files": [
+      { "filename": "src/a.py", "language": "python", "flagged": false, "flag_reason": null, "parse_error": false,
+        "functions": [ { "name": "252f10c83610ebca", "start_line": 1, "end_line": 4, "score": 1,
+                         "max_depth": 1, "nested": false, "exempt_reason": null } ] }
+    ],
+    "skipped_files": [],
+    "errors": {},
+    "hints": {},
+    "hint_regions": {},
+    "fragmentation_flagged": false,
+    "summary_markdown": "### Krypton Structural Review -- Purity Score: 100/100 ..."
+  }
+}</code></pre>
+<ul>
+<li><b>Names are fingerprints.</b> A function's <code>name</code> comes back as the fingerprint the client sent. The client looks it up in its names book to show the real name; the server never knew it.</li>
+<li><b><code>detail</code>.</b> <code>summary</code> (the default) returns scores, flags, hints and the Markdown summary. <code>full</code> also returns the raw metric columns and is refused (<code>403</code>) unless the server was started to allow it, which a public server is not.</li>
+<li><b>Flags and hints.</b> Each flagged file carries a <code>flag_reason</code>, and <code>hints</code> maps a function to refactoring advice. What the flags mean is in <a href="how-it-works.html">How it works</a>.</li>
+</ul>
+
+<h2 id="errors">Errors</h2>
+<p>Every error is JSON with the same shape:</p>
+<pre><code>{ "error": { "code": "invalid_tree", "message": "files[0].tree.parent[3] = 7 points forward",
+             "path": "files[0].tree.parent[3]", "request_id": "9f2c1e04" } }</code></pre>
+<div class="scroll"><table>
+<tr><th class="n">HTTP</th><th>code</th><th>When</th></tr>
+<tr><td class="n">400</td><td><code>invalid_json</code></td><td>The body is not JSON, or the gzip stream is bad.</td></tr>
+<tr><td class="n">403</td><td><code>detail_not_allowed</code></td><td>The detail level requested is not served by this server.</td></tr>
+<tr><td class="n">404 / 405</td><td><code>not_found</code>, <code>method_not_allowed</code></td><td>Unknown path or method.</td></tr>
+<tr><td class="n">413</td><td><code>too_large</code></td><td>Over a body, file or node limit (see below).</td></tr>
+<tr><td class="n">415</td><td><code>unsupported_media_type</code></td><td>Not <code>application/json</code>, or an unsupported <code>Content-Encoding</code>.</td></tr>
+<tr><td class="n">422</td><td><code>invalid_tree</code>, <code>invalid_request</code></td><td>The body does not follow the format: array lengths differ, a parent points forward, a range is outside its file, an unknown kind or language. <code>path</code> names the first problem.</td></tr>
+<tr><td class="n">426</td><td><code>unsupported_wire_version</code></td><td>The <code>wire_version</code> is not one the server speaks.</td></tr>
+<tr><td class="n">429</td><td><code>rate_limited</code></td><td>Over this address's per-minute limit. <code>Retry-After</code> says how many seconds to wait.</td></tr>
+<tr><td class="n">503</td><td><code>busy</code></td><td>The server is already scoring as many requests as it can and its waiting line is full. <code>Retry-After</code> says how many seconds to wait.</td></tr>
+<tr><td class="n">500</td><td><code>internal</code></td><td>A server fault. The body has the <code>request_id</code> and nothing else: no stack trace, no input.</td></tr>
+</table></div>
+<p>The tree is untrusted input. It is checked before anything is scored, and a malformed tree never reaches the engine. A server error is never the answer to a bad request.</p>
+
+<h2 id="limits">Limits</h2>
+<div class="scroll"><table>
+<tr><th>Limit</th><th class="n">Value</th></tr>
+<tr><td>Request body, as sent</td><td class="n">20 MB</td></tr>
+<tr><td>Body after decompression</td><td class="n">set by the server's memory, up to 256 MB (about 85 MB, some 275,000 lines, on a 512 MB server); <code>capabilities</code> reports it as <code>max_decompressed_bytes</code></td></tr>
+<tr><td>Files per request</td><td class="n">2,000</td></tr>
+<tr><td>Nodes per file</td><td class="n">500,000</td></tr>
+<tr><td>Nodes per request</td><td class="n">3,000,000</td></tr>
+</table></div>
+<p>The same numbers are in <code>GET /v1/capabilities</code>. Files the engine's own size rules skip (very large files, extremely long lines, single nodes with a huge number of children) are reported in <code>errors</code>, not refused.</p>
+
+<h2 id="versioning">Versioning</h2>
+<p>The request names its <code>wire_version</code>. A server answers <code>426</code> to a version it does not speak, and <code>capabilities</code> lists the versions it does. Adding an optional field does not change the version; changing the meaning of an existing one does.</p>
+
+<h2 id="notyet">Not built yet</h2>
+<ul>
+<li><b><code>Idempotency-Key</code> and asynchronous jobs.</b> Scoring is synchronous.</li>
+<li><b>An MCP tool</b> that calls this API. (The <code>krypton</code> command line already does.)</li>
+</ul>
+
+<div class="pager"><a href="wire-format.html">&larr; Wire format</a><a href="order.html">File ordering &rarr;</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

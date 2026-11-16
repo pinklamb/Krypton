@@ -1,0 +1,78 @@
+[workspace]
+
+[package]
+name = "krypton"
+version = "2.0.0"
+edition = "2021"
+description = "Krypton client: parses code into a syntax tree on this machine and posts only the tree to a Krypton server"
+publish = false
+
+[lib]
+name = "krypton_client"
+
+[[bin]]
+name = "krypton"
+path = "src/main.rs"
+
+[dependencies]
+tree-sitter = "0.27"
+tree-sitter-python = "0.25"
+tree-sitter-javascript = "0.25"
+tree-sitter-typescript = "0.23"
+# the wire serializer (src/wire/): JSON out, the expression digest, and the client-side text rules; flate2 and ureq send it
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }  # config order matters: tsconfig aliases are tried in the order written
+sha2 = "0.10"
+regex = "1"
+flate2 = "1"
+ureq = "2"
+tiktoken-rs = "0.7"
+
+[profile.release]
+overflow-checks = true  # a wrapped number is a wrong answer: an overflow must stop the request instead (the server answers 500, never a wrong score)
+opt-level = 3
+lto = true
+codegen-units = 1
+
+# Code quality, run with `sh quality.sh` (Docker, like every build here). Thresholds are in clippy.toml.
+# Clippy's default lints stay on, plus the standard `pedantic` group, plus the specific lints below that keep functions small and
+# failures explicit. Nothing in pedantic is allowed away.
+[lints]
+workspace = true
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+# the HTTP client's own dependencies pull two versions of one crate; that is theirs to fix, not ours
+multiple_crate_versions = "allow"
+# restriction lints chosen because a malformed upload must never panic or silently wrap
+indexing_slicing = "warn"          # v[i] panics on bad data: use get() and return an error
+string_slice = "warn"
+arithmetic_side_effects = "warn"   # overflow and divide-by-zero: use checked or saturating maths
+cast_possible_truncation = "warn"
+unreachable = "warn"
+exit = "warn"
+let_underscore_must_use = "warn"
+missing_assert_message = "warn"
+map_err_ignore = "warn"
+get_unwrap = "warn"
+unwrap_in_result = "warn"
+panic_in_result_fn = "warn"
+missing_panics_doc = "warn"
+allow_attributes_without_reason = "warn"
+cognitive_complexity = "warn"      # one function, one idea
+too_many_lines = "warn"            # long functions hide several ideas
+too_many_arguments = "warn"        # pass a small struct instead
+excessive_nesting = "warn"         # flatten with early returns and let-else
+type_complexity = "warn"           # name a complicated type
+unwrap_used = "warn"               # no fallbacks: a failure is a Result the caller sees
+expect_used = "warn"
+panic = "warn"
+todo = "warn"
+unimplemented = "warn"
+dbg_macro = "warn"
+needless_pass_by_value = "warn"
+redundant_clone = "warn"
+manual_let_else = "warn"
+

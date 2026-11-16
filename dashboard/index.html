@@ -202,7 +202,13 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
 .treestep { margin-top: 14px; }
 .treestep .bar { height: 10px; border-radius: 99px; background: var(--accent-soft); overflow: hidden; position: relative; }
 .treestep .bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--accent), #8c74c3); border-radius: 99px; transition: width .2s linear; }
-.treestep p { margin: 10px 0 0; font-weight: 600; } .treestep p.done { color: var(--good); }
+.treestep p { margin: 12px 0 0; font-weight: 600; } .treestep p.done { color: var(--good); }
+.treehead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; min-width: 0; }
+.treehead b { font-size: 15px; overflow-wrap: anywhere; } .treehead span { font: 600 13px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.treestages { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; font: 13px var(--mono); }
+.treestages li { color: var(--muted); display: flex; gap: 8px; } .treestages li::before { content: '○'; width: 1ch; }
+.treestages li.on { color: var(--ink); } .treestages li.on::before { content: '›'; color: var(--accent); }
+.treestages li.done { color: var(--ink-2); } .treestages li.done::before { content: '✓'; color: var(--good); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips button { border: var(--border) solid var(--card-line); background: var(--card); border-radius: 999px; padding: 7px 14px; font: 600 14px var(--sans); }
 .chips button:hover { border-color: var(--accent); } .chips button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); } .chips small { opacity: .7; margin-left: 6px; }
@@ -251,14 +257,12 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
 .howflow h3 { font-size: 17px; }
 .howrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; counter-reset: s; }
 @media (max-width: 640px) { .howrow { grid-template-columns: 1fr; } }
-.howcard { align-content: start; background: var(--card); border: var(--border) solid var(--card-line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 6px; min-width: 0; animation: lit 9s infinite; }
-.howcard:nth-child(2) { animation-delay: 3s; } .howcard:nth-child(3) { animation-delay: 6s; }
+.howcard { align-content: start; background: var(--card); border: var(--border) solid var(--card-line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
 .howcard b { font: 600 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
 .howcard p { font-size: 14px; color: var(--ink-2); }
 .howcard svg { width: 100%; height: 64px; display: block; }
 .howcard svg .ln2 { fill: var(--muted); opacity: .55; } .howcard svg .nd2 { fill: var(--accent); } .howcard svg .ed { stroke: var(--accent); stroke-width: 2; fill: none; }
 .howcard svg text { font: 800 22px var(--sans); fill: var(--ink); }
-@keyframes lit { 0%, 33% { box-shadow: var(--shadow); } 34%, 100% { box-shadow: none; } }
 @keyframes gone { 0%, 55% { opacity: .55; } 80%, 100% { opacity: .08; } }
 .howcard:nth-child(3) .ln2 { animation: gone 9s infinite; }
 @media (prefers-reduced-motion: reduce) { .howcard, .howcard:nth-child(3) .ln2 { animation: none; } }
@@ -285,7 +289,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
         <p class="lede">Krypton keeps the files that rarely change at the front of every request, so the AI provider can reuse more of what it has already read. A 25,000-line codebase is roughly 175,000 tokens, read again on every turn.</p>
         <div class="cta"><button class="btn" id="go" type="button">Optimize this codebase →</button><button class="btn link" id="gh2" type="button">or connect your own repository</button></div>
         <div class="card repos" id="repoPanel" hidden><h3>Your repositories</h3><p class="muted small" id="repoNote"></p><div class="chips" id="repoChips"></div><div class="cta" style="margin-top:8px"><button class="btn" id="analyze" type="button" hidden>Analyze</button></div><p class="small muted" id="picked"></p>
-          <div class="treestep" id="treeStep" hidden aria-live="polite"><div class="bar"><i id="treeBar"></i></div><p id="treeMsg"></p><div class="cta" id="treeAsk" hidden><button class="btn" id="treeYes" type="button">Yes, send it to Krypton</button><button class="btn ghost" id="treeNo" type="button">Cancel</button></div></div></div>
+          <div class="treestep" id="treeStep" hidden aria-live="polite"><div class="treehead"><b id="treeTitle"></b><span id="treePct"></span></div><div class="bar"><i id="treeBar"></i></div><ol class="treestages" id="treeStages"></ol><p id="treeMsg"></p><div class="cta" id="treeAsk" hidden><button class="btn" id="treeYes" type="button">Yes, send it to Krypton</button><button class="btn ghost" id="treeNo" type="button">Cancel</button></div></div></div>
       </div>
       <div class="side">
       <div class="card project">
@@ -306,7 +310,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
             <svg viewBox="0 0 220 64" aria-hidden="true"><path class="ed" d="M50 10 30 30M50 10 70 30M30 30 20 52M30 30 40 52"/><circle class="nd2" cx="50" cy="10" r="5"/><circle class="nd2" cx="30" cy="30" r="5"/><circle class="nd2" cx="70" cy="30" r="5"/><circle class="nd2" cx="20" cy="52" r="4"/><circle class="nd2" cx="40" cy="52" r="4"/><path d="M96 32h26m-6-6 6 6-6 6" class="ed"/><text x="140" y="42">91 / 100</text></svg></div>
           <div class="howcard" role="listitem"><b>3 · Discard</b>
             <svg viewBox="0 0 220 64" aria-hidden="true"><rect class="ln2" x="4" y="8" width="60" height="6" rx="3"/><rect class="ln2" x="14" y="22" width="48" height="6" rx="3"/><rect class="ln2" x="24" y="36" width="36" height="6" rx="3"/><rect class="ln2" x="14" y="50" width="52" height="6" rx="3"/><path d="M80 32h26m-6-6 6 6-6 6" class="ed"/><text x="124" y="42">91 · hints</text></svg></div>
-        </div><p><a class="btn" href="/security" style="display:inline-block;text-decoration:none">See how it is secured →</a></p></div>
+        </div></div>
       </div>
     </div>
   </section>
@@ -828,8 +832,13 @@ function renderScan(d) {
 /* step 1 of 2: build the tree and wait for a yes. Nothing is sent to the Krypton server until the visitor confirms.
    Skeleton: the animation stands in for the local build (the krypton client will do it on the visitor's machine). */
 const TREE = { timer: null };
-function treeView(bar, message, done, ask) {
+const TREE_STAGES = ['Reading the source files', 'Parsing the syntax', 'Replacing names with digests', 'Assembling the tree'];
+function treeView(bar, message, done, ask, title) {
   $('treeStep').hidden = false; $('treeBar').style.width = bar + '%';
+  if (title) $('treeTitle').textContent = title;
+  $('treePct').textContent = Math.floor(bar) + '%';
+  const at = done ? TREE_STAGES.length : Math.floor(bar / (100 / TREE_STAGES.length));
+  $('treeStages').innerHTML = TREE_STAGES.map((name, i) => `<li class="${i < at ? 'done' : i === at ? 'on' : ''}">${name}</li>`).join('');
   $('treeMsg').textContent = message; $('treeMsg').classList.toggle('done', done); $('treeAsk').hidden = !ask;
 }
 function cancelTree() { clearInterval(TREE.timer); $('treeStep').hidden = true; $('analyze').disabled = false; }
@@ -838,11 +847,12 @@ function buildTree() {
   if (!repo) return;
   clearInterval(TREE.timer); $('analyze').disabled = true;
   const total = matchMedia('(prefers-reduced-motion: reduce)').matches ? 300 : 2200, t0 = performance.now();
-  treeView(0, `Building the tree for ${repo}…`, false, false);
+  const title = `Building the tree for ${repo}`;
+  treeView(0, '', false, false, title);
   TREE.timer = setInterval(() => {
     const p = Math.min(100, 100 * (performance.now() - t0) / total);
-    treeView(p, `Building the tree for ${repo}…`, false, false);
-    if (p >= 100) { clearInterval(TREE.timer); treeView(100, 'Tree successfully created. Send it to Krypton to be scored?', true, true); $('treeYes').focus(); }
+    treeView(p, '', false, false, title);
+    if (p >= 100) { clearInterval(TREE.timer); treeView(100, 'Tree ready. Only the tree goes to Krypton, never your source text. Send it to be scored?', true, true, title); $('treeYes').focus(); }
   }, 60);
 }
 function confirmTree() { cancelTree(); analyzeRepo(); }

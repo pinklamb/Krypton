@@ -8,10 +8,10 @@
 /* Layout: one dense column on the demo's blush ground with wine ink and crimson accent. Sharp corners, hairline wine borders, monospace for data. Verdicts first, then one section per question, then method and reproduce steps. Krypton is always the crimson series. */
 :root {
   color-scheme: light;
-  --bg: #dcd1f6; --bg-2: #c9baef; --surface: #fdfcff; --ink: #1b1235; --ink2: #463b72; --muted: #5b5284;
-  --grid: #ddd2f5; --axis: #b3a4de; --wine: #2c1d63;
-  --s-krypton: #6f55c9; --s-base: #8a7f73; --s-ctrl: #1f7a6d;
-  --good: #137a52; --warn: #8a5a00; --bad: #c4202e; --chip: #ece6fc;
+  --bg: #ecd0d2; --bg-2: #deb5b9; --surface: #fffcfc; --ink: #2b0a10; --ink2: #6e2f39; --muted: #8c5560;
+  --grid: #ecd3d3; --axis: #c9a3a8; --wine: #4a0f1a;
+  --s-krypton: #9b1c2e; --s-base: #8a7f73; --s-ctrl: #1f7a6d;
+  --good: #137a52; --warn: #8a5a00; --bad: #b45309; --chip: #f6e4e4;
   --sans: "Plus Jakarta Sans", system-ui, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 * { box-sizing: border-box; }
@@ -56,7 +56,7 @@ footer { color: var(--muted); font-size: 12px; font-family: var(--mono); }
 .eyebrow::before { content: "> "; }
 .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--grid); border: 1px solid var(--grid); border-radius: 4px; overflow: hidden; }
 .kv div { background: var(--surface); padding: 9px 12px; min-width: 0; } .kv small { display: block; color: var(--muted); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; } .kv b { font-weight: 600; overflow-wrap: anywhere; }
-pre.cmd { margin: 0; padding: 12px 14px; background: #0f0b1f; border: 1px solid var(--grid); border-radius: 4px; overflow-x: auto; font: 500 12.5px/1.75 var(--mono); color: var(--ink); }
+pre.cmd { margin: 0; padding: 12px 14px; background: #080405; border: 1px solid var(--grid); border-radius: 4px; overflow-x: auto; font: 500 12.5px/1.75 var(--mono); color: var(--ink); }
 pre.cmd .p { color: var(--s-krypton); } pre.cmd .c { color: var(--muted); }
 .formulas { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .formulas li { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 6px 16px; padding-block: 8px; border-top: 1px solid var(--grid); font-size: 12.5px; } .formulas li:first-child { border-top: 0; }
@@ -71,7 +71,7 @@ pre.cmd .p { color: var(--s-krypton); } pre.cmd .c { color: var(--muted); }
 .callout { margin: 0; padding: 10px 14px; border-left: 4px solid var(--s-krypton); background: var(--chip); font: 500 14px/1.5 var(--mono); color: var(--ink); } .callout b { font-weight: 700; }
 .meta { margin: 0; color: var(--muted); font: 500 12px/1.5 var(--mono); }
 .chip { border-radius: 0; }
-pre.cmd { background: var(--wine); color: #efe9fc; border: 0; border-radius: 2px; } pre.cmd .p { color: #b49ced; } pre.cmd .c { color: #b7afc8; }
+pre.cmd { background: var(--wine); color: #f4e8e8; border: 0; border-radius: 2px; } pre.cmd .p { color: #ff8a97; } pre.cmd .c { color: #cdaaad; }
 thead th { border-bottom: 1px solid var(--wine); }
 #tip { border-radius: 2px; }
 .back { display: inline-block; padding: 8px 14px; border: 1px solid var(--wine); background: var(--surface); color: var(--wine); font: 600 13px var(--mono); text-decoration: none; border-radius: 0; box-shadow: 2px 2px 0 var(--wine); }

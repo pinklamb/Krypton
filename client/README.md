@@ -1,7 +1,6 @@
 # krypton: the Krypton client
 
-Parses source code into a syntax tree **on your machine** and sends only the tree to a Krypton server. The server never receives source text:
-names become digests, strings and comments are not sent, and the real names stay here (`--names` puts them back into the review, locally).
+Parses source code into a syntax tree on your machine and sends the tree to a Krypton server. Names become digests, strings and comments are not sent, and the real names stay here (`--names` puts them back into the review, locally).
 Everything the client sends is built in `src/wire/`, so the code that decides what leaves your machine is small enough to read.
 
 ```

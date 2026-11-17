@@ -19,7 +19,7 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html" aria-current="page">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html" aria-current="page">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
 <div class="wrap">
 <aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#overview">Overview</a></li><li><a href="#components">Components</a></li><li><a href="#flow">The path of a file</a></li><li><a href="#visibility">What each side sees</a></li><li><a href="#server">The scoring server</a></li><li><a href="#checks">How it is checked</a></li><li><a href="#modes">Ways to run it</a></li></ul></aside>
 <main id="content">
@@ -37,7 +37,7 @@
 <tr><td><b>Wire format</b></td><td>Between the two</td><td>The request body: flat arrays for the tree, fingerprints for names, line shapes. See <a href="wire-format.html">Wire format</a>.</td></tr>
 <tr><td><b>Scoring server</b></td><td>Hosted</td><td>Validates the tree, scores it, returns JSON. Stateless: nothing from a request is stored. See <a href="api.html">API reference</a>.</td></tr>
 <tr><td><b>Engine</b></td><td>The scoring server</td><td>Counts decisions and nesting, applies the thresholds, raises flags, writes hints and the purity score. What it measures is in <a href="how-it-works.html">How it works</a>; the scoring maths is not published.</td></tr>
-<tr><td><b>Names book</b></td><td>Your machine</td><td>A map from fingerprint to name. It never leaves, and it is how the answer gets its names back.</td></tr>
+<tr><td><b>Names book</b></td><td>Your machine</td><td>A map from fingerprint to name, kept on your machine. It is how the answer gets its names back.</td></tr>
 <tr><td><b>Order</b></td><td>Your machine</td><td>Reads git history locally and sends only file names, token counts and which files each commit touched; the server decides whether a different file order would reuse more of a prompt cache. See <a href="order.html">file ordering</a>.</td></tr>
 </table></div>
 
@@ -65,7 +65,7 @@
 <h2 id="server">The scoring server</h2>
 <ul>
 <li><b>Stateless.</b> A request is scored and answered; no tree and no result is stored.</li>
-<li><b>Open, with a rate limit.</b> There are no accounts or keys; each address is limited to a few requests a minute, and nothing is stored.</li>
+<li><b>Open, with a rate limit.</b> There are no accounts or keys; each address is limited to a few requests a minute.</li>
 <li><b>Strict input.</b> A request is untrusted. Array lengths, parent order, ranges and unknown kinds are checked before anything is scored, and unknown fields are refused so a client typo cannot change a score.</li>
 <li><b>No client-set thresholds.</b> A client can change file selection and conventions, not the limits or weights, so it cannot read a hidden rating by moving a threshold and watching a flag flip.</li>
 <li><b>Bounded.</b> There are limits on body size, files per request and nodes per file. See <a href="api.html#limits">Limits</a>.</li>

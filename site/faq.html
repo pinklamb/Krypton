@@ -10,7 +10,7 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html" aria-current="page">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html" aria-current="page">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
 <div class="wrap single">
 
 <main id="content">
@@ -21,7 +21,7 @@
 <p>No. It measures structural weight, how hard code is to read, edit and pay for in tokens. It does not check style or correctness. Run your linter and tests too.</p>
 
 <h3>Does it send my code anywhere?</h3>
-<p>Not your source. The client parses your code on your machine and sends a Krypton server only the tree's structure, line shapes and fingerprints of names; strings and comments are not sent, and you can print the exact request with <code>krypton wire</code> before sending anything. The server stores nothing. The hosted demo is different: it reads a repository you choose, in memory, with your own GitHub access, and discards it. <a href="privacy.html">What exactly is sent, and the limits</a>.</p>
+<p>Not your source. The client sends a Krypton server a description of your code's structure, and <code>krypton wire</code> prints the exact request before anything is sent. The hosted demo is different: it reads a repository you choose. <a href="privacy.html">What exactly is sent, and the limits</a>.</p>
 
 <h3>Which languages does it support?</h3>
 <p>JavaScript, TypeScript (including JSX and TSX) and Python.</p>
@@ -36,7 +36,7 @@
 <p>Yes: <code>--level relaxed</code>, or <code>--base origin/main</code> to score only what changed on your branch.</p>
 
 <h3>What if the gate keeps sending my agent back to the same function?</h3>
-<p>A <code>krypton: ignore -- reason</code> comment (<code>#</code> in Python, <code>//</code> in JavaScript) above a function waives it, and the review lists every waiver with its reason. <code>--base</code> scores only the lines your branch changed, and <code>--level relaxed</code> raises the limit for everything. Exempt functions stay visible in the review and do not count toward the score. The earlier command line also had <code>--no-worse</code> and <code>--handoff-stalled</code>; they have not been rebuilt yet.</p>
+<p>A <code>krypton: ignore -- reason</code> comment (<code>#</code> in Python, <code>//</code> in JavaScript) above a function waives it, and the review lists every waiver with its reason. <code>--base</code> scores only the lines your branch changed, and <code>--level relaxed</code> raises the limit for everything. Exempt functions stay visible in the review and do not count toward the score. The earlier command line also had <code>--no-worse</code>, which has not been rebuilt; <code>--handoff-stalled</code> is now <a href="review.html">krypton review</a>.</p>
 
 <h3>Will it find bugs?</h3>
 <p>No. Heavy code is more likely to hide bugs, but Krypton only measures structure.</p>

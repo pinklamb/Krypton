@@ -10,7 +10,7 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html" aria-current="page">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html" aria-current="page">Privacy</a></nav></div></header>
 <div class="wrap single">
 
 <main id="content">
@@ -51,12 +51,11 @@
 <p><b>File paths are visible.</b> They are sent and they appear in the results, so folder and file names are not private from the server.</p>
 <p><b>Structure and layout are visible.</b> The server can see how many functions a file has, how large they are and how deeply they nest, and how long your lines are. That is what it needs to score them.</p>
 <p><b>The demo is different.</b> It fetches and reads the repository you connect. It does not keep it, but it does see it.</p>
-<p><b>Nothing is stored.</b> The scoring server keeps no tree, no result and no log of what it scored; it counts requests per address for a minute to enforce its rate limit.</p>
+<p><b>Nothing is stored.</b> The scoring server keeps no tree and no result. Its logs record a request id and a size, never code, and it counts requests per address for a minute to enforce its rate limit.</p>
 </div>
 
 <h2 id="check">How we check it</h2>
 <p>This is not left to review. An automated test takes real files, collects every word their code contains (names, string contents, comment text, import paths, waiver reasons) and fails if any of those words appears anywhere in the request or in the server's answer. It runs on more than 60 real files, and the same check run on the Rust program's output across 240 files found none. A deliberate leak is planted in a test to prove the check can fail.</p>
-<p>Requests are not stored. The server keeps no copy of a tree, and its logs record a request id, never code.</p>
 
 <div class="pager"><a href="faq.html">← FAQ</a><a href="architecture.html">Architecture →</a></div>
 </main>

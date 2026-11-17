@@ -1,0 +1,92 @@
+name: Krypton
+description: Score how tangled a pull request's code is, keep one comment on the pull request up to date, and refresh a purity badge when you push to your default branch.
+author: Krypton
+
+inputs:
+  server:
+    description: Address of the Krypton server, for example https://your-server.up.railway.app
+    required: true
+  fail-on-worse:
+    description: Fail the check when the purity score went down ("true" or "false").
+    default: "false"
+  badge-branch:
+    description: Branch the badge file is written to when you push (the badge is purity.json on that branch).
+    default: krypton-badge
+
+# Needs a checkout with history first:  - uses: actions/checkout@v4 / with: { fetch-depth: 0 }
+# and the permissions:  contents: write (badge), pull-requests: write (comment).
+runs:
+  using: composite
+  steps:
+    - name: Build the Krypton client
+      shell: bash
+      run: |
+        set -e
+        cargo build --release --manifest-path "${{ github.action_path }}/client/Cargo.toml"
+        echo "KRYPTON=${{ github.action_path }}/client/target/release/krypton" >> "$GITHUB_ENV"
+
+    - name: Score the pull request against its base
+      id: score
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        KRYPTON_SERVER: ${{ inputs.server }}
+        BASE: ${{ github.event.pull_request.base.sha }}
+        FAIL_ON_WORSE: ${{ inputs.fail-on-worse }}
+      run: |
+        set -e
+        git worktree add "$RUNNER_TEMP/krypton-base" "$BASE"
+        "$KRYPTON" scan "$RUNNER_TEMP/krypton-base" --summary "$RUNNER_TEMP/base.json" > /dev/null
+        "$KRYPTON" scan . --summary "$RUNNER_TEMP/head.json" > /dev/null
+        flag=""
+        if [ "$FAIL_ON_WORSE" = "true" ]; then flag="--fail-if-worse"; fi
+        status=0
+        "$KRYPTON" comment "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" $flag > "$RUNNER_TEMP/comment.md" || status=$?
+        cat "$RUNNER_TEMP/comment.md" >> "$GITHUB_STEP_SUMMARY"
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+
+    - name: Post or update the comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/comment.md`, 'utf8');
+          const marker = '<!-- krypton-comment -->';
+          const { owner, repo } = context.repo;
+          const issue_number = context.issue.number;
+          const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+          const mine = comments.find((comment) => comment.body && comment.body.includes(marker));
+          if (mine) {
+            await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body });
+          } else {
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+          }
+
+    - name: Fail when the score went down
+      if: github.event_name == 'pull_request' && steps.score.outputs.status != '0'
+      shell: bash
+      run: |
+        echo "Krypton: the purity score went down."
+        exit 1
+
+    - name: Refresh the badge
+      if: github.event_name == 'push'
+      shell: bash
+      env:
+        KRYPTON_SERVER: ${{ inputs.server }}
+        TOKEN: ${{ github.token }}
+        REPOSITORY: ${{ github.repository }}
+        BRANCH: ${{ inputs.badge-branch }}
+      run: |
+        set -e
+        "$KRYPTON" scan . --summary "$RUNNER_TEMP/head.json" > /dev/null
+        folder="$RUNNER_TEMP/krypton-badge"
+        mkdir "$folder"
+        "$KRYPTON" badge "$RUNNER_TEMP/head.json" "$folder/purity.json"
+        cd "$folder"
+        git init -q
+        git checkout -q -b "$BRANCH"
+        git add purity.json
+        git -c user.name=krypton-action -c user.email=krypton-action@users.noreply.github.com commit -q -m "Update the purity badge"
+        git push -f "https://x-access-token:${TOKEN}@github.com/${REPOSITORY}.git" "$BRANCH"

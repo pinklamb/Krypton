@@ -10,13 +10,13 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html" aria-current="page">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html" aria-current="page">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
 <div class="wrap">
 <aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#install">1. Get the client</a></li><li><a href="#scan">2. First scan</a></li><li><a href="#read">3. Read the report</a></li><li><a href="#changed">4. Score what changed</a></li><li><a href="#agent">5. Agent loop</a></li><li><a href="#next">Next</a></li></ul></aside>
 <main id="content">
 <div class="eyebrow">Getting started</div>
 <h1>From install to your first scan in five minutes</h1>
-<p class="lede">Krypton has two parts. A small client on your machine parses your code into a syntax tree and sends only the tree. A Krypton server scores it and sends back the review.</p>
+<p class="lede">Krypton has two parts. A small client on your machine parses your code into a syntax tree. A Krypton server scores it and sends back the review.</p>
 
 <h2 id="install">1. Get the client</h2>
 <p>The client is one program, <code>krypton</code>, written in Rust. Build it with Docker (nothing else to install):</p>
@@ -25,12 +25,12 @@
 <span class="c"># the program is target/release/krypton</span></code></pre>
 <p>Or, if you have Rust installed, <code>cargo build --release</code> in the <code>client</code> folder. Tell it where the server is once:</p>
 <pre><code><span class="p">$</span> export KRYPTON_SERVER=https://YOUR-SERVER</code></pre>
-<p>There are no accounts or keys. The server answers anyone, limits each address to a few requests a minute, and stores nothing.</p>
+<p>There are no accounts or keys. The server answers anyone, and limits each address to a few requests a minute.</p>
 
 <h2 id="scan">2. Run your first scan</h2>
 <pre><code><span class="p">$</span> krypton scan .
 <span class="p">$</span> krypton scan src --level relaxed --names</code></pre>
-<p>Give it a folder. It reads every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file, skipping <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like, builds the tree of each on your machine, and sends only the trees. <code>--names</code> puts your real function names back into the review locally: the server only ever saw fingerprints of them.</p>
+<p>Give it a folder. It reads every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file, skipping <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like, and builds the tree of each. <code>--names</code> puts your real function names back into the review locally: the server only ever saw fingerprints of them.</p>
 
 <h2 id="read">3. Read the report</h2>
 <p>The review ranks the heaviest functions, says why each is flagged, names the block most worth moving into its own function, and ends with a purity score from 0 to 100 for the whole run. Higher is lighter.</p>

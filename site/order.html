@@ -10,7 +10,7 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html" aria-current="page">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html" aria-current="page">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
 <div class="wrap">
 <aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#idea">The idea</a></li><li><a href="#use">Using it</a></li><li><a href="#decision">How it decides</a></li><li><a href="#output">The answer</a></li><li><a href="#results">Measured results</a></li><li><a href="#store">What it keeps</a></li><li><a href="#limits">Limits</a></li></ul></aside>
 <main id="content">
@@ -26,7 +26,7 @@
 <h2 id="use">Using it</h2>
 <pre><code><span class="p">$</span> krypton order . --subdir src --ext .py,.ts --files request.txt --model gpt-4o --post
 <span class="c"># request.txt: the files in this request, one per line, in your current order</span></code></pre>
-<p>The client reads git on your machine and sends the server <b>only file names, token counts, and which files each recent commit touched</b>: no source, no commit messages, no authors. The server decides and answers; it stores nothing.</p>
+<p>The client reads git on your machine and sends the server <b>only file names, token counts, and which files each recent commit touched</b>: no source, no commit messages, no authors. The server decides and answers.</p>
 <div class="scroll"><table>
 <tr><th>Option</th><th>What it does</th></tr>
 <tr><td><code>REPO</code></td><td>A git repository. Its history is the evidence.</td></tr>
@@ -84,7 +84,7 @@ REORDER: Krypton's order would have kept +13.4% more of the prompt, ahead in 9 o
 <div class="note"><b>What this does not show.</b> This is one repository. The <a href="prompt-caching.html#survey">20-repository survey</a> shows that Krypton's order beat alphabetical on 12 and lost on 7, which is exactly why the guard exists. A live check against measured provider cache reads is planned and has not been run.</div>
 
 <h2 id="store">What it keeps</h2>
-<p>The server keeps nothing. On your machine, only if you name a Claude model, token counts from Anthropic's counter are cached by content hash in <code>.krypton/tokens.json</code> (numbers, no file names or source), so a second run asks for nothing. If you name a Claude model, each file's text goes to Anthropic to be counted, with your own API key; it never goes to Krypton.</p>
+<p>On your machine, only if you name a Claude model, token counts from Anthropic's counter are cached by content hash in <code>.krypton/tokens.json</code> (numbers, no file names or source), so a second run asks for nothing. If you name a Claude model, each file's text goes to Anthropic to be counted, with your own API key; it never goes to Krypton.</p>
 
 <h2 id="limits">Limits</h2>
 <ul>

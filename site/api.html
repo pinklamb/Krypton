@@ -10,14 +10,14 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html" aria-current="page">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html" aria-current="page">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
 <div class="wrap">
 <aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#overview">Overview</a></li><li><a href="#auth">Access</a></li><li><a href="#health">GET /v1/health</a></li><li><a href="#capabilities">GET /v1/capabilities</a></li><li><a href="#score">POST /v1/score</a></li><li><a href="#order">POST /v1/order</a></li><li><a href="#response">The response</a></li><li><a href="#errors">Errors</a></li><li><a href="#limits">Limits</a></li><li><a href="#versioning">Versioning</a></li><li><a href="#notyet">Not built yet</a></li></ul></aside>
 <main id="content">
 <div class="eyebrow">API reference</div>
 <h1>The scoring server API</h1>
-<p class="lede">A small JSON API: send the trees of your files, get back a score, flags and refactoring hints. The server never receives source text.</p>
-<div class="note"><b>No accounts, no keys.</b> The server answers anyone, rate limits each address, and stores nothing. Examples use <code>YOUR-SERVER</code> where the address goes.</div>
+<p class="lede">A small JSON API: send the trees of your files, get back a score, flags and refactoring hints.</p>
+<div class="note"><b>No accounts, no keys.</b> The server answers anyone and rate limits each address. Examples use <code>YOUR-SERVER</code> where the address goes.</div>
 
 <h2 id="overview">Overview</h2>
 <div class="scroll"><table>
@@ -27,7 +27,7 @@
 <tr><td><code>POST /v1/score</code></td><td>Trees in, result out. Synchronous and stateless.</td></tr>
 <tr><td><code>POST /v1/order</code></td><td>File names, token counts and recent history in; the order to send the files in, or the order you already have, out.</td></tr>
 </table></div>
-<p>Requests and responses are JSON. A request body may be gzip-compressed. Every response carries an <code>X-Request-Id</code> header, repeated as <code>request_id</code> in the body, to quote when asking for support. The server stores nothing from a request: no tree and no result.</p>
+<p>Requests and responses are JSON. A request body may be gzip-compressed. Every response carries an <code>X-Request-Id</code> header, repeated as <code>request_id</code> in the body, to quote when asking for support.</p>
 
 <h2 id="auth">Access</h2>
 <p>There are no accounts or keys. Every request counts against its sender's address, which is limited to a few requests a minute; over that the answer is <code>429</code> with a <code>Retry-After</code>. A client that sends a <code>Authorization</code> header is not refused, and the header is ignored.</p>
@@ -72,7 +72,7 @@
   "files":   [ { "path": "src/config.py", "tokens": 812 }, ... ],   // your order
   "history": [ ["src/a.py", "src/b.py"], ["src/a.py"], ... ],        // one list per commit, oldest first
   "in_flux": ["src/b.py"] }                                          // uncommitted files (optional)</code></pre>
-<p>The answer's <code>result</code> has <code>action</code> (<code>keep</code> or <code>reorder</code>), <code>reason</code>, <code>order</code> (yours when <code>keep</code>, the new one when <code>reorder</code>, so a caller can always send <code>order</code> as is) and a <code>backtest</code> summary. Like scoring, it is stateless: nothing is stored.</p>
+<p>The answer's <code>result</code> has <code>action</code> (<code>keep</code> or <code>reorder</code>), <code>reason</code>, <code>order</code> (yours when <code>keep</code>, the new one when <code>reorder</code>, so a caller can always send <code>order</code> as is) and a <code>backtest</code> summary.</p>
 
 <h2 id="response">The response</h2>
 <p>Scoring a file that cannot be scored is not an HTTP error: files too large, too wide or unparseable appear in <code>errors</code> and <code>skipped_files</code> and are left out of the score, exactly as the command line does.</p>

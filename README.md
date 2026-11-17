@@ -15,7 +15,7 @@ krypton order . --subdir src --model gpt-4o --post    # should this prompt's fil
 krypton wire src/app.py                   # print exactly what would be sent
 ```
 
-The server is a separate program (it holds the scoring); there are no accounts or API keys, it limits each address to a few requests a minute and stores nothing.
+The server is a separate program (it holds the scoring); there are no accounts or API keys, it limits each address to a few requests a minute.
 
 ## What Krypton is
 
@@ -69,7 +69,7 @@ Start with the [documentation site](https://pinklamb.github.io/Krypton/): gettin
 
 ## Hosted demo
 
-[`dashboard/`](dashboard/) is a small web app: visitors sign in with GitHub, pick a repository, and see what it costs to read and what Krypton could save. The repository is read in memory, turned into a syntax tree and discarded; only the tree goes to the scoring server, and nothing from the repository is run or stored. GitHub does the signing in; Krypton keeps no accounts. See [`dashboard/DEPLOY.md`](dashboard/DEPLOY.md) to deploy it with Docker or Railway.
+[`dashboard/`](dashboard/) is a small web app: visitors sign in with GitHub, pick a repository, and see what it costs to read and what Krypton could save. GitHub does the signing in; Krypton keeps no accounts. See [`dashboard/DEPLOY.md`](dashboard/DEPLOY.md) to deploy it with Docker or Railway.
 
 ## Repository layout
 

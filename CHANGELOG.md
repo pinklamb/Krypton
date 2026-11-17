@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.1.0
+
+A review step for the work of coding agents, and the pull request pieces around it.
+
+### The client
+- `krypton scan --log [--ticket TEXT]` adds each run to `.krypton/runs.jsonl` (purity and, for every function at or over the limit, how many times over it is, under its real name) and saves the state of the files as a patch in `.krypton/attempts/`. The `.krypton/` folder writes its own `.gitignore`, so the log and the saved code cannot be committed by accident.
+- `krypton review [--json]` names the functions that are still over the limit after the start and three runs and never got 10% better, with their score at every run, the best run, and the purity if the best run is put back. This is the old stalled hand-off, rebuilt.
+- `krypton restore --run N` puts the files back to run N from its saved patch. It refuses when the files changed since the last logged run, `--dry-run` only checks, and a patch that does not apply cleanly leaves everything as it was.
+- `krypton scan --summary FILE`, `krypton comment BEFORE AFTER [--badge FILE] [--fail-if-worse]` and `krypton badge SUMMARY OUT` write the pull request comment (one comment, edited in place) and the README badge.
+
+### Around it
+- `action.yml`: a GitHub Action that scores a pull request against its base, posts or updates the comment, and refreshes the badge on a push.
+- `themes.md` and `agent/review-brief.md`: your coding agent builds a local review page from them (the outline is fixed; `themes.md` only styles it). Krypton itself builds no page. See `site/review.html` and `site/review-preview.html`.
+
 ## 2.0.0 (Rust)
 
 Krypton is now written in Rust, in two parts.
@@ -24,7 +38,7 @@ Krypton is now written in Rust, in two parts.
 - The Python engine and the `krypton` Python package. The Rust server replaces them, and the scoring maths now lives only on the server.
 
 ### Not rebuilt yet
-- `--top`, `--history`, `--no-worse`, `--handoff-stalled`, `--config` on `scan`, and the loading animation of the Python command line.
+- `--top`, `--no-worse`, `--config` on `scan`, and the loading animation of the Python command line (`--history` and `--handoff-stalled` are now `--log` and `krypton review`).
 - An MCP tool for agents.
 
 ## 1.x (Python)

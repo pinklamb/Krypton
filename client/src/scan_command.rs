@@ -1,6 +1,7 @@
-//! `krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--server URL] [--names] [--json] [--save FILE]`: build the tree of every source file under
+//! `krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--server URL] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE]`: build the tree of every source file under
 //! REPO on this machine, send only the tree to the Krypton server and print its review. The server never receives source text; names, strings and
-//! comments stay here, and `--names` puts the real function names back into the review locally.
+//! comments stay here, and `--names` puts the real function names back into the review locally. `--log` also adds the run to `.krypton/runs.jsonl` and
+//! saves an attempt (a patch) so the run can be put back; `--summary FILE` writes the scores with real names for `krypton comment`.
 
 use std::collections::BTreeSet;
 use std::fs;
@@ -9,11 +10,14 @@ use std::path::{Path, PathBuf};
 use krypton_client::{Builder, ClientConfig, Names};
 use serde_json::Value;
 
+use crate::attempts;
 use crate::diff::changed_since;
 use crate::http::Server;
+use crate::runlog;
 use crate::Failure;
 
-const USAGE: &str = "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--server URL] [--names] [--json] [--save FILE]";
+const USAGE: &str =
+    "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--server URL] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE]";
 const EXTENSIONS: [&str; 9] = ["py", "js", "jsx", "mjs", "cjs", "ts", "mts", "cts", "tsx"];
 const SKIP_DIRS: [&str; 12] =
     [".git", "node_modules", "dist", "build", "venv", ".venv", "__pycache__", "target", ".next", "coverage", "vendor", "site-packages"];
@@ -27,6 +31,9 @@ struct Options {
     json: bool,
     base: Option<String>,
     save: Option<PathBuf>,
+    log: bool,
+    ticket: String,
+    summary: Option<PathBuf>,
 }
 
 fn usage(message: &str) -> Failure {
@@ -34,7 +41,18 @@ fn usage(message: &str) -> Failure {
 }
 
 fn parse_options(args: &[String]) -> Result<Options, Failure> {
-    let mut options = Options { repo: PathBuf::new(), level: "standard".to_string(), server: None, names: false, json: false, base: None, save: None };
+    let mut options = Options {
+        repo: PathBuf::new(),
+        level: "standard".to_string(),
+        server: None,
+        names: false,
+        json: false,
+        base: None,
+        save: None,
+        log: false,
+        ticket: String::new(),
+        summary: None,
+    };
     let mut repo = None;
     let mut words = args.iter();
     while let Some(word) = words.next() {
@@ -42,6 +60,9 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
         match word.as_str() {
             "--names" => options.names = true,
             "--json" => options.json = true,
+            "--log" => options.log = true,
+            "--ticket" => options.ticket = value("--ticket")?,
+            "--summary" => options.summary = Some(PathBuf::from(value("--summary")?)),
             "--base" => options.base = Some(value("--base")?),
             "--server" => options.server = Some(value("--server")?),
             "--save" => options.save = Some(PathBuf::from(value("--save")?)),
@@ -133,17 +154,35 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
             .map_err(|error| Failure::Output(format!("{}: {error}", path.display())))?;
     }
     let result = answer.get("result").cloned().unwrap_or(Value::Null);
+    record(&options, &result, &names)?;
     let conclusion = result.get("check_conclusion").and_then(Value::as_str).unwrap_or("unknown");
     if options.json {
         println!("{}", serde_json::to_string_pretty(&result).map_err(|error| Failure::Output(error.to_string()))?);
     } else {
         print_review(&result, answer.get("usage").unwrap_or(&Value::Null), options.names.then_some(&names))?;
     }
-    if conclusion == "success" {
+    if conclusion == "success" || options.summary.is_some() {
         Ok(())
     } else {
         Err(Failure::Flagged)
     }
+}
+
+/// With `--log` or `--summary`: the scores of this run under their real names, added to the run log (with the attempt) and/or written to a file.
+fn record(options: &Options, result: &Value, names: &Names) -> Result<(), Failure> {
+    if !options.log && options.summary.is_none() {
+        return Ok(());
+    }
+    let number = runlog::for_ticket(&runlog::read_all(&options.repo)?, &options.ticket).len();
+    let run = runlog::from_answer(result, names, &options.ticket, number)?;
+    if let Some(path) = &options.summary {
+        runlog::write_summary(path, &run)?;
+    }
+    if options.log {
+        attempts::log_run(&options.repo, &run)?;
+        eprintln!("logged run {number} of ticket {:?} and saved its attempt", options.ticket);
+    }
+    Ok(())
 }
 
 /// The review as text, with the real names put back when asked, and a one-line total.

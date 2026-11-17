@@ -10,7 +10,7 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html" aria-current="page">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html" aria-current="page">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
 <div class="wrap">
 <aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#agents">Coding agents</a></li><li><a href="#ci">Pre-commit and CI</a></li><li><a href="#docker">Docker</a></li><li><a href="#demo">Hosted demo</a></li></ul></aside>
 <main id="content">
@@ -35,7 +35,8 @@ jobs:
         with: { fetch-depth: 0 }
       - run: cargo build --release --manifest-path path/to/client/Cargo.toml
       - run: path/to/client/target/release/krypton scan . --base origin/${{ github.base_ref }}</code></pre>
-<p>The client sends only the tree of the changed files, so the job needs a route to the Krypton server and nothing else from your repository leaves the runner.</p>
+<p>The job needs a route to the Krypton server and nothing else.</p>
+<p>Or use the Krypton action, which also keeps one comment on each pull request up to date with the change in purity and refreshes a README badge. See <a href="review.html#github">Review</a>.</p>
 
 <h2 id="docker">Docker</h2>
 <pre><code>docker run --rm -v "$PWD:/work" -w /work rust:1 cargo build --release     # in client
@@ -46,7 +47,7 @@ docker run --rm -e KRYPTON_SERVER -v "$PWD:/repo:ro" -v krypton_target:/target:r
 <p>The repository includes a small web app that shows what a codebase costs to read and what a refactor could save.</p>
 <ol class="steps">
 <li>Visitors <b>sign in with GitHub</b>. GitHub does the authenticating and decides which repositories they may read; Krypton keeps no accounts.</li>
-<li>The server <b>reads the chosen repository in memory</b> with the visitor's own access, builds the syntax trees, and sends only the trees to the Krypton server. Nothing from the repository is run or stored, and the visitor's GitHub token is forgotten when they sign out or after an hour.</li>
+<li>The server <b>reads the chosen repository in memory</b> with the visitor's own access, builds the syntax trees and sends them to the Krypton server.</li>
 <li>The page shows <b>files, lines, tokens per read, structure score and the hardest functions</b>, then a savings view built from the real size.</li>
 </ol>
 <p>The savings use the rates measured on one repository (see <a href="prompt-caching.html">Prompt caching</a>), scaled to the visitor's repository, so treat them as estimates. Deployment steps (Docker and Railway) are in <a href="https://github.com/pinklamb/Krypton/blob/main/dashboard/DEPLOY.md">dashboard/DEPLOY.md</a>.</p>

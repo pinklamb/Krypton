@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review | Krypton</title>
+<meta name="description" content="Let a person approve what a coding agent could not simplify, keep a purity score on your README, and see each pull request's effect on it.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html" aria-current="page">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<div class="wrap">
+<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#flow">The review step</a></li><li><a href="#commands">Commands</a></li><li><a href="#page">The review page</a></li><li><a href="#github">On GitHub</a></li><li><a href="#limits">Limits</a></li></ul></aside>
+<main id="content">
+<div class="eyebrow">Review</div>
+<h1>A person approves what the agent could not simplify</h1>
+<p>An agent refactoring toward a better score sometimes gets stuck: three tries later a function is barely better. Krypton keeps a log of every try, says which functions are stuck, and puts any earlier try back. Your coding agent turns that into a small page on your own computer where you approve the best try or send it back, <b>before anything goes to GitHub</b>.</p>
+
+<h2 id="flow">The review step</h2>
+<ol class="steps">
+<li><b>Log each run.</b> The agent runs <code>krypton scan . --log --ticket "what it is fixing"</code> before it starts (run 0) and after each change. Each run records the purity score and how far over the limit every function is, under its real name, in <code>.krypton/runs.jsonl</code>, and saves the state of the files as a patch.</li>
+<li><b>Ask what is stuck.</b> <code>krypton review --json</code> lists the functions that, after the start and three runs, are still over the limit and never got more than 10% better than where they started, with the score at every run and the best run.</li>
+<li><b>Show a person.</b> The agent builds one local page from that data and your <a href="https://github.com/pinklamb/Krypton/blob/main/themes.md"><code>themes.md</code></a>. For each stuck function you choose <b>Approve best</b> or <b>Send back</b>.</li>
+<li><b>Carry on.</b> Approved: <code>krypton restore --run N</code> puts the best run's files back and the agent continues to push and open the pull request. Sent back: the agent tries that function again.</li>
+</ol>
+<p>Nothing in this step leaves your machine.</p>
+
+<h2 id="commands">Commands</h2>
+<h3>scan --log</h3>
+<pre><code>krypton scan . --log --ticket "fix discount rounding"</code></pre>
+<p>Scores as usual, then adds the run to the log and saves its attempt. <code>--ticket</code> names the piece of work; the first run of a ticket is run 0. It needs a git repository with a first commit and must be run from the repository's top folder. The <code>.krypton/</code> folder ignores itself (it holds a <code>.gitignore</code> of its own), so the log and the saved code cannot be committed by accident.</p>
+
+<h3>review</h3>
+<pre><code>krypton review [REPO] [--ticket TEXT] [--json]</code></pre>
+<p>Without <code>--json</code> it prints a short summary. With it:</p>
+<pre><code>{
+  "ticket": "fix discount rounding",
+  "runs": [ {"run": 0, "purity": 71}, {"run": 1, "purity": 72}, ... ],
+  "purity": { "start": 71, "now": 72, "if_approved": 74 },
+  "restore_run": 2,
+  "needs_review": true,
+  "improved": 12,
+  "stuck": [ { "file": "checkout.py", "function": "apply_discount",
+               "ratings": [46.0, 45.0, 43.0, 44.0], "best_run": 2, "best": 43.0 } ],
+  "note": null
+}</code></pre>
+<p>A score is how many times the limit a function is at (1× is the most a function may have). <code>restore_run</code> is the run with the highest purity, and <code>if_approved</code> is the purity at that run.</p>
+
+<h3>restore</h3>
+<pre><code>krypton restore --run N [REPO] [--ticket TEXT] [--dry-run] [--force]</code></pre>
+<p>Puts the files back to how they were at run N. It refuses if the files have changed since the last logged run, so nothing unsaved is lost; <code>--force</code> skips that check after saving what is there to <code>.krypton/attempts/before-restore.patch</code>. <code>--dry-run</code> lists the files it would change and touches nothing. If a patch does not apply cleanly, everything is put back and the reason is printed. No commits or branches are made.</p>
+
+<h3>comment, badge, and scan --summary</h3>
+<pre><code>krypton scan . --summary head.json
+krypton comment base.json head.json [--badge FILE] [--fail-if-worse]
+krypton badge head.json purity.json</code></pre>
+<p><code>--summary</code> writes the run's scores to a file and does not fail on a flagged review. <code>comment</code> prints the pull request comment as markdown; <code>badge</code> writes the README badge as a <a href="https://shields.io/badges/endpoint-badge">shields.io endpoint</a> file.</p>
+
+<h2 id="page">The review page</h2>
+<p>Krypton does not build the page and does not read <code>themes.md</code>. The agent you already use builds it, following <a href="https://github.com/pinklamb/Krypton/blob/main/agent/review-brief.md"><code>agent/review-brief.md</code></a>: the same outline every time (the ticket, purity now and if you approve, one card per stuck function with its scores and two buttons, and a footer), styled the way <code>themes.md</code> describes in your own words. See the <a href="review-preview.html">preview</a>.</p>
+
+<h2 id="github">On GitHub</h2>
+<p>The action in this repository's root scores a pull request against its base, keeps one comment up to date, and refreshes a badge when you push.</p>
+<pre><code>name: Krypton
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pinklamb/Krypton@main
+        with:
+          server: ${{ secrets.KRYPTON_SERVER }}
+          fail-on-worse: "false"</code></pre>
+<p>The comment looks like this, and is edited in place on every push:</p>
+<pre><code>### Krypton · ▲ 71% → 74% (+3)
+
+| | Before | After |
+|---|---|---|
+| Purity | 71% | 74% |
+| Over the limit | 14 | 12 |
+
+**2 functions got worse**
+- `billing.py · apply_discount` 40× → 44×
+- `auth.ts · refresh_session` under the limit → 2×</code></pre>
+<p>For the badge, add this to your README with your own name and repository:</p>
+<pre><code>![Krypton](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPO/krypton-badge/purity.json)</code></pre>
+<p>The badge file is read from a public address, so it shows only on public repositories. For a private repository, commit a badge image instead.</p>
+
+<h2 id="limits">Limits</h2>
+<ul>
+<li><b>Restoring is for the whole working tree, not one function.</b> An attempt is the state of all changed files at that run, so putting back run 2 puts back everything as it was at run 2. <code>restore_run</code> picks the run with the best purity overall; a function whose own best run was a different one is shown as such, but one restore cannot give two functions two different runs.</li>
+<li>Attempts cover tracked files and new files that are not ignored. Ignored files are not saved. Attempts hold your code as patches, so keep <code>.krypton/</code> out of anything you share.</li>
+<li>A function counts as stuck only after the start and three runs. With fewer, <code>review</code> says so in <code>note</code>.</li>
+<li>The wording bands in the preview ("very hard to read") are only examples; the commands report numbers.</li>
+</ul>
+
+<div class="pager"><a href="integrations.html">← Integrations</a><a href="faq.html">FAQ →</a></div>
+</main>
+</div>
+<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

@@ -428,7 +428,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
       <div class="scroll" style="margin-top:16px"><table class="src"><thead><tr><th>Control</th><th>What it does</th><th>Where it works today</th></tr></thead><tbody>
         <tr><td><b>Strictness</b><br>relaxed, standard, strict</td><td>Sets how much tangle is tolerated. On garth, 3, 11 and 21 functions are over the limit.</td><td>Command line</td></tr>
         <tr><td><b>Only what the change touched</b></td><td>The gate checks the functions a change touched, so old tangle never blocks an agent. In the test, garth's worst old function stayed about 12× over for all 20 revisions and never triggered a fix.</td><td>Command line (<code>krypton scan --base</code>)</td></tr>
-        <tr><td><b>No worse than before</b> <span class="tag good">new</span></td><td>A function that is over the limit passes if it is no heavier than it was at the base ref, so an agent is not sent back to fix tangle it did not make. It is listed as exempt in the report.</td><td>Earlier Python version; not rebuilt in v2 yet</td></tr>
+        <tr><td><b>No worse than before</b> <span class="tag good">new</span></td><td>A function that is over the limit passes if it is no heavier than it was at the base ref, so an agent is not sent back to fix tangle it did not make. It is listed as exempt in the report.</td><td>Rebuilt in v2.1 as <code>krypton review</code></td></tr>
         <tr><td><b>Waivers</b> <span class="tag good">new</span></td><td>A <code>krypton: ignore -- reason</code> comment above a function lets it through, for code that is complex on purpose. Every waiver is listed with its reason.</td><td>Command line, any run</td></tr>
         <tr><td><b>Hand off a stalled function</b> <span class="tag good">new</span></td><td>When a function has not improved by 10% in three runs, the gate stops blocking on it and lists it for a person instead of retrying. The 60-ticket test used a simpler cap of two fix rounds per ticket; it was reached once and still cleared.</td><td>Earlier Python version; not rebuilt in v2 yet</td></tr>
         <tr><td><b>Specific hints</b></td><td>Each flagged function names the block to pull out and the predicted score after, so a fix converges quickly.</td><td>Command line</td></tr>
@@ -739,7 +739,7 @@ function repoChip(repo) {
 function renderRepos() {
   $('repoPanel').hidden = !AUTH.connected;
   if (!AUTH.connected) return;
-  $('repoNote').textContent = AUTH.repos.length ? 'Pick a repository. Krypton turns it into a tree in memory, scores the tree and drops the copy; nothing is run or stored.' : 'No repositories found for this account.';
+  $('repoNote').textContent = AUTH.repos.length ? 'Pick a repository to analyze.' : 'No repositories found for this account.';
   $('repoChips').innerHTML = AUTH.repos.slice(0, 10).map(repoChip).join('');
   $('analyze').hidden = !AUTH.picked; $('analyze').textContent = `Analyze ${AUTH.picked} →`;
   document.querySelectorAll('#repoChips button').forEach((b) => { b.onclick = () => { cancelTree(); AUTH.picked = b.dataset.repo; renderRepos(); }; });
@@ -826,7 +826,7 @@ function renderScan(d) {
   $('repoEyebrow').textContent = 'Your repository';
   const facts = [statBox(fmt(d.files), 'source files'), statBox(fmt(d.lines), 'lines of code'), statBox('~' + tokK(d.tokens * CLAUDE_TOKENS), 'tokens each time an agent reads it'),
     statBox(d.purity + ' / 100', 'structure score'), statBox(`${d.tangled} of ${fmt(d.functions)}`, 'functions too tangled')];
-  $('scanOut').innerHTML = `<div class="scanfacts">${facts.join('')}</div><h3>Hardest functions to read</h3>${worstTable(d)}<p class="small muted">Turned into a tree in memory on the server, scored, then dropped; nothing was run or stored. Token counts are estimates (characters ÷ 3.5).</p>`;
+  $('scanOut').innerHTML = `<div class="scanfacts">${facts.join('')}</div><h3>Hardest functions to read</h3>${worstTable(d)}<p class="small muted">Token counts are estimates (characters ÷ 3.5).</p>`;
   $('scanOut').hidden = false; $('scanBtns').hidden = false; $('scanSave').hidden = false;
 }
 /* step 1 of 2: build the tree and wait for a yes. Nothing is sent to the Krypton server until the visitor confirms.
@@ -852,7 +852,7 @@ function buildTree() {
   TREE.timer = setInterval(() => {
     const p = Math.min(100, 100 * (performance.now() - t0) / total);
     treeView(p, '', false, false, title);
-    if (p >= 100) { clearInterval(TREE.timer); treeView(100, 'Tree ready. Only the tree goes to Krypton, never your source text. Send it to be scored?', true, true, title); $('treeYes').focus(); }
+    if (p >= 100) { clearInterval(TREE.timer); treeView(100, 'Tree ready. Send it to Krypton to be scored?', true, true, title); $('treeYes').focus(); }
   }, 60);
 }
 function confirmTree() { cancelTree(); analyzeRepo(); }

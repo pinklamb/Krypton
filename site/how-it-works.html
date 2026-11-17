@@ -10,7 +10,7 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html" aria-current="page">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html" aria-current="page">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
 <div class="wrap">
 <aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#pipeline">The pipeline</a></li><li><a href="#score">How the score is calculated</a></li><li><a href="#measures">What else it measures</a></li><li><a href="#algorithm">Not published</a></li><li><a href="#flags">Flags and purity</a></li><li><a href="#hints">Hints</a></li><li><a href="#progress">Progress</a></li><li><a href="#caching">Prompt caching</a></li><li><a href="#private">What leaves your machine</a></li><li><a href="#limits">Limits</a></li></ul></aside>
 <main id="content">
@@ -102,13 +102,13 @@ function's decision weight; invert conditions with early returns, or move lines 
 <p>When a hint names a block it also predicts the ratings after extracting it. Hints are advice only and never change a score.</p>
 
 <h2 id="progress">Progress between runs</h2>
-<p>Version 2 scores a branch against a git ref (<code>--base</code>). Logging each run and explaining why a function did not improve (<code>--history</code>, <code>--handoff-stalled</code>) has not been rebuilt yet.</p>
+<p>Version 2 scores a branch against a git ref (<code>--base</code>). With <code>--log</code>, every run is added to a log together with a saved attempt; <code>krypton review</code> then names the functions that are still over the limit after three runs and never got 10% better, so a person can approve the best attempt or send it back. See <a href="review.html">Review</a>.</p>
 
 <h2 id="caching">Ordering files for prompt caching</h2>
 <p>If your tool sends the whole codebase on every turn, the files that rarely change should come first, so that most of the prompt is identical from one turn to the next and the provider can reuse it. Krypton orders your files from most stable to most volatile using their change history. This is a prediction from history, not a guarantee: across 20 open-source repositories it reused more of the prompt than alphabetical order on 12 and less on 7, so check it on your own repository. <a href="prompt-caching.html">Details and measured results</a>.</p>
 
 <h2 id="private">What leaves your machine</h2>
-<p>The client parses your code on your machine and sends only the syntax tree: node kinds and positions, line shapes, and fingerprints of names. It never sends source text, strings or comments. <a href="privacy.html">Exactly what is sent</a>.</p>
+<p>The client parses your code on your machine and sends a syntax tree: node kinds and positions, line shapes, and fingerprints of names. <a href="privacy.html">Exactly what is sent</a>.</p>
 
 <h2 id="limits">Limits</h2>
 <ul>

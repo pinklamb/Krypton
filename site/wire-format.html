@@ -10,13 +10,13 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html" aria-current="page">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
+<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html" aria-current="page">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
 <div class="wrap">
 <aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#shape">The request</a></li><li><a href="#file">A file</a></li><li><a href="#tree">The tree</a></li><li><a href="#text">What carries text</a></li><li><a href="#lines">Line shapes</a></li><li><a href="#facts">Facts from the client</a></li><li><a href="#example">A worked example</a></li><li><a href="#rules">Rules a request must meet</a></li></ul></aside>
 <main id="content">
 <div class="eyebrow">Wire format</div>
 <h1>Wire format, version 1</h1>
-<p class="lede">The body of <code>POST /v1/score</code>. A client reads source on the user's machine and writes this; the server never receives the source.</p>
+<p class="lede">The body of <code>POST /v1/score</code>. A client reads source on the user's machine and writes this.</p>
 <div class="note"><b>Status.</b> Version 1 is the format the server speaks; a server answers <code>426</code> to any other <code>wire_version</code>.</div>
 
 <h2 id="shape">The request</h2>

@@ -152,7 +152,7 @@ tr:last-child td { border-bottom:0; } .n { text-align:right; font-variant-numeri
 footer.site { border-top:1px solid var(--line); }
 footer.site .bar { font:italic 400 16px var(--serif); color:var(--ink3); justify-content:space-between; flex-wrap:wrap; padding-block:22px; }
 footer.site a { color:var(--ink2); }
-footer.site .mark { color:var(--ink); background:none; } footer.site .mark b { font-size:24px; letter-spacing:-.01em; } footer.site .xtal { font-size:3.2px; transform:translateY(-4px); }
+footer.site .bar { align-items:baseline; } footer.site .mark { color:var(--ink); background:none; } footer.site .mark b { font-size:24px; letter-spacing:-.01em; } footer.site .xtal { font-size:3.2px; transform:none; }
 
 @media (max-width:900px) {
   .wrap { grid-template-columns:minmax(0,1fr); }

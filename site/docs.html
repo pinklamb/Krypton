@@ -34,13 +34,14 @@
 <li><b>Build the image once</b>Krypton runs in Docker, so there is nothing else to install. The function makes every <code>krypton</code> command in these docs work as written.
 <pre><code><span class="p">$</span> docker build -t krypton client
 <span class="p">$</span> krypton() { docker run --rm $([ -t 0 ] &amp;&amp; echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] &amp;&amp; echo -p 127.0.0.1:7777:7777) -v krypton-home:/krypton-home -v "$PWD:/repo" krypton "$@"; }</code></pre></li>
-<li><b>Set it up</b>Krypton logs you in with GitHub (a short code you approve on github.com), maps your codebase and shows its score today, then asks for your target score, max tries, and what happens when the agent is stuck. Answer in the terminal, or open the link it prints and click your settings on a local dashboard.
+<li><b>Set it up</b>Krypton logs you in with GitHub (a short code you approve on github.com), maps your codebase and shows its score today, then suggests a target score a step above it (change it if you like), and asks for max tries and what happens when the agent is stuck. Answer in the terminal, or open the link it prints and click your settings on a local dashboard.
 <pre class="term" data-splash role="img" aria-label="Running krypton: the crystal draws itself, then the Krypton name and the codebase map start"><code><span class="p">$</span> krypton</code></pre></li>
 <li><b>Scan</b>Every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file is read, skipping <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like. The review ends with a purity score from 0 to 100; higher is lighter.
 <pre><code><span class="p">$</span> krypton scan .
 ### Krypton Structural Review -- Purity Score: 100/100
 0 of 1 changed files flagged.</code></pre></li>
 </ol>
+<div class="note"><b>Already have a tangled codebase?</b>Start clean from day one, or untangle legacy AI code incrementally without stopping to refactor. Krypton works a codebase like a deque, from both ends. At the front, new code goes in clean: the target from step 2 applies to the code each ticket touches (Krypton suggests 70 when the whole repository scans 56 today, and raises its suggestion as the score climbs), and the pull request gate fails only a change that makes purity worse. At the back, the worst functions come off a few at a time, from the top of the scan&rsquo;s list. The code in between is left alone.</div>
 <div class="cards">
 <div class="tile"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5V21M18 15.5V3M10 6h4M10 18h4"/></svg>Score only what changed</h3><p><code>krypton scan . --base origin/main</code> scores just this branch's lines, so old code never blames the agent.</p></div>
 <div class="tile"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h11M11 7.5 15.5 12 11 16.5M20 4v16"/></svg>Exit codes</h3><p><code>0</code> fine, <code>1</code> the review failed or something could not be read, <code>2</code> a usage error.</p></div>

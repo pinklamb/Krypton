@@ -139,7 +139,11 @@ fn choice(name: &str, value: &str, text: &str, checked: bool) -> String {
 
 fn page(current: &Settings, problem: Option<&str>) -> String {
     let today = current.baseline.map_or_else(String::new, |score| {
-        format!("<p>Your codebase scores <b>{score}</b>/100 today. Set the target above that and new work slowly cleans up the old.</p>")
+        format!(
+            "<p>Your codebase scores <b>{score}</b>/100 today. Krypton suggests <b>{}</b>, a step above: only new tickets are held to it, so \
+             new work slowly cleans up the old and old code is never blocked.</p>",
+            current.target
+        )
     });
     let error = problem.map_or_else(String::new, |text| format!("<p class=err>{text}</p>"));
     let runs: String = [1, 2, 3, 5, 10].iter().map(|runs| choice("runs", &runs.to_string(), &runs.to_string(), *runs == current.max_runs)).collect();

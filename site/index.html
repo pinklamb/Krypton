@@ -84,7 +84,7 @@ pre.fig { font:400 13px/1.95 var(--mono); color:var(--ink); overflow-x:auto; whi
 .rc .tag { justify-self:start; font:400 11px var(--mono); color:var(--acc); background:var(--glow); border-radius:999px; padding:4px 10px; }
 .runs { list-style:none; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; } .runs li { font:400 15px var(--mono); padding:8px 10px; border-radius:8px; background:var(--card); font-variant-numeric:tabular-nums; } .runs span { display:block; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink3); margin-bottom:2px; } .runs .best { outline:1px solid var(--acc); }
 .acts2 { display:flex; gap:8px; flex-wrap:wrap; } .acts2 button { font:400 11.5px var(--mono); letter-spacing:.14em; text-transform:uppercase; padding:10px 16px; border-radius:999px; border:1px solid var(--ink3); background:var(--card); color:var(--ink); cursor:pointer; } .acts2 .go { background:var(--acc); color:var(--acc-ink); border-color:var(--acc); } .acts2 button[aria-pressed="true"] { box-shadow:0 0 0 3px var(--glow); } .acts2 button[aria-pressed="false"].dim { opacity:.45; }
-.rc .verdict { font:400 12px var(--mono); color:var(--ink2); margin:0; } .rc .verdict code { color:var(--acc); }
+
 @media (max-width:560px) { .runs { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 .ghi { width:16px; height:16px; flex:none; } .ghost .ghi { margin-right:10px; }
 .gh { justify-self:start; display:inline-flex; align-items:center; gap:12px; padding:14px 24px; border:0; border-radius:999px; background:var(--ink); color:var(--bg); font:400 13px var(--sans); letter-spacing:.02em; cursor:pointer; box-shadow:0 8px 26px rgba(0,0,0,.14); transition:transform .2s, box-shadow .2s; } .gh .ghi { width:20px; height:20px; } .gh:hover { transform:translateY(-2px); box-shadow:0 12px 34px rgba(0,0,0,.2); }
@@ -203,7 +203,7 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
   <section class="rows" id="rows" aria-label="What you get">
     <h2>What you get</h2>
     <article class="row">
-      <div><h3 class="reveal">Set your rules in a local dashboard</h3><p class="reveal">Run <code class="ic">krypton setup</code> on your machine. It maps your codebase and shows its score today. Then set your target score, cap how many times the agent can retry, and choose whether it carries on by itself or pauses for your review before opening a pull request. Answer each question in the terminal, or open the link it gives you and click your settings on a local dashboard.</p><p class="reveal">Aim above where you are. If your codebase scores 28 and your target is 70, every ticket has to leave the code it touches at 70 or better, so new work slowly cleans up the old.</p><div class="gate reveal" role="group" aria-label="Try the settings"><div class="gq"><span>Target score</span><div class="seg" data-k="target"><button type="button" data-v="60">60</button><button type="button" data-v="70" aria-pressed="true">70</button><button type="button" data-v="80">80</button><button type="button" data-v="90">90</button></div></div><div class="gq"><span>Max tries</span><div class="seg" data-k="tries"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3" aria-pressed="true">3</button><button type="button" data-v="5">5</button></div></div><div class="gq"><span>When stuck</span><div class="seg" data-k="mode"><button type="button" data-v="manual" aria-pressed="true">Ask me</button><button type="button" data-v="auto">Auto</button></div></div></div></div>
+      <div><h3 class="reveal">Set your rules in a local dashboard</h3><p class="reveal">Run <code class="ic">krypton setup</code> on your machine. It maps your codebase and shows its score today. Then set your target score, cap how many times the agent can retry, and choose whether it carries on by itself or pauses for your review before opening a pull request. Answer each question in the terminal, or open the link it gives you and click your settings on a local dashboard.</p><p class="reveal">Krypton suggests a target a step above where you are: if your codebase scores 56, it suggests 70, and you can pick your own. Only new tickets are held to it, so the code they touch gets cleaner while old code never blocks a merge. Run setup again as the score climbs and the suggestion climbs with it.</p><div class="gate reveal" role="group" aria-label="Try the settings"><div class="gq"><span>Target score</span><div class="seg" data-k="target"><button type="button" data-v="60">60</button><button type="button" data-v="70" aria-pressed="true">70</button><button type="button" data-v="80">80</button><button type="button" data-v="90">90</button></div></div><div class="gq"><span>Max tries</span><div class="seg" data-k="tries"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3" aria-pressed="true">3</button><button type="button" data-v="5">5</button></div></div><div class="gq"><span>When stuck</span><div class="seg" data-k="mode"><button type="button" data-v="manual" aria-pressed="true">Ask me</button><button type="button" data-v="auto">Auto</button></div></div></div></div>
       <div class="fig rev reveal" role="group" aria-label="Example review screen">
         <div class="rh"><span>Example review &middot; fix discount rounding</span><span class="pills"><i id="pT">Target 70</i><i id="pM">Max tries 3</i></span><span id="rvh">Purity <span id="rv0">71</span> <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> <b id="rvp">71</b></span></div>
         <div class="rc">
@@ -211,7 +211,6 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
           <span class="tag" id="rvt">Stuck after 3 runs &middot; best only 7% better</span>
           <ol class="runs" id="rvr" aria-label="Times over the limit at each run"></ol>
           <div class="acts2"><button type="button" class="go" data-d="approve" aria-pressed="false">Approve best</button><button type="button" data-d="back" aria-pressed="false">Send back</button></div>
-          <p class="verdict" id="rvv" aria-live="polite"></p>
         </div>
       </div>
     </article>
@@ -254,6 +253,7 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
 
   <section class="close" id="start" aria-labelledby="start-h">
     <div><h2 id="start-h" class="reveal">Start saving on your AI bills today.</h2>
+      <p class="reveal" style="margin:0 0 28px">Start clean from day one, or untangle legacy AI code incrementally without stopping to refactor.</p>
       <div class="acts reveal"><a class="cta" href="#story">See the demo <svg class="ar up" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a><a class="lnk" href="docs.html">Read the docs</a></div></div>
     <div class="fig own reveal" id="own">
       <h3 class="ownh">Visualize your code with your GitHub repo</h3>
@@ -284,19 +284,15 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
   function draw() {
     var n = G.tries, ratings = EX.ratings.slice(0, n + 1), purity = EX.purity.slice(0, n + 1);
     var best = 0; purity.forEach(function (p, i) { if (p > purity[best]) { best = i; } });
-    var low = Math.min.apply(null, ratings), pct = Math.round((1 - low / ratings[0]) * 100), meets = purity[best] >= G.target;
+    var low = Math.min.apply(null, ratings), pct = Math.round((1 - low / ratings[0]) * 100);
     document.getElementById("rvr").innerHTML = EX.ratings.map(function (r, i) { var cls = i > n ? "gone" : (i === best && i > 0 ? "best" : ""); return '<li class="' + cls + '"><span>' + (i ? "run " + i : "start") + (i === best && i > 0 && i <= n ? " &middot; best" : "") + "</span>" + r + "&times;</li>"; }).join("");
-    var tag = document.getElementById("rvt"), acts = document.querySelector(".acts2"), v = document.getElementById("rvv"), auto = G.mode === "auto";
-    var goal = meets ? "reaches your target of " + G.target : "short of your target of " + G.target;
+    var tag = document.getElementById("rvt"), acts = document.querySelector(".acts2"), auto = G.mode === "auto";
     if (auto) {
       tag.className = "tag ok"; tag.innerHTML = "Auto-resolved &middot; kept run " + best + " (" + ratings[best] + "&times;)";
       acts.hidden = true; document.getElementById("rvp").textContent = purity[best];
-      v.innerHTML = "Krypton put back run " + best + " and the agent carried on: purity " + purity[0] + " <svg class=\"ar\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M2.5 8h11M9 3.5 13.5 8 9 12.5\"/></svg> " + purity[best] + ", " + goal + ".";
     } else {
       tag.className = "tag"; tag.innerHTML = "Stuck after " + n + (n === 1 ? " run" : " runs") + " &middot; best only " + pct + "% better";
       acts.hidden = false; document.getElementById("rvp").textContent = pick === "approve" ? purity[best] : purity[0];
-      v.innerHTML = pick === "approve" ? "Approved: <code class='ic'>krypton restore --run " + best + "</code> puts run " + best + " back (purity " + purity[best] + ", " + goal + "), then the agent opens the pull request."
-        : pick === "back" ? "Sent back: the agent tries apply_discount() again." : "Your call. Keeping run " + best + " gives purity " + purity[best] + ", " + goal + ".";
     }
     document.getElementById("rv0").textContent = purity[0]; document.getElementById("pT").textContent = "Target " + G.target; document.getElementById("pM").textContent = "Max tries " + G.tries;
   }
@@ -388,10 +384,10 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
 
   var VS = [
     'attribute vec3 pa; attribute vec3 ja; attribute vec3 jc; attribute float t; attribute float fid; attribute float sev; attribute vec3 perp; attribute float size; attribute vec4 wv; attribute vec3 du;',
-    'uniform float amp; uniform float k; uniform float glow; uniform float uFrom; uniform float uTo; uniform float uMix; uniform float uTime; uniform float uAlpha; uniform float uScale; uniform float uAmb; uniform float uTreeA; uniform float uAmbA;',
+    'uniform float amp; uniform float k; uniform float glow; uniform float uFrom; uniform float uTo; uniform float uMix; uniform float uTime; uniform float uAlpha; uniform float uScale; uniform float uAmb; uniform float uTreeA; uniform float uAmbA; uniform float uPick; uniform float uBurst; uniform vec3 uCen;',
     'uniform mat3 uRot; uniform vec2 uOff; uniform vec3 uInk; uniform vec3 uHot0; uniform vec3 uHot1; uniform vec3 uFix; uniform vec3 uAmbC;',
     'varying vec3 vc; varying float va;',
-    'vec3 tree(){ float hot=fid>=0.0?1.0:0.0; vec3 A=pa+ja*amp; vec3 C=position+jc*amp; vec3 p=mix(A,C,t)+perp*sin(3.14159*t)*0.05*amp*hot*sev; return uRot*(p*uScale); }',
+    'vec3 tree(){ float hot=fid>=0.0?1.0:0.0; vec3 A=pa+ja*amp; vec3 C=position+jc*amp; vec3 p=mix(A,C,t)+perp*sin(3.14159*t)*0.05*amp*hot*sev; if(abs(fid-uPick)<0.5){ p=uCen+(p-uCen)*(1.0+2.4*uBurst); } return uRot*(p*uScale); }',
     'vec3 wave(){ float x=wv.x, z=wv.y; float y=-1.0+0.2*sin(x*0.55+uTime*0.45+z*0.2)*cos(z*0.45-uTime*0.3)+0.06*sin(x*1.9+z*1.2+uTime*0.8); return vec3(x,y,z); }',
     // a drafting lattice: points run along grid lines on the floor, a slow ripple passing through
     'vec3 lattice(){ float gs=0.7; float x=wv.x, z=wv.y; if(wv.z<3.1416){ x=floor(x/gs+0.5)*gs; } else { z=floor(z/gs+0.5)*gs; }',
@@ -415,7 +411,7 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
     '  else if(s<1.5){ float hot=fid>=0.0?1.0:0.0; float gl=hot*glow*amp; float fixd=hot*glow*(1.0-amp);',
     '    c=mix(mix(uInk,mix(uHot0,uHot1,sev),gl),uFix,fixd);',
     '    a=mix(mix(t<1.0?0.16:0.34,t<1.0?0.55:0.85,gl),t<1.0?0.3:0.5,fixd)*uTreeA;',
-    '    z=mix(t<1.0?0.9:1.6,size,gl); a*=uScale; }',
+    '    z=mix(t<1.0?0.9:1.6,size,gl); a*=uScale; if(abs(fid-uPick)<0.5){ z*=1.0+0.6*uBurst; a=min(1.0,a*(1.0+0.8*uBurst)); } }',
     '  else { c=uAmbC; a=uAmbA*0.6; z=1.0; } }',
     'void main(){ float boost=1.0; float m=smoothstep(wv.w*0.45,wv.w*0.45+0.55,uMix);',
     '  vec3 p0=shp(uFrom); vec3 p1=shp(uTo); vec3 p=mix(p0,p1,m); if(uAmb>2.5&&uAmb<3.5&&uFrom+uTo>0.5&&uFrom+uTo<1.5){ float mm=smoothstep(wv.w*0.25,wv.w*0.25+0.75,uMix); float q=uFrom<0.5?mm:1.0-mm; float qg=uFrom<0.5?uMix:1.0-uMix; float w=smoothstep(0.0,0.55,qg); float b=smoothstep(0.5,1.0,q); vec3 ow=orbitW(w*2.6,1.0-0.55*w); boost=1.0+2.6*w*(1.0-b); p=mix(ow,tree(),b); p0=uFrom<0.5?ow:p0; p1=uTo<0.5?ow:p1; m=uFrom<0.5?b:1.0-b; } vec3 c0; float a0; float z0; vec3 c1; float a1; float z1; look(uFrom,p0,c0,a0,z0); look(uTo,p1,c1,a1,z1);',
@@ -424,7 +420,7 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
   ].join('\n');
   var FS = 'varying vec3 vc; varying float va; void main(){ float d=length(gl_PointCoord-.5)*2.; if(d>1.) discard; gl_FragColor=vec4(vc, va*smoothstep(1.,.45,d)); }';
   function v3c(a) { return new THREE.Vector3(a[0], a[1], a[2]); }
-  var U = { amp: { value: 1 }, k: { value: 300 }, glow: { value: 0 }, uFrom: { value: 0 }, uTo: { value: 0 }, uMix: { value: 0 }, uTime: { value: 0 }, uAlpha: { value: 1 }, uScale: { value: 1 }, uAmb: { value: 0 }, uTreeA: { value: 1 }, uAmbA: { value: .5 },
+  var U = { amp: { value: 1 }, k: { value: 300 }, glow: { value: 0 }, uFrom: { value: 0 }, uTo: { value: 0 }, uMix: { value: 0 }, uTime: { value: 0 }, uAlpha: { value: 1 }, uScale: { value: 1 }, uAmb: { value: 0 }, uTreeA: { value: 1 }, uAmbA: { value: .5 }, uPick: { value: -9 }, uBurst: { value: 0 }, uCen: { value: new V() },
     uRot: { value: new THREE.Matrix3() }, uOff: { value: new THREE.Vector2() }, uInk: { value: new V() }, uHot0: { value: new V() }, uHot1: { value: new V() }, uFix: { value: new V() }, uAmbC: { value: new V() } };
   var mat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false, depthTest: false });
   var pts = new THREE.Points(g, mat); pts.frustumCulled = false;
@@ -486,8 +482,8 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
   function label(f, q, p, s) {
     if (p < .335) { return f.name; }
     if (s.glow < .5) { return f.fp; }
-    if (s.amp > .5) { return (q + 1) + ' · ' + f.name + ' // ' + f.times + 'x limit'; }
-    return f.name + ' // split (illustration)';
+    if (s.amp > .5) { return (q + 1) + ' · ' + f.name + ' · ' + f.times + 'x limit'; }
+    return f.name + ' · split (illustration)';
   }
   function place(p, s) {
     var show = s.from === 1 && s.mix === 0 && p > .26 && p < .995, W = cv.clientWidth, H = cv.clientHeight, placed = [];
@@ -505,6 +501,35 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
     var pv = Math.round(62 + 19 * smooth((p - .74) / .16)); if (+pur.textContent !== pv) { pur.textContent = pv; }
   }
 
+  // ---------- an easter egg: click a lavender cluster and that function's whole subtree blooms out; click again to fold it ----------
+  var egg = { on: -1, want: 0, ok: false, s: null }, ndc = new V();
+  function treeShown(s) { return s.from === 1 && s.mix === 0 && s.glow > .5; }
+  function clusterAt(x, y) {
+    var s = egg.s; if (!s || !treeShown(s)) { return -1; }
+    var W = cv.clientWidth, H = cv.clientHeight, best = -1, bd = 46 * 46;
+    cent.forEach(function (c, i) {
+      if (!c.n) { return; }
+      ndc.copy(c.s).multiplyScalar(s.s).applyMatrix3(U.uRot.value).project(cam);
+      var px = (ndc.x + s.x + 1) / 2 * W, py = (1 - (ndc.y + s.oy)) / 2 * H, d = (px - x) * (px - x) + (py - y) * (py - y);
+      if (d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
+  function busy(t) { return t.closest && t.closest('a, button, input, select, textarea, summary, label, code, pre, .fig, .pill'); }
+  document.addEventListener('click', function (e) {
+    if (busy(e.target) || String(getSelection()).length) { return; }
+    var hit = clusterAt(e.clientX, e.clientY);
+    if (hit >= 0 && hit !== egg.on) { egg.on = hit; egg.want = 1; U.uPick.value = hit; U.uCen.value.copy(cent[hit].s); }
+    else { egg.want = 0; }
+  });
+  document.addEventListener('mousemove', function (e) { egg.ok = !busy(e.target) && clusterAt(e.clientX, e.clientY) >= 0; document.body.style.cursor = egg.ok ? 'pointer' : ''; });
+  function bloom(s, dt) {
+    egg.s = s; if (!treeShown(s)) { egg.want = 0; }
+    var b = U.uBurst.value, to = egg.want; b = REDUCE ? to : b + (to - b) * (1 - Math.exp(-dt / .35));
+    if (to === 0 && b < .002) { b = 0; egg.on = -1; U.uPick.value = -9; }
+    U.uBurst.value = b;
+  }
+
   // ---------- the loop ----------
   var drawn = scrollY, last = performance.now(), yaw = .4;
   function frame(now) {
@@ -512,6 +537,7 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
     var Y = scrollY; drawn = REDUCE ? Y : drawn + (Y - drawn) * (1 - Math.exp(-dt / .3)); if (Math.abs(Y - drawn) < .5) { drawn = Y; }
     var s = state(drawn), p = progress(drawn);
     if (!REDUCE) { yaw += dt * .06; U.uTime.value += dt; }
+    bloom(s, dt);
     eul.set(.25, yaw + p * .9, 0); rot.makeRotationFromEuler(eul); U.uRot.value.setFromMatrix4(rot);
     U.uFrom.value = s.from; U.uTo.value = s.to; U.uMix.value = s.mix; U.glow.value = s.glow; U.amp.value = s.amp; U.uAlpha.value = s.a; U.uScale.value = s.s; U.uOff.value.set(s.x, s.oy);
     cam.position.set(0, .3, 7.2); cam.lookAt(0, 0, 0);

@@ -3,7 +3,8 @@
 //! 0. It logs you in with GitHub if you are not yet (`krypton login`): the server scores only for a logged-in user.
 //! 1. It maps the whole codebase (an ordinary scan) and shows its purity today: the baseline.
 //! 2. It asks for the **target**: the purity a ticket's code should reach. Set it above the baseline and every change the agent makes
-//!    lifts the code it touches, so the rest of the codebase gets cleaner a ticket at a time.
+//!    lifts the code it touches, so the rest of the codebase gets cleaner a ticket at a time. It suggests one from the baseline: a step
+//!    above today's score, never below a target saved before, so running setup again as the codebase improves only ever raises it.
 //! 3. It asks for **max tries**: how many runs the agent gets on a function before Krypton calls it stuck.
 //! 4. It asks what happens when the agent is stuck: **ask me** (the agent builds a local review page for the current ticket, styled by
 //!    `themes.md`) or **auto** (Krypton puts back the best run and the agent carries on).
@@ -30,6 +31,26 @@ const BASELINE: &str = "baseline.json";
 pub const DEFAULT_TARGET: i64 = 70;
 pub const DEFAULT_RUNS: usize = 3;
 const MAX_RUNS: usize = 10;
+/// How far above today's score the suggested target sits: far enough that every ticket lifts the code it touches.
+const LIFT: i64 = 10;
+/// The highest target Krypton suggests on its own; asking for a perfect score on every ticket is left to the person.
+const SUGGEST_CAP: i64 = 95;
+
+const fn round_up_to_five(score: i64) -> i64 {
+    match score.rem_euclid(5) {
+        0 => score,
+        rest => score.saturating_add(5_i64.saturating_sub(rest)),
+    }
+}
+
+/// The target to suggest: today's score plus a step, rounded up to a multiple of 5 and capped, but never below today's score and never
+/// below a target saved before. The second rule is the ratchet: as tickets lift the codebase, running setup again raises the suggestion,
+/// and nothing lowers it except the person typing a lower number.
+#[must_use]
+pub fn suggested_target(baseline: Option<i64>, kept: Option<i64>) -> i64 {
+    let from_today = baseline.map_or(DEFAULT_TARGET, |score| round_up_to_five(score.saturating_add(LIFT)).min(SUGGEST_CAP).max(score));
+    kept.map_or(from_today, |target| target.max(from_today))
+}
 
 /// What happens when a ticket has functions the agent could not fix.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -198,11 +219,14 @@ pub fn parse_runs(text: &str) -> Option<usize> {
     text.trim().parse().ok().filter(|runs| (1..=MAX_RUNS).contains(runs))
 }
 
-fn target_question(baseline: Option<i64>) -> String {
+fn target_question(baseline: Option<i64>, suggest: i64) -> String {
     let today = baseline.map_or_else(String::new, |score| {
-        format!("Your codebase scores {score}/100 today. Set the target above that: every ticket must reach it, so new code lifts the rest.\n")
+        format!(
+            "Your codebase scores {score}/100 today. Krypton suggests {suggest}, a step above: only new tickets are held to it, so new code \
+             lifts the code it touches and old code is never blocked.\n"
+        )
     });
-    format!("\n{today}Target purity for each ticket's code, 0-100 [{DEFAULT_TARGET}]: ")
+    format!("\n{today}Target purity for each ticket's code, 0-100 [{suggest}]: ")
 }
 
 const WHERE_QUESTION: &str = "
@@ -234,10 +258,10 @@ When the agent is still stuck after those tries, what should happen?
 Choose 1 or 2 [1]: ";
 
 /// Ask whatever the flags left open.
-fn ask_all(prompt: &mut Prompt, given: &Options, baseline: Option<i64>) -> Result<Settings, Failure> {
+fn ask_all(prompt: &mut Prompt, given: &Options, baseline: Option<i64>, suggest: i64) -> Result<Settings, Failure> {
     let target = match given.target {
         Some(target) => target,
-        None => prompt.ask(&target_question(baseline), DEFAULT_TARGET, parse_target)?,
+        None => prompt.ask(&target_question(baseline, suggest), suggest, parse_target)?,
     };
     let max_runs = match given.max_runs {
         Some(runs) => runs,
@@ -304,25 +328,42 @@ pub fn interactive() -> bool {
     io::stdin().is_terminal()
 }
 
-/// The settings the flags give, with the defaults for anything left open.
-fn from_flags(options: &Options, baseline: Option<i64>) -> Settings {
+/// The settings the flags give, with the suggested target and the defaults for anything left open.
+fn from_flags(options: &Options, baseline: Option<i64>, suggest: i64) -> Settings {
     Settings {
         mode: options.mode.unwrap_or(Mode::Manual),
-        target: options.target.unwrap_or(DEFAULT_TARGET),
+        target: options.target.unwrap_or(suggest),
         max_runs: options.max_runs.unwrap_or(DEFAULT_RUNS),
         baseline,
     }
 }
 
 /// Ask in the terminal or on the settings page, whichever the person picks; flags already given are not asked again in the terminal.
-fn choose(options: &Options, baseline: Option<i64>) -> Result<Settings, Failure> {
+fn choose(options: &Options, baseline: Option<i64>, suggest: i64) -> Result<Settings, Failure> {
     let mut prompt = Prompt { input: &mut io::stdin().lock(), output: &mut io::stdout().lock() };
     let everything_given = options.mode.is_some() && options.target.is_some() && options.max_runs.is_some();
     let page = options.page || (!everything_given && prompt.ask(WHERE_QUESTION, false, parse_where)?);
     if page {
-        return crate::setup_page::choose(&options.listen, &from_flags(options, baseline));
+        return crate::setup_page::choose(&options.listen, &from_flags(options, baseline, suggest));
     }
-    ask_all(&mut prompt, options, baseline)
+    ask_all(&mut prompt, options, baseline, suggest)
+}
+
+/// The target saved by an earlier setup, for the ratchet. A damaged settings file is said out loud and then replaced, since rewriting it is
+/// exactly what setup is for.
+fn kept_target(repo: &Path) -> Option<i64> {
+    match saved(repo) {
+        Ok(settings) => settings.map(|settings| settings.target),
+        Err(error) => {
+            let why = match error {
+                Failure::Log(message) => message,
+                Failure::Read(path, error) => format!("cannot read {path}: {error}"),
+                other => format!("{other:?}"),
+            };
+            eprintln!("{why} (setup will replace it)");
+            None
+        }
+    }
 }
 
 pub fn run(args: &[String]) -> Result<(), Failure> {
@@ -339,7 +380,8 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
         eprintln!("Mapping your codebase ...");
     }
     let baseline = if options.no_map { None } else { Some(map_codebase(&options.repo)?) };
-    let settings = if asking || options.page { choose(&options, baseline)? } else { from_flags(&options, baseline) };
+    let suggest = suggested_target(baseline, kept_target(&options.repo));
+    let settings = if asking || options.page { choose(&options, baseline, suggest)? } else { from_flags(&options, baseline, suggest) };
     save(&options.repo, &settings)?;
     let themes = if settings.mode == Mode::Manual { starter_themes(&options.repo)? } else { None };
     println!("{}", next_steps(&settings, themes.as_deref()));
@@ -350,18 +392,34 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
 mod tests {
     use std::io::Cursor;
 
-    use super::{ask_all, parse_where, save, saved, starter_themes, Mode, Options, Prompt, Settings};
+    use super::{ask_all, parse_where, save, saved, starter_themes, suggested_target, Mode, Options, Prompt, Settings};
 
     fn answers(typed: &str) -> Option<Settings> {
         let mut input = Cursor::new(typed.as_bytes().to_vec());
         let mut output = Vec::new();
-        ask_all(&mut Prompt { input: &mut input, output: &mut output }, &Options::default(), Some(28)).ok()
+        ask_all(&mut Prompt { input: &mut input, output: &mut output }, &Options::default(), Some(28), suggested_target(Some(28), None)).ok()
     }
 
-    // Enter three times takes the defaults.
+    // Enter three times takes the defaults, and the target default is the one suggested from today's score.
     #[test]
     fn test_defaults() {
-        assert_eq!(answers("\n\n\n"), Some(Settings { mode: Mode::Manual, target: 70, max_runs: 3, baseline: Some(28) }), "70, 3, ask me");
+        assert_eq!(
+            answers("\n\n\n"),
+            Some(Settings { mode: Mode::Manual, target: 40, max_runs: 3, baseline: Some(28) }),
+            "40 (28 + 10, rounded up), 3, ask me"
+        );
+    }
+
+    // The suggestion is a step above today, capped, never below today, and it only ratchets up.
+    #[test]
+    fn test_suggested_target() {
+        assert_eq!(suggested_target(Some(56), None), 70, "56 + 10 rounds up to 70");
+        assert_eq!(suggested_target(Some(60), None), 70, "a multiple of 5 stays");
+        assert_eq!(suggested_target(Some(90), None), 95, "capped at 95");
+        assert_eq!(suggested_target(Some(98), None), 98, "never below today");
+        assert_eq!(suggested_target(None, None), 70, "no map: the usual 70");
+        assert_eq!(suggested_target(Some(56), Some(80)), 80, "a higher saved target is kept");
+        assert_eq!(suggested_target(Some(78), Some(70)), 90, "a better codebase raises it");
     }
 
     // A wrong answer is asked again.

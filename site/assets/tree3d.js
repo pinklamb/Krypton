@@ -26,9 +26,9 @@
     var RX = 1.45, RY = .98, RZ = 1.12, golden = Math.PI * (3 - Math.sqrt(5)), seq = [], dirs = {};
     F.forEach(function (f, k) { var d = f.p.split('/').slice(0, -1).join('/'); (dirs[d] = dirs[d] || []).push(k); });
     Object.keys(dirs).sort(function (a, b) { return dirs[b].length - dirs[a].length; }).forEach(function (d) { dirs[d].sort(function (a, b) { return F[b].t.length - F[a].t.length; }).forEach(function (k) { seq.push(k); }); });
-    var root = [], out = [], P3 = [], HOT = [], SZ = [], AL = [], zero = new V(), cent = FN.map(function () { return { s: new V(), n: 0 }; });
+    var root = [], out = [], P3 = [], HOT = [], SZ = [], AL = [], HIT = [], zero = new V(), cent = FN.map(function () { return { s: new V(), n: 0 }; });
     seq.forEach(function (k, s) { var u = .9 * (1 - 2 * (s + .5) / seq.length), v = s * golden, w = Math.sqrt(1 - u * u), p = new V(RX * w * Math.cos(v), RY * u, RZ * w * Math.sin(v)); root[k] = p; out[k] = new V(p.x / (RX * RX), p.y / (RY * RY), p.z / (RZ * RZ)).normalize(); });
-    function push(p, sev, size, alpha) { P3.push(p.x, p.y, p.z); HOT.push(sev); SZ.push(size); AL.push(alpha); }
+    function push(p, sev, size, alpha, hit) { P3.push(p.x, p.y, p.z); HOT.push(sev); SZ.push(size); AL.push(alpha); HIT.push(hit); }
     F.forEach(function (f, k) {
       var P = f.t, n = P.length, kids = [], dep = new Array(n).fill(0), pos = new Array(n), dir = new Array(n), fid = new Array(n);
       for (i = 0; i < n; i++) { kids.push([]); fid[i] = CODES.indexOf(f.h.charAt(i)); }
@@ -46,14 +46,14 @@
       for (i = 0; i < n; i++) {
         if (!pos[i]) { continue; }
         var h = fid[i], sev = h >= 0 ? SEV[h] : -1, jit = h >= 0 ? new V(R() - .5, R() - .5, R() - .5).multiplyScalar((.05 + .012 * dep[i]) * (.6 + SEV[h])) : zero, p = pos[i].clone().add(jit);
-        push(p, sev, i === 0 ? 4 : h >= 0 ? 2.6 + 3.4 * SEV[h] : 1.7, h >= 0 ? .85 : .34);
+        push(p, sev, i === 0 ? 4 : h >= 0 ? 2.6 + 3.4 * SEV[h] : 1.7, h >= 0 ? .85 : .34, h);
         if (h >= 0) { cent[h].s.add(p); cent[h].n++; }
-        if (i && pos[P[i]]) { var steps = h >= 0 ? 4 : 2, pp = pos[P[i]], s; for (s = 1; s <= steps; s++) { push(pp.clone().lerp(p, s / (steps + 1)), sev, h >= 0 ? 1.4 + SEV[h] : .9, h >= 0 ? .55 : .16); } }
+        if (i && pos[P[i]]) { var steps = h >= 0 ? 4 : 2, pp = pos[P[i]], s; for (s = 1; s <= steps; s++) { push(pp.clone().lerp(p, s / (steps + 1)), sev, h >= 0 ? 1.4 + SEV[h] : .9, h >= 0 ? .55 : .16, h); } }
       }
     });
     D.edges.forEach(function (e) { var a = root[e[0]], b = root[e[1]], s; if (!a || !b) { return; } for (s = 1; s < 18; s++) { var t = s / 18, mid = a.clone().add(b).multiplyScalar(.5 * .35), p = a.clone().multiplyScalar((1 - t) * (1 - t)).add(mid.clone().multiplyScalar(2 * (1 - t) * t)).add(b.clone().multiplyScalar(t * t)); push(p, -1, .8, .16); } });
     cent.forEach(function (c) { if (c.n) { c.s.multiplyScalar(1 / c.n); } });
-    return { P3: P3, HOT: HOT, SZ: SZ, AL: AL, cent: cent };
+    return { P3: P3, HOT: HOT, SZ: SZ, AL: AL, HIT: HIT, cent: cent };
   }
 
   function scheme() {
@@ -82,10 +82,29 @@
       var el = document.createElement('div'); el.className = 'pill' + (q === 0 ? ' top' : ''); el.textContent = (q + 1) + ' · ' + f.name + ' // ' + f.times + '× limit'; opts.labels.appendChild(el); return el;
     });
     var yaw = .4, pitch = .12, drag = null, still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, running = true, last = performance.now();
-    var rot = new THREE.Matrix4(), eul = new THREE.Euler(), v = new THREE.Vector3();
+    var rot = new THREE.Matrix4(), eul = new THREE.Euler(), v = new THREE.Vector3(), pickV = new THREE.Vector3();
     canvas.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, yaw: yaw, pitch: pitch }; canvas.setPointerCapture(e.pointerId); });
     canvas.addEventListener('pointermove', function (e) { if (!drag) { return; } yaw = drag.yaw + (e.clientX - drag.x) * .008; pitch = Math.max(-1, Math.min(1, drag.pitch + (e.clientY - drag.y) * .006)); });
-    canvas.addEventListener('pointerup', function () { drag = null; });
+    canvas.addEventListener('pointerup', function (e) {
+      if (!drag) { return; }
+      var moved = Math.hypot(e.clientX - drag.x, e.clientY - drag.y); drag = null;
+      if (moved > 5 || !opts.selection) { return; }
+      var rect = canvas.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top, best = 15 * 15, found = -1;
+      eul.set(pitch, yaw, 0); rot.makeRotationFromEuler(eul);
+      for (var n = 0; n < L.HIT.length; n++) {
+        var id = L.HIT[n]; if (id < 0) { continue; }
+        pickV.set(L.P3[n * 3], L.P3[n * 3 + 1], L.P3[n * 3 + 2]).applyMatrix4(rot).project(cam);
+        if (pickV.z < -1 || pickV.z > 1) { continue; }
+        var px = (pickV.x + 1) * rect.width / 2, py = (1 - pickV.y) * rect.height / 2, dist = (px - x) * (px - x) + (py - y) * (py - y);
+        if (dist < best) { best = dist; found = id; }
+      }
+      if (found >= 0 && D.fns[found]) {
+        var fn = D.fns[found], box = opts.selection;
+        box.replaceChildren(); var title = document.createElement('b'); title.textContent = fn.name;
+        box.appendChild(title); box.appendChild(document.createElement('br')); box.appendChild(document.createTextNode(fn.file + ' · ' + fn.times + '× the limit'));
+        box.hidden = false;
+      }
+    });
     function size() {
       var w = canvas.clientWidth, h = canvas.clientHeight; R3.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
       U.k.value = h / (2 * Math.tan(cam.fov * Math.PI / 360)) * .0055;

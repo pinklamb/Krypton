@@ -44,6 +44,8 @@
 .stage .pill { position:absolute; transform:translate(-50%,-100%); font:400 11.5px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px 11px; white-space:nowrap; pointer-events:none; opacity:0; }
 .stage .pill.top { border-color:var(--acc); box-shadow:0 0 18px var(--glow); }
 .stage .hint { position:absolute; left:16px; bottom:12px; font:italic 400 15px var(--serif); color:var(--ink3); }
+.stage .selection { position:absolute; right:14px; bottom:12px; max-width:min(70%,520px); padding:9px 13px; border:1px solid var(--acc); border-radius:var(--r); background:var(--card); color:var(--ink); font:400 12px/1.5 var(--mono); box-shadow:0 0 18px var(--glow); overflow-wrap:anywhere; }
+.stage .selection[hidden] { display:none; } .stage .selection b { color:var(--acc); font-weight:400; }
 .worst { display:grid; margin:6px 0 22px; border:1px solid var(--line); border-radius:var(--r); background:var(--card); overflow:hidden; }
 .worst div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; padding:10px 16px; border-bottom:1px solid var(--line); font:400 13.5px var(--mono); }
 .worst div:last-child { border-bottom:0; } .worst span { min-width:0; overflow-wrap:anywhere; } .worst b { color:var(--acc); font-weight:400; }
@@ -87,7 +89,7 @@
       <h3 id="h3s">Your tree</h3>
       <div id="result" hidden>
         <div class="stats" id="facts"></div>
-        <div class="stage" id="stage"><canvas id="scene" aria-label="Your repository's syntax tree, tangled functions in lavender"></canvas><span class="hint">Drag to turn it</span></div>
+        <div class="stage" id="stage"><canvas id="scene" aria-label="Your repository's syntax tree, tangled functions in lavender. Click a highlighted section to identify its function; drag to turn the tree."></canvas><span class="hint">Click a highlighted section to identify it · drag to turn</span><div class="selection" id="selection" role="status" aria-live="polite" hidden></div></div>
         <div id="worstWrap"><p>The most tangled functions:</p><div class="worst" id="worst"></div></div>
         <div class="cta"><a class="btn" href="savings.html">See the savings</a><button class="btn ghost" type="button" id="again">Another repository</button></div>
       </div>
@@ -152,7 +154,7 @@
     });
     $('worstWrap').hidden = !(d.worst || []).length;
     $('result').hidden = false; step(3);
-    if (d.tree && window.THREE) { drawing = KryptonTree.draw($('scene'), d.tree, { labels: $('stage') }); }
+    if (d.tree && window.THREE) { drawing = KryptonTree.draw($('scene'), d.tree, { labels: $('stage'), selection: $('selection') }); }
     try { sessionStorage.setItem('kr-repo', JSON.stringify({ repo: d.repo, files: d.files, lines: d.lines, characters: d.tokens * 3.5, functions: d.functions, tangled: d.tangled })); } catch (e) { /* the savings page then shows the example team */ }
     $('s3').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }

@@ -76,11 +76,12 @@
 
 
 <h2 id="setup">Set it up once</h2>
-<p>The first time you run the Krypton image in a repository, it maps the whole codebase and shows its score today, then asks three things: the <b>target</b> score each ticket's code must reach, how many <b>tries</b> the agent gets on a function before it counts as stuck, and whether a stuck function should <b>ask you</b> or be <b>approved automatically</b>. Answer in the terminal, or pick the browser and it prints a one-time link to a local settings dashboard where you click them instead.</p>
-<p>Set the target above today's score. If the codebase scores 28 and the target is 70, every ticket has to leave the code it touches at 70 or better, so the rest of the codebase gets cleaner one ticket at a time.</p>
+<p>The first time you run the Krypton image in a repository, it maps the whole codebase and shows its score today, then asks four things: the <b>target</b> score each ticket's code must reach (it suggests one a step above today's score), how many <b>tries</b> the agent gets on a function before it counts as stuck, whether a stuck function should <b>ask you</b> or be <b>approved automatically</b>, and whether to set up the <b>pull request gate</b> on GitHub. Answer in the terminal, or pick the browser and it prints a one-time link to a local settings dashboard where you click them instead.</p>
+<p>Krypton suggests the target from today's score: a step above it, so a codebase that scores 56 gets 70. Only new tickets are held to it, so the code they touch gets cleaner one ticket at a time while old code never blocks anyone. Run setup again as the score climbs and the suggestion climbs with it; it never drops below a target you saved.</p>
+<p>For the gate, setup writes <code>.github/workflows/krypton.yml</code> with the rule you pick: <b>never worse</b> (a pull request fails only if it lowers the purity score) or <b>target</b> (the files a pull request changes must reach your target; the rest of the codebase is never judged). Commit the file to turn the gate on. Setup never overwrites a workflow that is already there.</p>
 <pre><code>docker run -it --rm -p 127.0.0.1:7777:7777 -v "$PWD:/repo" krypton   # terminal or local dashboard
 krypton setup --page                                                  # straight to the dashboard link
-krypton setup --mode manual|auto --target 70 --runs 3                 # no questions</code></pre>
+krypton setup --mode manual|auto --target 70 --runs 3 --gate target  # no questions</code></pre>
 <ul><li><b>Ask me</b> (manual): your agent builds a review page on your computer for the ticket it is working on, styled by your <code>themes.md</code> (setup writes a starter one if you have none). You keep the best try or send it back before anything goes to GitHub.</li>
 <li><b>Auto</b>: <code>krypton review</code> puts back the best run itself and the agent carries on.</li></ul>
 <p>You can change these later in the terminal (<code>krypton setup</code>) or on the review page your agent builds, which has a small Settings panel styled by your <code>themes.md</code>. The answer is kept in <code>.krypton/settings.json</code>, which git never sees. <code>krypton review --auto</code> or <code>--manual</code> overrides it for one run.</p>
@@ -121,14 +122,14 @@ krypton setup --mode manual|auto --target 70 --runs 3                 # no quest
 
 <h3>comment (the scorecard) and scan --summary</h3>
 <pre><code>krypton scan . --summary head.json
-krypton comment base.json head.json [--line FILE] [--fail-if-worse]</code></pre>
-<p><code>--summary</code> writes the run's scores to a file and does not fail on a flagged review. <code>comment</code> prints the pull request scorecard as markdown, and <code>--line</code> writes the gate line.</p>
+krypton comment base.json head.json [--line FILE] [--fail-if-worse] [--target N [--changed changed.json]]</code></pre>
+<p><code>--summary</code> writes the run's scores to a file and does not fail on a flagged review. <code>comment</code> prints the pull request scorecard as markdown, and <code>--line</code> writes the gate line. With <code>--target</code>, a third summary of only the changed files (<code>krypton scan . --base BASE --summary changed.json</code>) must score at least N; without <code>--changed</code>, no source file changed and there is nothing to hold to the target.</p>
 
 <h2 id="page">The review page</h2>
 <p>Krypton does not build the page and does not read <code>themes.md</code>. The agent you already use builds it, following <a href="https://github.com/pinklamb/Krypton/blob/main/agent/review-brief.md"><code>agent/review-brief.md</code></a>: the same outline every time (the ticket, purity now and if you approve, one card per stuck function with its scores and two buttons, and a footer), styled the way <code>themes.md</code> describes in your own words. See the <a href="review-preview.html">preview</a>.</p>
 
 <h2 id="github">On GitHub</h2>
-<p>The action in this repository's root scores a pull request against its base and puts <b>one line</b> in its checks. Nothing is posted in the conversation, so there is no comment to scroll past and no notification on every push.</p>
+<p><code>krypton setup</code> writes this workflow for you. The action in this repository's root scores a pull request against its base and puts <b>one line</b> in its checks. Nothing is posted in the conversation, so there is no comment to scroll past and no notification on every push.</p>
 <pre><code>name: Krypton
 on:
   pull_request:
@@ -143,7 +144,7 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: pinklamb/Krypton@main</code></pre>
-<p>The line is green unless you turn on <code>fail-on-worse</code> and the score went down: add <code>with: { fail-on-worse: "true" }</code> to the action step.</p>
+<p>The line is green unless you turn on a rule. <b>Never worse</b>: add <code>with: { fail-on-worse: "true" }</code> to the action step, and a pull request fails if the score went down. <b>Target</b>: add <code>with: { target: "70" }</code>, and a pull request fails if the files it changed score below 70; the line then reads, for example, <code>Purity ▲ 56% → 57% (+1) · changed code 64% (target 70)</code>.</p>
 <p>The action logs in to Krypton as your repository with the run's own GitHub identity (<code>id-token: write</code>), so there is no secret to store. <code>statuses: write</code> lets it set the line.</p>
 <p>The scorecard in the run summary looks like this:</p>
 <pre><code>### Krypton · ▲ 71% → 74% (+3)
@@ -172,6 +173,6 @@ jobs:
  /    \ 
  \    / 
   \  /  
-   \/   </pre><b>Kr</b><span>ypton</span></a><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+   \/   </pre><b>Krypton</b></a><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

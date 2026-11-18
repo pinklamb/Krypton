@@ -101,7 +101,8 @@ krypton wire --stdin-json &lt; files.json</code></pre>
 <h2 id="scanned">What gets scanned</h2>
 <ul>
 <li><code>.js .jsx .mjs .cjs .ts .tsx .mts .cts .py</code></li>
-<li>Dependency and build folders (<code>node_modules</code>, <code>dist</code>, <code>build</code>, <code>.git</code>, virtual environments and the like) are never read.</li>
+<li>Whatever your <code>.gitignore</code> files ignore is never read (git's own rules: nested files, <code>!</code> exceptions and <code>.git/info/exclude</code>), and a <code>.kryptonignore</code> file next to it adds more paths in the same syntax, for code you keep in git but do not want scored, such as generated files or test fixtures.</li>
+<li>Dependency and build folders (<code>node_modules</code>, <code>dist</code>, <code>build</code>, <code>.git</code>, virtual environments and the like) are never read, even when nothing ignores them.</li>
 <li>The server also leaves out vendored and generated code by path and by name (minified and bundled files, copies of well-known libraries such as bootstrap or jQuery, anything <code>.gitattributes</code> marks <code>linguist-vendored</code> or <code>linguist-generated</code>), and lists each with the reason.</li>
 <li>A <code>krypton: ignore -- reason</code> comment above a function waives it. The review lists every waiver with its reason.</li>
 </ul>
@@ -126,6 +127,6 @@ krypton order . --subdir src --ext .py,.ts --model gpt-4o --post</code></pre>
  /    \ 
  \    / 
   \  /  
-   \/   </pre><b>Kr</b><span>ypton</span></a><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+   \/   </pre><b>Krypton</b></a><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

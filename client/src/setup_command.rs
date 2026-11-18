@@ -1,4 +1,5 @@
-//! `krypton setup [REPO] [--page] [--mode manual|auto] [--target N] [--runs N] [--no-map]`: set up Krypton for one repository, once.
+//! `krypton setup [REPO] [--page] [--mode manual|auto] [--target N] [--runs N] [--gate off|worse|target] [--no-map]`: set up Krypton for one
+//! repository, once.
 //!
 //! 0. It logs you in with GitHub if you are not yet (`krypton login`): the server scores only for a logged-in user.
 //! 1. It maps the whole codebase (an ordinary scan) and shows its purity today: the baseline.
@@ -8,6 +9,9 @@
 //! 3. It asks for **max tries**: how many runs the agent gets on a function before Krypton calls it stuck.
 //! 4. It asks what happens when the agent is stuck: **ask me** (the agent builds a local review page for the current ticket, styled by
 //!    `themes.md`) or **auto** (Krypton puts back the best run and the agent carries on).
+//! 5. It asks whether to set up the **pull request gate** on GitHub: never worse (a pull request fails only if it lowers the score) or
+//!    target (the files a pull request changes must reach the target), and writes `.github/workflows/krypton.yml` for it (see
+//!    `workflow.rs`). That file is never overwritten, and nothing is committed: committing it turns the gate on.
 //!
 //! The questions are asked in the terminal, or, with `--page` (or by answering "browser" to the first question), on a one-time local
 //! page where the settings are clicked instead (see `setup_page.rs`).
@@ -22,9 +26,11 @@ use std::path::{Path, PathBuf};
 use serde_json::{json, Value};
 
 use crate::runlog;
+use crate::workflow::{self, Gate, Written};
 use crate::Failure;
 
-const USAGE: &str = "usage: krypton setup [REPO] [--page [--listen HOST:PORT]] [--mode manual|auto] [--target 0-100] [--runs 1-10] [--no-map]";
+const USAGE: &str =
+    "usage: krypton setup [REPO] [--page [--listen HOST:PORT]] [--mode manual|auto] [--target 0-100] [--runs 1-10] [--gate off|worse|target] [--no-map]";
 const SETTINGS: &str = "settings.json";
 const BASELINE: &str = "baseline.json";
 /// Used when nobody answers a question (an empty line) and no flag was given.
@@ -88,11 +94,13 @@ pub struct Settings {
     pub max_runs: usize,
     /// The whole codebase's purity when setup ran, if it was mapped.
     pub baseline: Option<i64>,
+    /// What fails a pull request on GitHub, if the gate was set up.
+    pub gate: Gate,
 }
 
 impl Settings {
     /// What review uses before setup has been run.
-    pub const DEFAULT: Self = Self { mode: Mode::Manual, target: DEFAULT_TARGET, max_runs: DEFAULT_RUNS, baseline: None };
+    pub const DEFAULT: Self = Self { mode: Mode::Manual, target: DEFAULT_TARGET, max_runs: DEFAULT_RUNS, baseline: None, gate: Gate::Off };
 }
 
 fn settings_path(repo: &Path) -> PathBuf {
@@ -125,13 +133,19 @@ pub fn saved(repo: &Path) -> Result<Option<Settings>, Failure> {
         .and_then(|runs| usize::try_from(runs).ok())
         .filter(|runs| (1..=MAX_RUNS).contains(runs))
         .ok_or_else(|| bad_settings(&path, "has no max_runs from 1 to 10"))?;
-    Ok(Some(Settings { mode, target, max_runs, baseline: value.get("baseline").and_then(Value::as_i64) }))
+    // Settings saved before the gate question existed have no gate: the gate was simply never set up there.
+    let gate = value
+        .get("gate")
+        .and_then(Value::as_str)
+        .map_or(Some(Gate::Off), Gate::parse)
+        .ok_or_else(|| bad_settings(&path, "has a gate that is not off, worse or target"))?;
+    Ok(Some(Settings { mode, target, max_runs, baseline: value.get("baseline").and_then(Value::as_i64), gate }))
 }
 
 fn save(repo: &Path, settings: &Settings) -> Result<PathBuf, Failure> {
     runlog::ensure_folder(repo)?;
     let path = settings_path(repo);
-    let body = json!({ "review": settings.mode.name(), "target": settings.target, "max_runs": settings.max_runs, "baseline": settings.baseline });
+    let body = json!({ "review": settings.mode.name(), "target": settings.target, "max_runs": settings.max_runs, "baseline": settings.baseline, "gate": settings.gate.name() });
     let text = serde_json::to_string_pretty(&body).map_err(|error| Failure::Output(error.to_string()))?;
     fs::write(&path, text + "\n").map_err(|error| Failure::Log(format!("cannot write {}: {error}", path.display())))?;
     Ok(path)
@@ -257,6 +271,19 @@ When the agent is still stuck after those tries, what should happen?
 
 Choose 1 or 2 [1]: ";
 
+fn gate_question(target: i64) -> String {
+    format!(
+        "
+Set up the pull request gate on GitHub? This writes .github/workflows/krypton.yml; commit it to turn the gate on.
+
+  1) Not now
+  2) Never worse  A pull request fails only if it lowers the purity score, so old code never blocks anyone.
+  3) Target       A pull request fails if the files it changes score below your target ({target}).
+
+Choose 1, 2 or 3 [2]: "
+    )
+}
+
 /// Ask whatever the flags left open.
 fn ask_all(prompt: &mut Prompt, given: &Options, baseline: Option<i64>, suggest: i64) -> Result<Settings, Failure> {
     let target = match given.target {
@@ -271,10 +298,14 @@ fn ask_all(prompt: &mut Prompt, given: &Options, baseline: Option<i64>, suggest:
         Some(mode) => mode,
         None => prompt.ask(MODE_QUESTION, Mode::Manual, Mode::parse)?,
     };
-    Ok(Settings { mode, target, max_runs, baseline })
+    let gate = match given.gate {
+        Some(gate) => gate,
+        None => prompt.ask(&gate_question(target), Gate::Worse, Gate::parse)?,
+    };
+    Ok(Settings { mode, target, max_runs, baseline, gate })
 }
 
-fn next_steps(settings: &Settings, themes: Option<&Path>) -> String {
+fn next_steps(settings: &Settings, themes: Option<&Path>, gate: &Written) -> String {
     let handled = if settings.mode == Mode::Auto { "automatically (best run kept)" } else { "by you, on a local review page" };
     let mut lines = vec![format!(
         "Saved: target {} purity per ticket, {} tries before a function is stuck, stuck functions handled {handled}.",
@@ -283,8 +314,18 @@ fn next_steps(settings: &Settings, themes: Option<&Path>) -> String {
     if let Some(path) = themes {
         lines.push(format!("Wrote {} for you to style the review page.", path.display()));
     }
+    match gate {
+        Written::Wrote(path) => {
+            lines.push(format!("Wrote {} (the pull request gate: {}). Commit it to turn the gate on.", path.display(), settings.gate.name()));
+        }
+        Written::Kept(path) => lines.push(format!("{} already exists and was left as it is.", path.display())),
+        Written::Off => {}
+    }
     lines.push("Next: krypton scan . --log --ticket \"what you are fixing\"   (before and after each change)".to_string());
-    lines.push("Change any of this with krypton setup again, krypton setup --page, or: krypton setup --mode manual|auto --target N --runs N".to_string());
+    lines.push(
+        "Change any of this with krypton setup again, krypton setup --page, or: krypton setup --mode manual|auto --target N --runs N --gate off|worse|target"
+            .to_string(),
+    );
     lines.join("\n")
 }
 
@@ -294,6 +335,7 @@ struct Options {
     mode: Option<Mode>,
     target: Option<i64>,
     max_runs: Option<usize>,
+    gate: Option<Gate>,
     no_map: bool,
     page: bool,
     listen: String,
@@ -313,6 +355,7 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
             "--mode" => options.mode = Some(Mode::parse(&value("--mode")?).ok_or_else(|| usage("--mode is manual or auto"))?),
             "--target" => options.target = Some(parse_target(&value("--target")?).ok_or_else(|| usage("--target is a whole number from 0 to 100"))?),
             "--runs" => options.max_runs = Some(parse_runs(&value("--runs")?).ok_or_else(|| usage("--runs is a whole number from 1 to 10"))?),
+            "--gate" => options.gate = Some(Gate::parse(&value("--gate")?).ok_or_else(|| usage("--gate is off, worse or target"))?),
             "--no-map" => options.no_map = true,
             "--page" => options.page = true,
             "--listen" => options.listen = value("--listen")?,
@@ -328,23 +371,25 @@ pub fn interactive() -> bool {
     io::stdin().is_terminal()
 }
 
-/// The settings the flags give, with the suggested target and the defaults for anything left open.
-fn from_flags(options: &Options, baseline: Option<i64>, suggest: i64) -> Settings {
+/// The settings the flags give, with the suggested target and the defaults for anything left open. `gate` is the gate when no flag names
+/// one: never worse when a person is choosing, off when nobody is (no workflow is written unasked).
+fn from_flags(options: &Options, baseline: Option<i64>, suggest: i64, gate: Gate) -> Settings {
     Settings {
         mode: options.mode.unwrap_or(Mode::Manual),
         target: options.target.unwrap_or(suggest),
         max_runs: options.max_runs.unwrap_or(DEFAULT_RUNS),
         baseline,
+        gate: options.gate.unwrap_or(gate),
     }
 }
 
 /// Ask in the terminal or on the settings page, whichever the person picks; flags already given are not asked again in the terminal.
 fn choose(options: &Options, baseline: Option<i64>, suggest: i64) -> Result<Settings, Failure> {
     let mut prompt = Prompt { input: &mut io::stdin().lock(), output: &mut io::stdout().lock() };
-    let everything_given = options.mode.is_some() && options.target.is_some() && options.max_runs.is_some();
+    let everything_given = options.mode.is_some() && options.target.is_some() && options.max_runs.is_some() && options.gate.is_some();
     let page = options.page || (!everything_given && prompt.ask(WHERE_QUESTION, false, parse_where)?);
     if page {
-        return crate::setup_page::choose(&options.listen, &from_flags(options, baseline, suggest));
+        return crate::setup_page::choose(&options.listen, &from_flags(options, baseline, suggest, Gate::Worse));
     }
     ask_all(&mut prompt, options, baseline, suggest)
 }
@@ -381,10 +426,11 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     }
     let baseline = if options.no_map { None } else { Some(map_codebase(&options.repo)?) };
     let suggest = suggested_target(baseline, kept_target(&options.repo));
-    let settings = if asking || options.page { choose(&options, baseline, suggest)? } else { from_flags(&options, baseline, suggest) };
+    let settings = if asking || options.page { choose(&options, baseline, suggest)? } else { from_flags(&options, baseline, suggest, Gate::Off) };
     save(&options.repo, &settings)?;
     let themes = if settings.mode == Mode::Manual { starter_themes(&options.repo)? } else { None };
-    println!("{}", next_steps(&settings, themes.as_deref()));
+    let gate = workflow::write(&options.repo, settings.gate, settings.target)?;
+    println!("{}", next_steps(&settings, themes.as_deref(), &gate));
     Ok(())
 }
 
@@ -392,7 +438,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
 mod tests {
     use std::io::Cursor;
 
-    use super::{ask_all, parse_where, save, saved, starter_themes, suggested_target, Mode, Options, Prompt, Settings};
+    use super::{ask_all, parse_where, save, saved, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings};
 
     fn answers(typed: &str) -> Option<Settings> {
         let mut input = Cursor::new(typed.as_bytes().to_vec());
@@ -400,13 +446,13 @@ mod tests {
         ask_all(&mut Prompt { input: &mut input, output: &mut output }, &Options::default(), Some(28), suggested_target(Some(28), None)).ok()
     }
 
-    // Enter three times takes the defaults, and the target default is the one suggested from today's score.
+    // Enter four times takes the defaults: the target suggested from today's score, and the never-worse gate.
     #[test]
     fn test_defaults() {
         assert_eq!(
-            answers("\n\n\n"),
-            Some(Settings { mode: Mode::Manual, target: 40, max_runs: 3, baseline: Some(28) }),
-            "40 (28 + 10, rounded up), 3, ask me"
+            answers("\n\n\n\n"),
+            Some(Settings { mode: Mode::Manual, target: 40, max_runs: 3, baseline: Some(28), gate: Gate::Worse }),
+            "40 (28 + 10, rounded up), 3, ask me, never worse"
         );
     }
 
@@ -425,7 +471,11 @@ mod tests {
     // A wrong answer is asked again.
     #[test]
     fn test_asks_again() {
-        assert_eq!(answers("150\n75%\n0\n5\nmaybe\n2\n").map(|s| (s.target, s.max_runs, s.mode)), Some((75, 5, Mode::Auto)), "the fitting answers count");
+        assert_eq!(
+            answers("150\n75%\n0\n5\nmaybe\n2\nsure\n3\n").map(|s| (s.target, s.max_runs, s.mode, s.gate)),
+            Some((75, 5, Mode::Auto, Gate::Target)),
+            "the fitting answers count"
+        );
     }
 
     // "Here" or "browser" picks where the settings are chosen.
@@ -445,7 +495,7 @@ mod tests {
     fn test_saved() {
         let repo = std::env::temp_dir().join(format!("krypton-setup-{}", std::process::id()));
         std::fs::create_dir_all(&repo).unwrap();
-        let wanted = Settings { mode: Mode::Auto, target: 72, max_runs: 4, baseline: Some(28) };
+        let wanted = Settings { mode: Mode::Auto, target: 72, max_runs: 4, baseline: Some(28), gate: Gate::Target };
         save(&repo, &wanted).unwrap();
         assert_eq!(saved(&repo).unwrap(), Some(wanted), "what was saved comes back");
         std::fs::write(repo.join("themes.md"), "mine").unwrap();

@@ -19,7 +19,7 @@ required-features = ["cli"]
 # the `cli` feature adds what only the command line needs.
 [features]
 default = ["cli"]
-cli = ["dep:flate2", "dep:ureq", "dep:tiktoken-rs", "dep:getrandom"]
+cli = ["dep:flate2", "dep:ureq", "dep:tiktoken-rs", "dep:getrandom", "dep:ignore"]
 
 [dependencies]
 tree-sitter = "0.27"
@@ -35,6 +35,7 @@ regex = "1"
 flate2 = { version = "1", optional = true }
 ureq = { version = "2", optional = true }
 tiktoken-rs = { version = "0.7", optional = true }
+ignore = { version = "0.4", optional = true }   # the scan's file list: .gitignore rules, plus .kryptonignore in the same syntax
 
 [profile.release]
 overflow-checks = true  # a wrapped number is a wrong answer: an overflow must stop the request instead (the server answers 500, never a wrong score)

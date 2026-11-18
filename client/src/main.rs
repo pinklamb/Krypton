@@ -32,6 +32,7 @@ mod setup_command;
 mod setup_page;
 mod tokens;
 mod wire_command;
+mod workflow;
 
 const USAGE: &str = "usage: krypton setup | login | logout | scan REPO | order REPO | wire FILE... | review | restore --run N | comment BEFORE AFTER";
 

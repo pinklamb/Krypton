@@ -34,9 +34,9 @@
 <li><b>Build the image once</b>Krypton runs in Docker, so there is nothing else to install. The function makes every <code>krypton</code> command in these docs work as written.
 <pre><code><span class="p">$</span> docker build -t krypton client
 <span class="p">$</span> krypton() { docker run --rm $([ -t 0 ] &amp;&amp; echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] &amp;&amp; echo -p 127.0.0.1:7777:7777) -v krypton-home:/krypton-home -v "$PWD:/repo" krypton "$@"; }</code></pre></li>
-<li><b>Set it up</b>Krypton logs you in with GitHub (a short code you approve on github.com), maps your codebase and shows its score today, then suggests a target score a step above it (change it if you like), and asks for max tries and what happens when the agent is stuck. Answer in the terminal, or open the link it prints and click your settings on a local dashboard.
+<li><b>Set it up</b>Krypton logs you in with GitHub (a short code you approve on github.com), maps your codebase and shows its score today, then suggests a target score a step above it (change it if you like), and asks for max tries, what happens when the agent is stuck, and whether to write the GitHub pull request gate for you. Answer in the terminal, or open the link it prints and click your settings on a local dashboard.
 <pre class="term" data-splash role="img" aria-label="Running krypton: the crystal draws itself, then the Krypton name and the codebase map start"><code><span class="p">$</span> krypton</code></pre></li>
-<li><b>Scan</b>Every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file is read, skipping <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like. The review ends with a purity score from 0 to 100; higher is lighter.
+<li><b>Scan</b>Every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file is read, skipping whatever <code>.gitignore</code> and <code>.kryptonignore</code> exclude, and <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like. The review ends with a purity score from 0 to 100; higher is lighter.
 <pre><code><span class="p">$</span> krypton scan .
 ### Krypton Structural Review -- Purity Score: 100/100
 0 of 1 changed files flagged.</code></pre></li>
@@ -90,7 +90,7 @@
 <h2 id="commands">The whole client</h2>
 <div class="scroll"><table>
 <tr><th>Command</th><th>What it does</th></tr>
-<tr><td><code>krypton</code> or <code>krypton setup</code></td><td>Map the codebase and choose target, max tries and ask me or auto, in the terminal or a local dashboard.</td></tr>
+<tr><td><code>krypton</code> or <code>krypton setup</code></td><td>Map the codebase, choose target, max tries, ask me or auto, and the pull request gate (it writes the workflow), in the terminal or a local dashboard.</td></tr>
 <tr><td><code>krypton scan REPO</code></td><td>Score a folder; <code>--base REF</code> only what changed, <code>--names</code> real names back, <code>--log</code> records the run.</td></tr>
 <tr><td><code>krypton review</code></td><td>List the functions that are stuck.</td></tr>
 <tr><td><code>krypton restore --run N</code></td><td>Put the files back to how they were at run N.</td></tr>
@@ -119,6 +119,6 @@
  /    \ 
  \    / 
   \  /  
-   \/   </pre><b>Kr</b><span>ypton</span></a><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+   \/   </pre><b>Krypton</b></a><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

@@ -92,20 +92,27 @@ fn is_source(path: &Path) -> bool {
     path.extension().and_then(|extension| extension.to_str()).is_some_and(|extension| EXTENSIONS.contains(&extension.to_ascii_lowercase().as_str()))
 }
 
-/// The source files under `root` as forward-slash paths relative to it, sorted, leaving out the usual build and dependency folders.
+/// The file, next to `.gitignore`, that lists more paths for Krypton to leave out, in the same syntax.
+pub const KRYPTON_IGNORE: &str = ".kryptonignore";
+
+/// The source files under `root` as forward-slash paths relative to it, sorted. Left out: whatever the repository's `.gitignore` files
+/// and `.git/info/exclude` ignore (git's own rules, nested files and `!` included, even outside a git checkout), whatever `.kryptonignore`
+/// files add in the same syntax, and the usual build and dependency folders even when nothing ignores them. Hidden files are scanned
+/// unless something ignores them; the user's global git excludes are not read, so a scan gives the same answer on every machine.
 fn source_files(root: &Path) -> Result<Vec<String>, Failure> {
+    let walker = ignore::WalkBuilder::new(root)
+        .hidden(false)
+        .git_global(false)
+        .require_git(false)
+        .add_custom_ignore_filename(KRYPTON_IGNORE)
+        .filter_entry(|entry| !(entry.file_type().is_some_and(|kind| kind.is_dir()) && SKIP_DIRS.contains(&entry.file_name().to_string_lossy().as_ref())))
+        .build();
     let mut found = BTreeSet::new();
-    let mut folders = vec![root.to_path_buf()];
-    while let Some(folder) = folders.pop() {
-        let entries = fs::read_dir(&folder).map_err(|error| Failure::Read(folder.display().to_string(), error))?;
-        for entry in entries.flatten() {
-            let (path, kind) = (entry.path(), entry.file_type());
-            let Ok(kind) = kind else { continue };
-            if kind.is_dir() && !SKIP_DIRS.contains(&entry.file_name().to_string_lossy().as_ref()) {
-                folders.push(path);
-            } else if kind.is_file() && is_source(&path) {
-                found.extend(path.strip_prefix(root).ok().map(|relative| relative.to_string_lossy().replace('\\', "/")));
-            }
+    for entry in walker {
+        let entry = entry.map_err(|error| Failure::Read(root.display().to_string(), std::io::Error::other(error.to_string())))?;
+        let path = entry.path();
+        if entry.file_type().is_some_and(|kind| kind.is_file()) && is_source(path) {
+            found.extend(path.strip_prefix(root).ok().map(|relative| relative.to_string_lossy().replace('\\', "/")));
         }
     }
     Ok(found.into_iter().collect())
@@ -228,4 +235,30 @@ fn print_review(result: &Value, usage: &Value, names: Option<&Names>) -> Result<
         number(usage.get("ms"))
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // The scan leaves out what .gitignore ignores (no git checkout needed), what .kryptonignore adds, and dependency folders.
+    #[test]
+    fn test_ignores() {
+        let root = std::env::temp_dir().join(format!("krypton-ignore-{}", std::process::id()));
+        let file = |name: &str, text: &str| {
+            let path = root.join(name);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, text).unwrap();
+        };
+        file("app/main.py", "x = 1\n");
+        file("app/gen/schema_pb2.py", "x = 1\n");
+        file("tests/fixtures/big.py", "x = 1\n");
+        file("tests/fixtures/keep.py", "x = 1\n");
+        file("node_modules/pkg/index.js", "x\n");
+        file(".gitignore", "gen/\n");
+        file(".kryptonignore", "tests/fixtures/*.py\n!tests/fixtures/keep.py\n");
+        let found = source_files(&root).unwrap();
+        assert_eq!(found, ["app/main.py", "tests/fixtures/keep.py"], ".gitignore, .kryptonignore with a ! exception, and node_modules");
+        fs::remove_dir_all(&root).unwrap();
+    }
 }

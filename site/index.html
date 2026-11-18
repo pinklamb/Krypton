@@ -138,7 +138,9 @@ code.ic { font:400 .88em var(--mono); color:var(--ink); background:var(--card); 
 .runs span { font:italic 400 14px var(--serif); letter-spacing:0; text-transform:none; }
 .acts2 button { font:400 14px var(--sans); letter-spacing:.01em; text-transform:none; }
 .fn { font:italic 400 15px/1.5 var(--serif); letter-spacing:0; } .fn code { font:400 12px var(--mono); }
-.foot { font:italic 400 15px/1.5 var(--serif); letter-spacing:0; }
+.foot { font:italic 400 15px/1.5 var(--serif); letter-spacing:0; justify-content:space-between; align-items:center; border-top:1px solid var(--line); }
+.foot .mark { color:var(--ink); background:none; } .foot .mark b { font-size:24px; letter-spacing:-.01em; color:var(--ink); } .foot .xtal { font-size:3.2px; transform:translateY(-4px); margin-right:7px; } .foot .copy { color:var(--ink3); }
+.checks .wf { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; padding:0 0 12px; margin-bottom:6px; border-bottom:1px dashed var(--line); font:400 12px var(--mono); color:var(--ink3); } .checks .wf code { color:var(--acc); }
 /* nav: a thin underline grows in on hover and focus, like the text links */
 .nav a { padding-bottom:3px; background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat; transition:background-size .25s, color .2s; } .nav a:hover, .nav a:focus-visible { background-size:100% 1px; outline:none; color:var(--ink); }
 /* more room in the "see your own tree" card */
@@ -217,8 +219,9 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
     
     
     <section class="trio" id="trio" aria-label="For teams, for agent builders, clean code and model choice">
-    <article class="tc tl"><h3 class="reveal" id="team">One GitHub Action for the whole team&nbsp;<svg class="h3i" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></h3><p class="reveal">Scaling to a larger team? Add the GitHub Action and every pull request gets a purity check, while each developer keeps full control of their own local limits and agent loops. It fails only if a change makes the code worse, so old code never blocks anyone.</p>
-      <div class="fig checks reveal" role="img" aria-label="Example pull request checks with a Krypton gate line: Purity up from 71% to 74%, plus 3.">
+    <article class="tc tl"><h3 class="reveal" id="team">One GitHub Action for the whole team&nbsp;<svg class="h3i" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></h3><p class="reveal">Scaling to a larger team? <code class="ic">krypton setup</code> writes the GitHub workflow for you. Pick the gate, never worse or a target for the code each pull request changes, commit one file, and every pull request gets a purity check. Each developer keeps full control of their own local limits and agent loops, and old code never blocks anyone.</p>
+      <div class="fig checks reveal" role="img" aria-label="The workflow krypton setup writes, and example pull request checks with a Krypton gate line: Purity up from 71% to 74%, plus 3.">
+        <div class="wf"><code>.github/workflows/krypton.yml</code><span>written by krypton setup</span></div>
         <div class="r"><i></i>build<span>passed</span></div>
         <div class="r"><i></i>tests<span>passed</span></div>
         <div class="r hl"><i></i>Krypton gate<span>Purity <svg class="tri" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8.5H1z"/></svg> 71% <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> 74% (+3)</span></div>
@@ -263,7 +266,12 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
   </section>
 </main>
 
-<footer class="foot"><span>Krypton</span><span>Measured on garth (open source) with the live Claude API; savings vary by repo.</span></footer>
+<footer class="foot"><a class="mark" href="./" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Krypton</b></a><span class="copy">&copy; 2026 Krypton</span></footer>
 
 <script>
 (function () {

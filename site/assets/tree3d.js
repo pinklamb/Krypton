@@ -1,10 +1,11 @@
 /* Krypton tree: draws a repository as the landing page draws garth, one point per node of its syntax tree, files on a sphere, imports as
    arcs, and the tangled functions lit in lavender. It needs three.js (r128) on the page.
 
-   KryptonTree.draw(canvas, data, { labels: element })  ->  { stop() }
+   KryptonTree.draw(canvas, data, { labels: element, selection: element })  ->  { focus(index), stop() }
      data: { files: [{ p, t, h }], edges: [[a, b]], fns: [{ name, times, file }] }, the outline /api/scan answers
 
-   Same layout as the landing page (assets of land4.js), without the scroll story: it turns slowly, and dragging turns it by hand. */
+   Same layout as the landing page (assets of land4.js), without the scroll story: it turns slowly, dragging turns it by hand, and the
+   tangled function under the pointer is named and lit (the tree holds still while you look). */
 (function () {
   'use strict';
   var CODES = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -68,42 +69,66 @@
     g.setAttribute('sev', new THREE.Float32BufferAttribute(L.HOT, 1));
     g.setAttribute('size', new THREE.Float32BufferAttribute(L.SZ, 1));
     g.setAttribute('alpha', new THREE.Float32BufferAttribute(L.AL, 1));
-    var U = { k: { value: 300 }, uRot: { value: new THREE.Matrix3() }, uInk: { value: new THREE.Vector3().fromArray(C.ink) }, uHot0: { value: new THREE.Vector3().fromArray(C.hot0) }, uHot1: { value: new THREE.Vector3().fromArray(C.hot1) } };
+    g.setAttribute('fn', new THREE.Float32BufferAttribute(L.HIT, 1));
+    var U = { k: { value: 300 }, uSel: { value: -1 }, uRot: { value: new THREE.Matrix3() }, uInk: { value: new THREE.Vector3().fromArray(C.ink) }, uHot0: { value: new THREE.Vector3().fromArray(C.hot0) }, uHot1: { value: new THREE.Vector3().fromArray(C.hot1) } };
     var mat = new THREE.ShaderMaterial({
       uniforms: U, transparent: true, depthWrite: false, depthTest: false, blending: DARK[name] ? THREE.AdditiveBlending : THREE.NormalBlending,
-      vertexShader: 'attribute float sev; attribute float size; attribute float alpha; uniform float k; uniform mat3 uRot; uniform vec3 uInk; uniform vec3 uHot0; uniform vec3 uHot1; varying vec3 vc; varying float va;' +
-        'void main(){ vc = sev < 0.0 ? uInk : mix(uHot0, uHot1, sev); va = alpha * 1.15; vec4 mv = modelViewMatrix * vec4(uRot * position, 1.0); gl_PointSize = size * k / -mv.z; gl_Position = projectionMatrix * mv; }',
+      // the function under the pointer grows and turns the deepest lavender; the other tangled functions step back while one is picked
+      vertexShader: 'attribute float sev; attribute float size; attribute float alpha; attribute float fn; uniform float k; uniform float uSel; uniform mat3 uRot; uniform vec3 uInk; uniform vec3 uHot0; uniform vec3 uHot1; varying vec3 vc; varying float va;' +
+        'void main(){ bool picked = uSel >= 0.0 && abs(fn - uSel) < 0.5; bool other = uSel >= 0.0 && fn >= 0.0 && !picked;' +
+        ' vc = sev < 0.0 ? uInk : (picked ? uHot1 : mix(uHot0, uHot1, sev)); va = alpha * (picked ? 1.6 : other ? 0.45 : 1.15);' +
+        ' vec4 mv = modelViewMatrix * vec4(uRot * position, 1.0); gl_PointSize = size * (picked ? 1.7 : 1.0) * k / -mv.z; gl_Position = projectionMatrix * mv; }',
       fragmentShader: 'varying vec3 vc; varying float va; void main(){ float d = length(gl_PointCoord - .5) * 2.; if (d > 1.) discard; gl_FragColor = vec4(vc, min(1.0, va) * smoothstep(1., .45, d)); }'
     });
     var pts = new THREE.Points(g, mat), R3 = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false });
     pts.frustumCulled = false; R3.setPixelRatio(Math.min(devicePixelRatio, 2)); R3.setClearColor(C.bg, 1);
     var scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 1, .1, 60); scene.add(pts); cam.position.set(0, 0, 5.4);
+    // labels on the three worst functions, each pinned to its own cluster: "1  name  46.2× limit"
     var pills = (opts.labels ? D.fns.slice(0, 3) : []).map(function (f, q) {
-      var el = document.createElement('div'); el.className = 'pill' + (q === 0 ? ' top' : ''); el.textContent = (q + 1) + ' · ' + f.name + ' // ' + f.times + '× limit'; opts.labels.appendChild(el); return el;
+      var el = document.createElement('div'), n = document.createElement('i'), t = document.createElement('span'), x = document.createElement('em');
+      el.className = 'pill' + (q === 0 ? ' top' : ''); n.textContent = q + 1; t.textContent = f.name; x.textContent = f.times + '× limit';
+      el.append(n, t, x); opts.labels.appendChild(el); return el;
     });
-    var yaw = .4, pitch = .12, drag = null, still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, running = true, last = performance.now();
+    var tip = null;
+    if (opts.labels) { tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; opts.labels.appendChild(tip); }
+    var hot = []; for (var n0 = 0; n0 < L.HIT.length; n0++) { if (L.HIT[n0] >= 0) { hot.push(n0); } }
+    var yaw = .4, pitch = .12, drag = null, hover = null, picked = -1, held = -1, still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, running = true, last = performance.now();
     var rot = new THREE.Matrix4(), eul = new THREE.Euler(), v = new THREE.Vector3(), pickV = new THREE.Vector3();
+
+    function nearest(x, y) {
+      var rect = canvas.getBoundingClientRect(), best = 14 * 14, found = -1;
+      for (var q = 0; q < hot.length; q++) {
+        var n = hot[q];
+        pickV.set(L.P3[n * 3], L.P3[n * 3 + 1], L.P3[n * 3 + 2]).applyMatrix4(rot).project(cam);
+        if (pickV.z < -1 || pickV.z > 1) { continue; }
+        var px = (pickV.x + 1) * rect.width / 2, py = (1 - pickV.y) * rect.height / 2, dist = (px - x) * (px - x) + (py - y) * (py - y);
+        if (dist < best) { best = dist; found = L.HIT[n]; }
+      }
+      return found;
+    }
+    function describe(fn, box) {
+      var title = document.createElement('b'), where = document.createElement('span'), times = document.createElement('em');
+      title.textContent = fn.name; where.textContent = fn.file; times.textContent = fn.times + '× the limit';
+      box.replaceChildren(title, where, times);
+    }
+    function showTip(id, x, y) {
+      if (!tip) { return; }
+      if (id < 0 || !D.fns[id]) { tip.hidden = true; return; }
+      describe(D.fns[id], tip); tip.hidden = false;
+      var W = canvas.clientWidth; tip.style.left = Math.min(x + 14, W - tip.offsetWidth - 8) + 'px'; tip.style.top = Math.max(8, y - tip.offsetHeight - 10) + 'px';
+    }
     canvas.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, yaw: yaw, pitch: pitch }; canvas.setPointerCapture(e.pointerId); });
-    canvas.addEventListener('pointermove', function (e) { if (!drag) { return; } yaw = drag.yaw + (e.clientX - drag.x) * .008; pitch = Math.max(-1, Math.min(1, drag.pitch + (e.clientY - drag.y) * .006)); });
+    canvas.addEventListener('pointermove', function (e) {
+      if (drag) { yaw = drag.yaw + (e.clientX - drag.x) * .008; pitch = Math.max(-1, Math.min(1, drag.pitch + (e.clientY - drag.y) * .006)); if (tip) { tip.hidden = true; } return; }
+      var rect = canvas.getBoundingClientRect(); hover = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    });
+    canvas.addEventListener('pointerleave', function () { hover = null; picked = -1; if (tip) { tip.hidden = true; } });
     canvas.addEventListener('pointerup', function (e) {
       if (!drag) { return; }
       var moved = Math.hypot(e.clientX - drag.x, e.clientY - drag.y); drag = null;
       if (moved > 5 || !opts.selection) { return; }
-      var rect = canvas.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top, best = 15 * 15, found = -1;
-      eul.set(pitch, yaw, 0); rot.makeRotationFromEuler(eul);
-      for (var n = 0; n < L.HIT.length; n++) {
-        var id = L.HIT[n]; if (id < 0) { continue; }
-        pickV.set(L.P3[n * 3], L.P3[n * 3 + 1], L.P3[n * 3 + 2]).applyMatrix4(rot).project(cam);
-        if (pickV.z < -1 || pickV.z > 1) { continue; }
-        var px = (pickV.x + 1) * rect.width / 2, py = (1 - pickV.y) * rect.height / 2, dist = (px - x) * (px - x) + (py - y) * (py - y);
-        if (dist < best) { best = dist; found = id; }
-      }
-      if (found >= 0 && D.fns[found]) {
-        var fn = D.fns[found], box = opts.selection;
-        box.replaceChildren(); var title = document.createElement('b'); title.textContent = fn.name;
-        box.appendChild(title); box.appendChild(document.createElement('br')); box.appendChild(document.createTextNode(fn.file + ' · ' + fn.times + '× the limit'));
-        box.hidden = false;
-      }
+      var rect = canvas.getBoundingClientRect(), found = nearest(e.clientX - rect.left, e.clientY - rect.top);
+      if (found >= 0 && D.fns[found]) { describe(D.fns[found], opts.selection); opts.selection.hidden = false; }
     });
     function size() {
       var w = canvas.clientWidth, h = canvas.clientHeight; R3.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
@@ -112,20 +137,32 @@
     function frame(now) {
       if (!running) { return; }
       var dt = Math.min(.1, (now - last) / 1000); last = now;
-      if (!drag && !still) { yaw += dt * .08; }
+      if (!drag && !still && picked < 0 && held < 0) { yaw += dt * .08; }
       eul.set(pitch, yaw, 0); rot.makeRotationFromEuler(eul); U.uRot.value.setFromMatrix4(rot);
+      if (hover && !drag) { picked = nearest(hover.x, hover.y); showTip(picked, hover.x, hover.y); }
+      U.uSel.value = picked >= 0 ? picked : held;
       R3.render(scene, cam);
       var W = canvas.clientWidth, H = canvas.clientHeight, placed = [];
       pills.forEach(function (el, q) {
-        v.copy(L.cent[q].s).applyMatrix3(U.uRot.value); v.project(cam);
-        var x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H - 14, w = el.offsetWidth, moved = true;
-        while (moved) { moved = false; placed.forEach(function (r) { if (Math.abs(r.x - x) < (r.w + w) / 2 + 6 && Math.abs(r.y - y) < 28) { y = r.y - 30; moved = true; } }); }
-        placed.push({ x: x, y: y, w: w }); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.opacity = 1;
+        if (!L.cent[q] || !L.cent[q].n) { el.style.opacity = 0; return; }
+        v.copy(L.cent[q].s).applyMatrix3(U.uRot.value);
+        var front = v.z > -.15;
+        v.project(cam);
+        var x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H - 12, w = el.offsetWidth, h = el.offsetHeight;
+        // a label that would cover an earlier one slides sideways, so each stays beside its own cluster
+        placed.forEach(function (r) { if (Math.abs(r.x - x) < (r.w + w) / 2 + 8 && Math.abs(r.y - y) < h + 4) { x = r.x + (x >= r.x ? 1 : -1) * ((r.w + w) / 2 + 8); } });
+        x = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, x));
+        placed.push({ x: x, y: y, w: w }); el.style.left = x + 'px'; el.style.top = y + 'px';
+        el.style.opacity = (picked >= 0 || held >= 0) && (picked >= 0 ? picked : held) !== q ? .25 : front ? 1 : .35;
       });
       requestAnimationFrame(frame);
     }
     size(); window.addEventListener('resize', size); requestAnimationFrame(frame);
-    return { stop: function () { running = false; R3.dispose(); pills.forEach(function (el) { el.remove(); }); } };
+    return {
+      // light up one function by its place in the list (the "most tangled" rows call this on hover), or none with -1
+      focus: function (id) { held = id; },
+      stop: function () { running = false; R3.dispose(); pills.forEach(function (el) { el.remove(); }); if (tip) { tip.remove(); } }
+    };
   }
 
   window.KryptonTree = { draw: draw };

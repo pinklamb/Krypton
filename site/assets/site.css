@@ -198,3 +198,11 @@ pre.term .again { position:absolute; top:10px; right:16px; font:italic 400 14px 
 pre.term code { color:#ede4da; }
 .wrap.single.wide { max-width:1180px; } .wrap.single.wide main { max-width:none; }
 .gh-ico { fill:currentColor; stroke:none; width:16px; height:16px; }
+/* the GitHub pill in the top bar: a button, not a nav link. No underline (only the text links underline), icon and word centred,
+   and it lifts a little on hover. The selector outranks `nav.main > a`, which would otherwise give it the underline and a low baseline. */
+nav.main > a.gh { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:36px; padding:0 15px; line-height:1;
+  font:400 14px/1 var(--sans); color:var(--ink); background:none; border:1px solid var(--line); border-radius:999px;
+  transition:transform .2s, border-color .2s, box-shadow .2s; }
+nav.main > a.gh:hover, nav.main > a.gh:focus-visible { background:none; transform:translateY(-2px); border-color:var(--acc); box-shadow:0 6px 16px var(--glow); color:var(--ink); }
+nav.main > a.gh svg { display:block; width:16px; height:16px; }
+@media (prefers-reduced-motion:reduce) { nav.main > a.gh:hover { transform:none; } }

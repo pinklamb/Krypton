@@ -113,6 +113,30 @@ CODES = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 NODE_BUDGET = 30000  # enough points to see the shape; a bigger repository shows the first part of each file's tree
 
 
+def marks_for(tree: dict, path: str, tangled: list) -> list[str]:
+    """For every node of one file, the code of the tangled function it belongs to ("0" for none). Earlier (worse) functions win."""
+    marks = ["0"] * tree["n"]
+    for q, (_, where, fn) in enumerate(tangled):
+        if where != path:
+            continue
+        for i, start in enumerate(tree["start_line"]):
+            if marks[i] == "0" and fn["start_line"] <= start + 1 <= fn["end_line"]:
+                marks[i] = CODES[q]
+    return marks
+
+
+def kept_nodes(parent: list[int], marks: list[str], share: float) -> list[int]:
+    """The nodes to draw, in their original order: the first share of the file, every node of a tangled function, and each such node's
+    ancestors, so a tangled function is always drawn whole and attached to its file however big the repository is."""
+    prefix = len(parent) if share >= 1 else max(1, math.ceil(len(parent) * share))
+    keep = set(range(prefix))
+    for i, mark in enumerate(marks):
+        while mark != "0" and i >= 0 and i not in keep:
+            keep.add(i)
+            i = parent[i]
+    return sorted(keep)
+
+
 def outline(body: dict, result: dict, names: dict[str, str]) -> dict:
     """The tree for the page to draw (the shape the landing page draws garth from): per file its parent array and which nodes belong to a
     tangled function, the import arcs, and the tangled functions by real name. Numbers and names only, no source text."""
@@ -125,16 +149,10 @@ def outline(body: dict, result: dict, names: dict[str, str]) -> dict:
     shaped = []
     for f in files:
         tree = f["tree"]
-        keep = tree["n"] if share >= 1 else max(1, math.ceil(tree["n"] * share))
-        marks = ["0"] * keep
-        for q, (_, path, fn) in enumerate(tangled):
-            if path != f["path"]:
-                continue
-            for i in range(keep):
-                line = tree["start_line"][i] + 1
-                if marks[i] == "0" and fn["start_line"] <= line <= fn["end_line"]:
-                    marks[i] = CODES[q]
-        shaped.append({"p": f["path"], "t": tree["parent"][:keep], "h": "".join(marks)})
+        marks = marks_for(tree, f["path"], tangled)
+        keep = kept_nodes(tree["parent"], marks, share)
+        renumber = {old: new for new, old in enumerate(keep)}
+        shaped.append({"p": f["path"], "t": [renumber.get(tree["parent"][old], -1) for old in keep], "h": "".join(marks[old] for old in keep)})
     edges = sorted({(a, index[path]) for a, f in enumerate(files) for group in f.get("imports", []) for path in group if path in index and index[path] != a})
     fns = [{"name": DIGEST.sub(lambda found: names.get(found.group(), found.group()), fn["name"]), "times": round(times, 1), "file": path} for times, path, fn in tangled]
     return {"files": shaped, "edges": [list(e) for e in edges], "fns": fns}

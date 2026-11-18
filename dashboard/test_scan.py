@@ -281,3 +281,17 @@ class BundledLibraryTests(GitHubCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OutlineTests(unittest.TestCase):
+    """The tree the page draws keeps every tangled function whole, however much of the rest is trimmed."""
+
+    # A tangled node past the trimmed part is kept with its ancestors, and the renumbered parents stay valid.
+    def test_kept_nodes(self):
+        import scan_worker
+        parent = [-1, 0, 1, 1, 0, 4, 5, 6]          # 0 > 1 > (2, 3);  0 > 4 > 5 > 6 > 7
+        marks = ["0"] * 7 + ["1"]                   # only the last node belongs to a tangled function
+        keep = scan_worker.kept_nodes(parent, marks, 0.25)
+        self.assertEqual(keep, [0, 1, 4, 5, 6, 7], "the first quarter, then the tangled node and its whole branch")
+        renumber = {old: new for new, old in enumerate(keep)}
+        self.assertTrue(all(renumber[parent[old]] < new for new, old in enumerate(keep) if new), "every parent comes before its child")

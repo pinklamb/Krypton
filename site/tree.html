@@ -25,12 +25,26 @@
 .step3 { display:grid; grid-template-columns:44px minmax(0,1fr); gap:16px; align-items:start; }
 .step3 .n { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font:400 14px var(--mono); color:var(--acc); border:1px solid var(--acc); background:var(--card); }
 .step3.off { opacity:.45; } .step3 h3 { margin:4px 0 10px; }
-.pick { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px; }
-.pick select { flex:1 1 260px; min-width:0; font:400 15px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:11px 18px; }
+/* signed in: one card, the account on top, the repository below */
+.acct { max-width:620px; background:var(--card); border-radius:var(--r); box-shadow:var(--shadow); padding:16px 20px 18px; }
+.signed { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 14px; padding-bottom:14px; border-bottom:1px solid var(--line); font-size:15px; color:var(--ink2); }
+.signed .who { display:flex; align-items:center; gap:10px; min-width:0; }
+.signed img { width:28px; height:28px; border-radius:50%; flex:none; }
+.signed .who b { color:var(--ink); font-weight:480; overflow-wrap:anywhere; }
+.signout { font:400 14px var(--sans); color:var(--ink2); background:none; border:1px solid var(--line); border-radius:999px; padding:6px 14px; cursor:pointer; transition:border-color .2s, color .2s; }
+.signout:hover, .signout:focus-visible { border-color:var(--acc); color:var(--ink); }
+.pick { display:grid; gap:8px; margin-top:14px; }
+.pick label { font:italic 400 16px var(--serif); color:var(--ink3); }
+.pick select { width:100%; min-width:0; font:400 15px var(--mono); color:var(--ink); appearance:none; -webkit-appearance:none; cursor:pointer;
+  background:color-mix(in srgb, var(--acc) 20%, var(--card)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%236b4f8a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 18px center / 12px 8px;
+  border:1px solid color-mix(in srgb, var(--acc) 45%, transparent); border-radius:999px; padding:11px 44px 11px 18px; transition:background-color .2s; }
+.pick select:hover { background-color:color-mix(in srgb, var(--acc) 27%, var(--card)); }
 .pick select:focus { outline:2px solid var(--acc); outline-offset:2px; }
-.signed { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; font-size:15px; color:var(--ink2); }
-.signed img { width:28px; height:28px; border-radius:50%; }
-.pick select:disabled { opacity:.65; cursor:wait; }
+.pick select:disabled { opacity:.7; cursor:wait; }
+.pick .hint { font-size:14px; color:var(--ink3); margin:2px 0 0; }
+/* the chevron in the lighter lavender on the dark palettes */
+:root[data-scheme="cocoa"] .pick select, :root[data-scheme="ink"] .pick select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23c7b5ec' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+:root[data-scheme="linen"] .pick select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%234f6f4b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 .btn.small { padding:9px 18px; font-size:14px; } .linkbtn { background:none; border:0; color:var(--acc); font:inherit; cursor:pointer; padding:0; text-decoration:underline; }
 .ticks { list-style:none; padding:0; display:flex; flex-wrap:wrap; gap:6px 18px; margin:12px 0 0; font:italic 400 16px var(--serif); color:var(--ink3); }
 .ticks li::before { content:"\2713  "; color:var(--acc); }
@@ -39,14 +53,20 @@
 .err { color:var(--bad); font-size:15px; margin-top:10px; }
 .stage { position:relative; height:min(58vh,520px); border-radius:var(--r); overflow:hidden; background:var(--card); margin:6px 0 18px; touch-action:none; }
 .stage canvas { width:100%; height:100%; display:block; cursor:grab; } .stage canvas:active { cursor:grabbing; }
-.stage .pill { position:absolute; transform:translate(-50%,-100%); font:400 11.5px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px 11px; white-space:nowrap; pointer-events:none; opacity:0; }
+.stage .pill { position:absolute; transform:translate(-50%,-100%); display:inline-flex; align-items:baseline; gap:7px; font:400 13px var(--sans); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px 12px 5px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .25s; }
+.stage .pill i { font:italic 400 15px var(--serif); color:var(--acc); } .stage .pill em { font:italic 400 14px var(--serif); color:var(--ink3); }
 .stage .pill.top { border-color:var(--acc); box-shadow:0 0 18px var(--glow); }
 .stage .hint { position:absolute; left:16px; bottom:12px; font:italic 400 15px var(--serif); color:var(--ink3); }
-.stage .selection { position:absolute; right:14px; bottom:12px; max-width:min(70%,520px); padding:9px 13px; border:1px solid var(--acc); border-radius:var(--r); background:var(--card); color:var(--ink); font:400 12px/1.5 var(--mono); box-shadow:0 0 18px var(--glow); overflow-wrap:anywhere; }
-.stage .selection[hidden] { display:none; } .stage .selection b { color:var(--acc); font-weight:400; }
+.stage .selection, .stage .tip { position:absolute; display:grid; gap:1px; max-width:min(70%,420px); padding:9px 14px; border:1px solid var(--acc); border-radius:14px; background:var(--card); color:var(--ink); box-shadow:0 0 18px var(--glow); overflow-wrap:anywhere; pointer-events:none; }
+.stage .selection { right:14px; bottom:12px; } .stage .tip { z-index:2; }
+.stage .selection b, .stage .tip b { font:400 16px var(--sans); color:var(--ink); } .stage .selection span, .stage .tip span { font:400 13px var(--sans); color:var(--ink3); } .stage .selection em, .stage .tip em { font:italic 400 16px var(--serif); color:var(--acc); }
+.stage .tip[hidden] { display:none; }
+.stage .selection[hidden] { display:none; }
 .worst { display:grid; margin:6px 0 22px; border:1px solid var(--line); border-radius:var(--r); background:var(--card); overflow:hidden; }
-.worst div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; padding:10px 16px; border-bottom:1px solid var(--line); font:400 13.5px var(--mono); }
-.worst div:last-child { border-bottom:0; } .worst span { min-width:0; overflow-wrap:anywhere; } .worst b { color:var(--acc); font-weight:400; }
+.worst div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 14px; align-items:baseline; padding:11px 16px; border-bottom:1px solid var(--line); cursor:default; transition:background .15s; }
+.worst div:hover, .worst div:focus-within { background:color-mix(in srgb, var(--acc) 10%, var(--card)); }
+.worst .name { font:400 16px var(--sans); color:var(--ink); } .worst .file { grid-column:1; font:400 13px var(--sans); color:var(--ink3); }
+.worst div:last-child { border-bottom:0; } .worst span { min-width:0; overflow-wrap:anywhere; } .worst b { grid-column:2; grid-row:1; font:italic 400 17px var(--serif); color:var(--acc); font-weight:400; white-space:nowrap; }
 </style>
 
 <div class="eyebrow">See your own tree</div>
@@ -62,9 +82,13 @@
         <a class="btn small" href="/auth/github"><svg class="gh-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Continue with GitHub</a>
         <ul class="ticks"><li>Read-only access</li><li>Scored in memory, never stored</li><li>Access ends with your visit</li></ul>
       </div>
-      <div id="signedIn" hidden>
-        <div class="signed"><img id="avatar" alt=""><span>Signed in as <b id="login"></b></span><a id="choose" target="_blank" rel="noopener">Choose repositories</a><button class="linkbtn" type="button" id="signOut">Sign out</button></div>
-        <div class="pick"><select id="repoSelect" aria-label="Choose a GitHub repository" disabled><option value="">Loading your repositories…</option></select></div>
+      <div id="signedIn" class="acct" hidden>
+        <div class="signed"><span class="who"><img id="avatar" alt=""><span>Signed in as <b id="login"></b></span></span><button class="signout" type="button" id="signOut">Sign out</button></div>
+        <div class="pick">
+          <label for="repoSelect">Repository</label>
+          <select id="repoSelect" disabled><option value="">Loading your repositories…</option></select>
+          <p class="hint" id="chooseHint">Missing one? <a id="choose" target="_blank" rel="noopener">Choose which repositories Krypton can read <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a></p>
+        </div>
       </div>
       <p class="err" id="err1" role="alert" hidden></p>
     </div>
@@ -86,7 +110,7 @@
       <h3 id="h3s">Your tree</h3>
       <div id="result" hidden>
         <div class="stats" id="facts"></div>
-        <div class="stage" id="stage"><canvas id="scene" aria-label="Your repository's syntax tree, tangled functions in lavender. Click a highlighted section to identify its function; drag to turn the tree."></canvas><span class="hint">Click a highlighted section to identify it · drag to turn</span><div class="selection" id="selection" role="status" aria-live="polite" hidden></div></div>
+        <div class="stage" id="stage"><canvas id="scene" aria-label="Your repository's syntax tree, tangled functions in lavender. Hover a lavender cluster to see which function it is; drag to turn the tree."></canvas><span class="hint">Hover a lavender cluster to see its function · drag to turn</span><div class="selection" id="selection" role="status" aria-live="polite" hidden></div></div>
         <div id="worstWrap"><p>The most tangled functions:</p><div class="worst" id="worst"></div></div>
         <div class="cta"><a class="btn" href="savings.html">See the savings</a><button class="btn ghost" type="button" id="again">Another repository</button></div>
       </div>
@@ -112,7 +136,7 @@
       if (!s.connected) { return; }
       $('signedOut').hidden = true; $('signedIn').hidden = false;
       $('login').textContent = s.user.login; $('avatar').src = s.user.avatar_url || '';
-      if (s.install_url) { $('choose').href = s.install_url; } else { $('choose').hidden = true; }
+      if (s.install_url) { $('choose').href = s.install_url; } else { $('chooseHint').hidden = true; }
       return fetch('/api/repos').then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) { throw new Error(d.error || 'Could not load your repositories.'); } return d; }); }).then(function (repos) {
         var select = $('repoSelect'); select.replaceChildren();
         var first = document.createElement('option'); first.value = ''; first.textContent = repos.length ? 'Select a repository…' : 'No repositories available'; select.appendChild(first);
@@ -149,9 +173,14 @@
     $('facts').innerHTML = [[d.purity + ' / 100', 'purity'], [fmt(d.files), 'files'], [fmt(d.lines), 'lines'], [fmt(d.tangled), 'tangled functions']]
       .map(function (x) { return '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('');
     $('worst').innerHTML = '';
+    var fns = (d.tree && d.tree.fns) || [];
     (d.worst || []).forEach(function (w) {
-      var row = document.createElement('div'), a = document.createElement('span'), b = document.createElement('b');
-      a.textContent = w.file + ' · ' + w.function; b.textContent = w.times + '× the limit'; row.appendChild(a); row.appendChild(b); $('worst').appendChild(row);
+      var row = document.createElement('div'), a = document.createElement('span'), f = document.createElement('span'), b = document.createElement('b');
+      a.className = 'name'; f.className = 'file'; a.textContent = w.function; f.textContent = w.file; b.textContent = w.times + '× the limit';
+      row.append(a, b, f); $('worst').appendChild(row);
+      var at = fns.findIndex(function (fn) { return fn.name === w.function && fn.file === w.file; });
+      row.addEventListener('mouseenter', function () { if (drawing && at >= 0) { drawing.focus(at); } });
+      row.addEventListener('mouseleave', function () { if (drawing) { drawing.focus(-1); } });
     });
     $('worstWrap').hidden = !(d.worst || []).length;
     $('result').hidden = false; step(3);

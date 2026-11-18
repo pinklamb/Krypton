@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Docs | Krypton</title>
+<meta name="description" content="How Krypton works: get started, what it measures, what is sent, review, and every command.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
+<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html" aria-current="page">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs.html" aria-current="page">Overview</a><ul class="sub"><li><a href="#start">Get started in three steps</a></li><li><a href="#how">What happens to a file</a></li><li><a href="#server">What the server receives</a></li><li><a href="#review">When the agent gets stuck</a></li><li><a href="#models">See which model writes your best code</a></li><li><a href="#commands">The whole client</a></li><li><a href="#reference">Go deeper</a></li></ul></li></ul><h2>Guides</h2><ul><li><a href="review.html">Review and setup</a></li><li><a href="prompt-caching.html">Prompt caching</a></li><li><a href="order.html">File ordering</a></li><li><a href="integrations.html">Integrations</a></li><li><a href="case-study.html">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference.html">Commands</a></li><li><a href="api.html">API</a></li><li><a href="wire-format.html">Wire format</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="faq.html">FAQ</a></li></ul></details></nav><main id="content">
+<div class="eyebrow">Documentation</div>
+<h1>How Krypton works</h1>
+<div class="glance">
+<div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>Your source stays home</b><span>Your machine parses the code. The server gets its structure, with every name swapped for a keyed hash.</span></div>
+<div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg><b>Every change is checked</b><span>A change fails only if it makes the code worse, so old code never blocks anyone.</span></div>
+<div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M14.6 9.4c-.6-.8-1.5-1.2-2.6-1.2-1.5 0-2.6.8-2.6 1.9 0 1.2 1.1 1.6 2.6 1.9s2.6.8 2.6 2c0 1.1-1.1 1.9-2.6 1.9-1.1 0-2.1-.4-2.7-1.3M12 6.4v1.8M12 15.8v1.8"/></svg><b>Cheaper prompts</b><span>Stable files first: up to 35% cheaper in our tests. Your result depends on your history.</span></div>
+</div>
+<div class="cta"><a class="btn" href="#start">Get started <svg class="ar dn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a><a class="btn ghost" href="index.html#story">See the demo</a></div>
+
+<h2 id="start">Get started in three steps</h2>
+<ol class="steps">
+<li><b>Build the image once</b>Krypton runs in Docker, so there is nothing else to install. The function makes every <code>krypton</code> command in these docs work as written.
+<pre><code><span class="p">$</span> docker build -t krypton client
+<span class="p">$</span> krypton() { docker run --rm $([ -t 0 ] &amp;&amp; echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] &amp;&amp; echo -p 127.0.0.1:7777:7777) -v krypton-home:/krypton-home -v "$PWD:/repo" krypton "$@"; }</code></pre></li>
+<li><b>Set it up</b>Krypton logs you in with GitHub (a short code you approve on github.com), maps your codebase and shows its score today, then asks for your target score, max tries, and what happens when the agent is stuck. Answer in the terminal, or open the link it prints and click your settings on a local dashboard.
+<pre class="term" data-splash role="img" aria-label="Running krypton: the crystal draws itself, then the Krypton name and the codebase map start"><code><span class="p">$</span> krypton</code></pre></li>
+<li><b>Scan</b>Every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file is read, skipping <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like. The review ends with a purity score from 0 to 100; higher is lighter.
+<pre><code><span class="p">$</span> krypton scan .
+### Krypton Structural Review -- Purity Score: 100/100
+0 of 1 changed files flagged.</code></pre></li>
+</ol>
+<div class="cards">
+<div class="tile"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5V21M18 15.5V3M10 6h4M10 18h4"/></svg>Score only what changed</h3><p><code>krypton scan . --base origin/main</code> scores just this branch's lines, so old code never blames the agent.</p></div>
+<div class="tile"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h11M11 7.5 15.5 12 11 16.5M20 4v16"/></svg>Exit codes</h3><p><code>0</code> fine, <code>1</code> the review failed or something could not be read, <code>2</code> a usage error.</p></div>
+</div>
+
+<h3 id="agent">Put it in your agent's loop</h3>
+<p>Paste this into <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your tool's rules file:</p>
+<pre><code>## Code structure (Krypton)
+- After editing source files, run: `krypton scan . --base HEAD --names`
+- If a function you wrote is flagged, refactor it before finishing:
+  early returns, small named helpers, one job per function.
+- Do not pack code onto fewer lines or split one function into trivial wrappers.
+- Re-run Krypton after refactoring and report the purity score.</code></pre>
+
+<h2 id="how">What happens to a file</h2>
+<div class="flow">
+<div class="here"><b>Parse</b><span>Each file becomes a syntax tree on your machine.</span></div><i><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></i>
+<div><b>Walk</b><span>One pass records every decision and how deep it sits.</span></div><i><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></i>
+<div><b>Rate and flag</b><span>Each function and file gets a rating; heavy ones are flagged with a reason.</span></div><i><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></i>
+<div><b>Advise</b><span>Names the deepest decision and the block worth pulling out.</span></div>
+<p class="lab">Hints are advice only and never change a score.</p>
+</div>
+<p>Krypton counts every decision in a function (an <code>if</code>, a loop, a <code>case</code>, a <code>catch</code>, a boolean operator, a ternary) and where it sits: three decisions stacked inside each other are harder to follow than three side by side. It also counts <b>effective size</b> (packing lines does not help), <b>coupling</b> (a file wired to many others) and <b>trivial wrappers</b> (splitting code into tiny functions just to pass lowers the score). It measures structure, not correctness, so run your tests too.</p>
+
+<h2 id="server">What the server receives</h2>
+<div class="sides">
+<div class="stays"><h3>Stays on your machine</h3><ul><li>The source text</li><li>Names in readable form, and the table from hash back to name</li><li>Every string, number and comment</li></ul></div>
+<div class="sent"><h3>Sent to the server</h3><ul><li>The tree: node kinds, positions, nesting</li><li>Each name as a keyed hash</li><li>Per line: length and where the visible characters are</li><li>File path, language and size</li></ul></div>
+</div>
+<p><code>krypton wire cart.py</code> prints the exact request before anything is sent. The answer names each function by its hash; with <code>--names</code> your machine puts the real names back.</p>
+<div class="note"><b>Names are keyed</b>Each name is sent as a keyed hash (HMAC-SHA256). The key is made fresh for every scan, stays in memory on your machine and is thrown away afterwards, so nobody can test a guess against the hashes or link one request to another. <a href="privacy.html">Everything that is and is not sent</a>.</div>
+
+<h2 id="review">When the agent gets stuck</h2>
+<ol class="steps">
+<li><b>Log each run</b><code>krypton scan . --log --ticket "what it is fixing"</code> before the work and after each change.</li>
+<li><b>Ask what is stuck</b><code>krypton review --json</code> lists the functions that never got 10% better within your max tries.</li>
+<li><b>You decide, or it does</b>Ask me: your agent builds a local review page styled by <code>themes.md</code>. Auto: Krypton keeps the best run.</li>
+<li><b>Carry on</b><code>krypton restore --run N</code> puts the best run back, then the agent opens the pull request.</li>
+</ol>
+<p><a href="review.html">The review guide</a> has the settings, the commands and the GitHub Action.</p>
+
+<h2 id="models">See which model writes your best code</h2>
+<p>Krypton sits outside the model path, so it measures a change the same way whether it came from Claude, GPT, Gemini or a local model. Score around every change, note which model did the work, and compare purity with what each one cost you. The choice is back in your hands, not a vendor&rsquo;s benchmark.</p>
+<div class="limit"><b>What it cannot do</b>Krypton does not know which model wrote a change, and it does not rank models. You supply the label; the comparison is yours.</div>
+
+<h2 id="commands">The whole client</h2>
+<div class="scroll"><table>
+<tr><th>Command</th><th>What it does</th></tr>
+<tr><td><code>krypton</code> or <code>krypton setup</code></td><td>Map the codebase and choose target, max tries and ask me or auto, in the terminal or a local dashboard.</td></tr>
+<tr><td><code>krypton scan REPO</code></td><td>Score a folder; <code>--base REF</code> only what changed, <code>--names</code> real names back, <code>--log</code> records the run.</td></tr>
+<tr><td><code>krypton review</code></td><td>List the functions that are stuck.</td></tr>
+<tr><td><code>krypton restore --run N</code></td><td>Put the files back to how they were at run N.</td></tr>
+<tr><td><code>krypton order REPO</code></td><td>Pick the file order that keeps the most of a prompt cache, or keep yours.</td></tr>
+<tr><td><code>krypton login</code>, <code>krypton logout</code></td><td>Log in with GitHub (the server scores only for logged-in users and GitHub Actions runs).</td></tr>
+<tr><td><code>krypton comment</code></td><td>Write the pull request scorecard and the gate line.</td></tr>
+<tr><td><code>krypton wire FILE</code></td><td>Print the exact request instead of sending it.</td></tr>
+</table></div>
+
+<h2 id="reference">Go deeper</h2>
+<div class="cards">
+<a class="card" href="review.html"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Review and setup</h3><p>Target, max tries, ask me or auto.</p></a>
+<a class="card" href="prompt-caching.html"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M14.6 9.4c-.6-.8-1.5-1.2-2.6-1.2-1.5 0-2.6.8-2.6 1.9 0 1.2 1.1 1.6 2.6 1.9s2.6.8 2.6 2c0 1.1-1.1 1.9-2.6 1.9-1.1 0-2.1-.4-2.7-1.3M12 6.4v1.8M12 15.8v1.8"/></svg>Prompt caching</h3><p>Measured results across 20 repositories.</p></a>
+<a class="card" href="order.html"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>File ordering</h3><p>How <code>krypton order</code> decides.</p></a>
+<a class="card" href="integrations.html"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/></svg>Integrations</h3><p>Agents, CI, Docker.</p></a>
+<a class="card" href="command-reference.html"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="m7 9 3 3-3 3M13 15h4"/></svg>Commands</h3><p>Every option.</p></a>
+<a class="card" href="api.html"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/><path d="M8 7.5h.01M8 16.5h.01"/></svg>API</h3><p>Endpoints, responses, errors.</p></a>
+<a class="card" href="wire-format.html"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></svg>Wire format</h3><p>Every field of the request.</p></a>
+<a class="card" href="privacy.html"><h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Privacy</h3><p>What is sent and what is kept.</p></a>
+</div>
+
+<nav class="pager" aria-label="Previous and next"><a class="next" href="review.html"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>Review and setup</a></nav>
+</main></div>
+<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

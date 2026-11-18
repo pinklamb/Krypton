@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import math
 import os
 import re
 import subprocess
@@ -90,7 +91,7 @@ def wire_body(sources: dict[str, str], names_file: Path) -> bytes:
 def ask_server(body: bytes) -> dict:
     """POST the tree to the scoring server and return its `result`."""
     url = os.environ.get("KRYPTON_SCORE_URL", "http://127.0.0.1:8081")
-    headers = {"Content-Type": "application/json", "Content-Encoding": "gzip"}
+    headers = {"Content-Type": "application/json", "Content-Encoding": "gzip", "Authorization": f"Bearer {os.environ.get('KRYPTON_SERVICE_TOKEN', '')}"}
     request = urllib.request.Request(f"{url}/v1/score", data=gzip.compress(body, 1), headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=SCORE_SECONDS) as reply:
@@ -108,6 +109,37 @@ def put_names_back(summary: dict, names: dict[str, str]) -> dict:
     return summary
 
 
+CODES = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+NODE_BUDGET = 30000  # enough points to see the shape; a bigger repository shows the first part of each file's tree
+
+
+def outline(body: dict, result: dict, names: dict[str, str]) -> dict:
+    """The tree for the page to draw (the shape the landing page draws garth from): per file its parent array and which nodes belong to a
+    tangled function, the import arcs, and the tangled functions by real name. Numbers and names only, no source text."""
+    files = body["files"]
+    total = sum(f["tree"]["n"] for f in files) or 1
+    share = min(1.0, NODE_BUDGET / total)
+    tangled = sorted(((fn["times_over_limit"], rf["filename"], fn) for rf in result["files"] for fn in rf["functions"] if fn["times_over_limit"] is not None),
+                     key=lambda row: -row[0])[: len(CODES)]
+    index = {f["path"]: k for k, f in enumerate(files)}
+    shaped = []
+    for f in files:
+        tree = f["tree"]
+        keep = tree["n"] if share >= 1 else max(1, math.ceil(tree["n"] * share))
+        marks = ["0"] * keep
+        for q, (_, path, fn) in enumerate(tangled):
+            if path != f["path"]:
+                continue
+            for i in range(keep):
+                line = tree["start_line"][i] + 1
+                if marks[i] == "0" and fn["start_line"] <= line <= fn["end_line"]:
+                    marks[i] = CODES[q]
+        shaped.append({"p": f["path"], "t": tree["parent"][:keep], "h": "".join(marks)})
+    edges = sorted({(a, index[path]) for a, f in enumerate(files) for group in f.get("imports", []) for path in group if path in index and index[path] != a})
+    fns = [{"name": DIGEST.sub(lambda found: names.get(found.group(), found.group()), fn["name"]), "times": round(times, 1), "file": path} for times, path, fn in tangled]
+    return {"files": shaped, "edges": [list(e) for e in edges], "fns": fns}
+
+
 def main() -> int:
     """stdin JSON in, summary JSON out."""
     limit_resources()
@@ -115,9 +147,12 @@ def main() -> int:
     scored = {name: text for name, text in sources.items() if name != ".gitattributes"}
     with tempfile.TemporaryDirectory() as work:
         names_file = Path(work) / "names.json"
-        result = ask_server(wire_body(sources, names_file))
+        body = wire_body(sources, names_file)
+        result = ask_server(body)
         names = json.loads(names_file.read_text(encoding="utf-8")) if names_file.exists() else {}
-    json.dump(put_names_back(summarize(result, scored), names), sys.stdout)
+    summary = put_names_back(summarize(result, scored), names)
+    summary["tree"] = outline(json.loads(body), result, names)
+    json.dump(summary, sys.stdout)
     return 0
 
 

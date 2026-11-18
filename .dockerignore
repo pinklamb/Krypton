@@ -1,14 +1,12 @@
-# Build context for the dashboard image: send only what the Dockerfile copies (keeps .env, datasets and .git out).
+# Build context for the site image: send only what the Dockerfile copies (keeps .env, datasets and .git out).
 # The Rust client is compiled in a build stage; only its binary reaches the final image, never the source.
 *
-!dashboard/index.html
-!dashboard/benchmarks.html
-!dashboard/security.html
 !dashboard/server.py
 !dashboard/auth.py
 !dashboard/repo_fetch.py
 !dashboard/scanner.py
 !dashboard/scan_worker.py
+!site
 !client/Cargo.toml
 !client/Cargo.lock
 !client/src

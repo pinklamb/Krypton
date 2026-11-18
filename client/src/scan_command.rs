@@ -1,4 +1,4 @@
-//! `krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--server URL] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE]`: build the tree of every source file under
+//! `krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]`: build the tree of every source file under
 //! REPO on this machine, send only the tree to the Krypton server and print its review. The server never receives source text; names, strings and
 //! comments stay here, and `--names` puts the real function names back into the review locally. `--log` also adds the run to `.krypton/runs.jsonl` and
 //! saves an attempt (a patch) so the run can be put back; `--summary FILE` writes the scores with real names for `krypton comment`.
@@ -13,22 +13,29 @@ use serde_json::Value;
 use crate::attempts;
 use crate::diff::changed_since;
 use crate::http::Server;
+use crate::loader::{self, Loader};
 use crate::runlog;
 use crate::Failure;
 
 const USAGE: &str =
-    "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--server URL] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE]";
+    "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]";
 const EXTENSIONS: [&str; 9] = ["py", "js", "jsx", "mjs", "cjs", "ts", "mts", "cts", "tsx"];
 const SKIP_DIRS: [&str; 12] =
     [".git", "node_modules", "dist", "build", "venv", ".venv", "__pycache__", "target", ".next", "coverage", "vendor", "site-packages"];
 const LEVELS: [&str; 3] = ["relaxed", "standard", "strict"];
 
+/// How the answer is shown.
+struct Output {
+    names: bool,
+    json: bool,
+}
+
 struct Options {
     repo: PathBuf,
     level: String,
     server: Option<String>,
-    names: bool,
-    json: bool,
+    output: Output,
+    no_loader: bool,
     base: Option<String>,
     save: Option<PathBuf>,
     log: bool,
@@ -45,8 +52,8 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
         repo: PathBuf::new(),
         level: "standard".to_string(),
         server: None,
-        names: false,
-        json: false,
+        output: Output { names: false, json: false },
+        no_loader: false,
         base: None,
         save: None,
         log: false,
@@ -58,8 +65,9 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
     while let Some(word) = words.next() {
         let mut value = |flag: &str| words.next().cloned().ok_or_else(|| usage(&format!("{flag} needs a value")));
         match word.as_str() {
-            "--names" => options.names = true,
-            "--json" => options.json = true,
+            "--names" => options.output.names = true,
+            "--json" => options.output.json = true,
+            "--no-loader" => options.no_loader = true,
             "--log" => options.log = true,
             "--ticket" => options.ticket = value("--ticket")?,
             "--summary" => options.summary = Some(PathBuf::from(value("--summary")?)),
@@ -119,25 +127,42 @@ type Built = (Vec<u8>, Names);
 
 /// The tree of every file to score, as the request body, and the real names that stay here. With `--base`, only the files changed since that ref,
 /// each with the lines that changed.
-fn build_body(options: &Options, files: &[String]) -> Result<Built, Failure> {
+fn build_body(options: &Options, files: &[String], loader: Option<&Loader>) -> Result<Built, Failure> {
     let altered = options.base.as_deref().map(|base| changed_since(base, &options.repo, files)).transpose()?;
     let selected: Vec<&String> = files.iter().filter(|name| altered.as_ref().is_none_or(|changed| changed.contains_key(name.as_str()))).collect();
     if selected.is_empty() {
         return Err(Failure::Usage("no source files changed since that ref: nothing to score".to_string()));
     }
-    eprintln!("building the tree of {} files ...", selected.len());
-    let builder = Builder::new(ClientConfig::from_overrides(Value::Null)?)?;
+    note(loader, &format!("building the tree of {} files ...", selected.len()));
+    let count = selected.len();
+    let builder = Builder::new(ClientConfig::from_overrides(Value::Null)?, crate::name_key::for_this_run()?)?;
     let known: BTreeSet<String> = selected.iter().map(|name| (*name).clone()).collect();
     let (mut wire_files, mut names) = (Vec::new(), Names::new());
-    for name in selected {
+    for (index, name) in selected.into_iter().enumerate() {
+        progress(loader, index, count);
         let path = options.repo.join(name);
         let bytes = fs::read(&path).map_err(|error| Failure::Read(path.display().to_string(), error))?;
         let mut wire = builder.file(name, &bytes, &known, &mut names)?;
         wire.altered_lines = altered.as_ref().and_then(|changed| changed.get(name.as_str())).map(|lines| lines.iter().copied().collect());
         wire_files.push(wire);
     }
+    progress(loader, count, count);
     let body = serde_json::to_vec(&builder.request(wire_files, &options.level, "summary")).map_err(|error| Failure::Output(error.to_string()))?;
     Ok((body, names))
+}
+
+/// A progress line on standard error, left out when the loader is drawing there.
+fn note(loader: Option<&Loader>, text: &str) {
+    if loader.is_none() {
+        eprintln!("{text}");
+    }
+}
+
+/// Tell the loader how many files are done.
+fn progress(loader: Option<&Loader>, done: usize, total: usize) {
+    if let Some(active) = loader {
+        active.update(done, total);
+    }
 }
 
 pub fn run(args: &[String]) -> Result<(), Failure> {
@@ -146,9 +171,13 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     if files.is_empty() {
         return Err(Failure::Usage(format!("no source files found under {}", options.repo.display())));
     }
-    let (body, names) = build_body(&options, &files)?;
-    eprintln!("sending {} KB of tree (no source text) ...", body.len() / 1000);
+    let loader = loader::start_if_wanted(options.no_loader);
+    let (body, names) = build_body(&options, &files, loader.as_ref())?;
+    note(loader.as_ref(), &format!("sending {} KB of tree (no source text) ...", body.len() / 1000));
     let answer = Server::from_flag(options.server.as_deref()).post("/v1/score", &body)?;
+    if let Some(active) = loader {
+        active.finish();
+    }
     if let Some(path) = &options.save {
         fs::write(path, serde_json::to_string_pretty(&answer).map_err(|error| Failure::Output(error.to_string()))?)
             .map_err(|error| Failure::Output(format!("{}: {error}", path.display())))?;
@@ -156,10 +185,10 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     let result = answer.get("result").cloned().unwrap_or(Value::Null);
     record(&options, &result, &names)?;
     let conclusion = result.get("check_conclusion").and_then(Value::as_str).unwrap_or("unknown");
-    if options.json {
+    if options.output.json {
         println!("{}", serde_json::to_string_pretty(&result).map_err(|error| Failure::Output(error.to_string()))?);
     } else {
-        print_review(&result, answer.get("usage").unwrap_or(&Value::Null), options.names.then_some(&names))?;
+        print_review(&result, answer.get("usage").unwrap_or(&Value::Null), options.output.names.then_some(&names))?;
     }
     if conclusion == "success" || options.summary.is_some() {
         Ok(())

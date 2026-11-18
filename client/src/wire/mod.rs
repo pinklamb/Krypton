@@ -5,10 +5,12 @@ mod attributes;
 mod digest;
 mod facts;
 mod imports;
+mod key;
 mod lines;
 mod model;
 mod policy;
 mod posix;
+mod repository;
 mod tree;
 mod vendored;
 
@@ -25,9 +27,11 @@ use crate::parse::parse;
 pub use attributes::linguist_globs;
 pub use digest::{expression_digest, hex};
 pub use imports::{candidates as import_candidates, ImportConfig, PythonImport, RawImports};
+pub use key::{hmac_sha256, BadKey, NameKey, PUBLIC_WORDS};
 pub use lines::{collapsed, line_shapes, longest_line, split_lines, Shapes};
 pub use model::{ClientInfo, WireFile, WireFlags, WireOptions, WireRequest, WIRE_VERSION};
 pub use posix::{dirname, join as posix_join, normpath};
+pub use repository::build_repository;
 pub use tree::{write_tree, CharIndex, Names};
 pub use vendored::Vendored;
 
@@ -107,6 +111,7 @@ impl ClientConfig {
 /// Builds wire files; the patterns are compiled once.
 pub struct Builder {
     config: ClientConfig,
+    key: NameKey,
     vendored: Vendored,
     waiver: Regex,
 }
@@ -123,8 +128,9 @@ impl Builder {
     /// # Errors
     ///
     /// [`WireError::Regex`] when a built-in pattern does not compile. That is a bug in the client, not a problem with any input.
-    pub fn new(config: ClientConfig) -> Result<Self, WireError> {
-        Ok(Self { config, vendored: Vendored::new()?, waiver: facts::waiver_pattern()? })
+    /// `key` digests every name and compared expression (see [`NameKey`]); it stays on the client.
+    pub fn new(config: ClientConfig, key: NameKey) -> Result<Self, WireError> {
+        Ok(Self { config, key, vendored: Vendored::new()?, waiver: facts::waiver_pattern()? })
     }
 
     /// One file as a wire file. `known` is every path in the request (imports are resolved against it); `names` collects digest -> real
@@ -139,7 +145,7 @@ impl Builder {
         let text = decode(bytes);
         let parsed = parse(lang, &text)?;
         let shapes = line_shapes(&text);
-        let (tree, tree_names, raw) = write_tree(&text, parsed.root_node(), lang)?;
+        let (tree, tree_names, raw) = write_tree(&text, parsed.root_node(), lang, &self.key)?;
         names.extend(tree_names);
         let vendored = if self.config.detect_vendored { self.vendored.reason(&path, &text) } else { None };
         Ok(WireFile {
@@ -152,7 +158,7 @@ impl Builder {
             flags: WireFlags { generated_marker: facts::has_generated_marker(&text, &self.config.generated_markers), vendored },
             altered_lines: None,
             change_frequency: None,
-            waivers: facts::waiver_facts(&text, &self.waiver, names),
+            waivers: facts::waiver_facts(&text, &self.waiver, names, &self.key),
             imports: imports::candidates(&path, &raw, &self.config.imports, known),
             tree,
             path,

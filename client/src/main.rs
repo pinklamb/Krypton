@@ -4,7 +4,10 @@
 //! * `krypton order REPO` asks the server whether a different file order would keep more of a prompt cache.
 //! * `krypton wire FILE...` prints the request body without sending it.
 //! * `krypton scan --log` keeps a run log and an attempt per run; `krypton review` says which functions are stuck; `krypton restore` puts a run back.
-//! * `krypton comment` and `krypton badge` write the pull request comment and the README badge from two scan summaries.
+//! * `krypton comment` writes the pull request comment from two scan summaries.
+//! * `krypton login` / `krypton logout`: the server scores only for a logged-in user (GitHub's device flow) or a GitHub Actions run.
+//! * `krypton setup` asks once whether stuck functions go to a person (a local review page) or are approved automatically; `krypton` alone, in a
+//!   terminal, starts it.
 //!
 //! Every failure is reported with its reason and a non-zero exit code; there is no fallback.
 
@@ -17,16 +20,20 @@ mod attempts;
 mod comment_command;
 mod diff;
 mod http;
+mod loader;
+mod login_command;
+mod name_key;
 mod order_command;
 mod restore_command;
 mod review_command;
 mod runlog;
 mod scan_command;
+mod setup_command;
+mod setup_page;
 mod tokens;
 mod wire_command;
 
-const USAGE: &str =
-    "usage: krypton scan REPO | order REPO | wire FILE... | review | restore --run N | comment BEFORE AFTER | badge SUMMARY OUT   (the server address is --server or KRYPTON_SERVER)";
+const USAGE: &str = "usage: krypton setup | login | logout | scan REPO | order REPO | wire FILE... | review | restore --run N | comment BEFORE AFTER";
 
 /// Why the command stopped: bad usage (exit 2), or a file, wire or server problem (exit 1).
 #[derive(Debug)]
@@ -90,13 +97,16 @@ fn run() -> Result<(), Failure> {
     let args: Vec<String> = env::args().skip(1).collect();
     let rest = args.get(1..).unwrap_or_default();
     match args.first().map(String::as_str) {
+        Some("setup") => setup_command::run(rest),
+        Some("login") => login_command::run(rest),
+        Some("logout") => login_command::logout(rest),
+        None if setup_command::interactive() => setup_command::run(&[]),
         Some("scan") => scan_command::run(rest),
         Some("order") => order_command::run(rest),
         Some("wire") => wire_command::run(rest),
         Some("review") => review_command::run(rest),
         Some("restore") => restore_command::run(rest),
         Some("comment") => comment_command::comment(rest),
-        Some("badge") => comment_command::badge_command(rest),
         _ => Err(Failure::Usage(USAGE.to_string())),
     }
 }

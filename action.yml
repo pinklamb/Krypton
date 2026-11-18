@@ -1,20 +1,22 @@
 name: Krypton
-description: Score how tangled a pull request's code is, keep one comment on the pull request up to date, and refresh a purity badge when you push to your default branch.
+description: Score how tangled a pull request's code is against its base, as one Krypton gate line in its checks and a scorecard in the run summary. No comments.
 author: Krypton
 
 inputs:
   server:
-    description: Address of the Krypton server, for example https://your-server.up.railway.app
-    required: true
+    description: Use a different Krypton server than the default (optional).
+    required: false
+    default: ""
   fail-on-worse:
     description: Fail the check when the purity score went down ("true" or "false").
     default: "false"
-  badge-branch:
-    description: Branch the badge file is written to when you push (the badge is purity.json on that branch).
-    default: krypton-badge
+  site:
+    description: The Krypton site address. When set, the gate line's Details opens your repository's tree there for this commit; otherwise it opens this run's summary.
+    required: false
+    default: ""
 
 # Needs a checkout with history first:  - uses: actions/checkout@v4 / with: { fetch-depth: 0 }
-# and the permissions:  contents: write (badge), pull-requests: write (comment).
+# and the permissions:  contents: read, statuses: write (the Krypton gate line), id-token: write (logs in to Krypton as this repository; no secret to store).
 runs:
   using: composite
   steps:
@@ -24,6 +26,14 @@ runs:
         set -e
         cargo build --release --manifest-path "${{ github.action_path }}/client/Cargo.toml"
         echo "KRYPTON=${{ github.action_path }}/client/target/release/krypton" >> "$GITHUB_ENV"
+        echo "KRYPTON_HOME=$RUNNER_TEMP/krypton-home" >> "$GITHUB_ENV"
+
+    - name: Log in to Krypton as this repository
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        KRYPTON_SERVER: ${{ inputs.server }}
+      run: '"$KRYPTON" login --github-actions'
 
     - name: Score the pull request against its base
       id: score
@@ -41,27 +51,35 @@ runs:
         flag=""
         if [ "$FAIL_ON_WORSE" = "true" ]; then flag="--fail-if-worse"; fi
         status=0
-        "$KRYPTON" comment "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" $flag > "$RUNNER_TEMP/comment.md" || status=$?
-        cat "$RUNNER_TEMP/comment.md" >> "$GITHUB_STEP_SUMMARY"
+        "$KRYPTON" comment "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" --line "$RUNNER_TEMP/line.txt" $flag > "$RUNNER_TEMP/scorecard.md" || status=$?
+        cat "$RUNNER_TEMP/scorecard.md" >> "$GITHUB_STEP_SUMMARY"
         echo "status=$status" >> "$GITHUB_OUTPUT"
 
-    - name: Post or update the comment
+    - name: Set the Krypton gate line
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
+      env:
+        GATE_STATUS: ${{ steps.score.outputs.status }}
+        SITE: ${{ inputs.site }}
       with:
         script: |
           const fs = require('fs');
-          const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/comment.md`, 'utf8');
-          const marker = '<!-- krypton-comment -->';
+          const line = fs.readFileSync(`${process.env.RUNNER_TEMP}/line.txt`, 'utf8').trim();
           const { owner, repo } = context.repo;
-          const issue_number = context.issue.number;
-          const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
-          const mine = comments.find((comment) => comment.body && comment.body.includes(marker));
-          if (mine) {
-            await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body });
-          } else {
-            await github.rest.issues.createComment({ owner, repo, issue_number, body });
-          }
+          const sha = context.payload.pull_request.head.sha;
+          const site = (process.env.SITE || '').replace(/\/+$/, '');
+          const details = site
+            ? `${site}/tree.html?repo=${encodeURIComponent(`${owner}/${repo}`)}&sha=${sha}`
+            : `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+          await github.rest.repos.createCommitStatus({
+            owner,
+            repo,
+            sha,
+            state: process.env.GATE_STATUS === '0' ? 'success' : 'failure',
+            context: 'Krypton gate',
+            description: line.slice(0, 140),
+            target_url: details,
+          });
 
     - name: Fail when the score went down
       if: github.event_name == 'pull_request' && steps.score.outputs.status != '0'
@@ -69,24 +87,3 @@ runs:
       run: |
         echo "Krypton: the purity score went down."
         exit 1
-
-    - name: Refresh the badge
-      if: github.event_name == 'push'
-      shell: bash
-      env:
-        KRYPTON_SERVER: ${{ inputs.server }}
-        TOKEN: ${{ github.token }}
-        REPOSITORY: ${{ github.repository }}
-        BRANCH: ${{ inputs.badge-branch }}
-      run: |
-        set -e
-        "$KRYPTON" scan . --summary "$RUNNER_TEMP/head.json" > /dev/null
-        folder="$RUNNER_TEMP/krypton-badge"
-        mkdir "$folder"
-        "$KRYPTON" badge "$RUNNER_TEMP/head.json" "$folder/purity.json"
-        cd "$folder"
-        git init -q
-        git checkout -q -b "$BRANCH"
-        git add purity.json
-        git -c user.name=krypton-action -c user.email=krypton-action@users.noreply.github.com commit -q -m "Update the purity badge"
-        git push -f "https://x-access-token:${TOKEN}@github.com/${REPOSITORY}.git" "$BRANCH"

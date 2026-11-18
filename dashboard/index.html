@@ -148,6 +148,13 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
 @media (max-width: 900px) { .hero, .calc { grid-template-columns: 1fr; } .steps { display: none; } .top { justify-content: space-between; } }
 @media (prefers-reduced-motion: reduce) { .screen { animation: none; } .progress i { transition: none; } }
 
+/* models screen */
+.howto { margin: 6px 0 0; padding-left: 22px; } .howto li { margin: 8px 0; }
+.illus .strip { margin-top: 12px; } .illus .bars { display: flex; align-items: flex-end; gap: 6px; height: 130px; border-bottom: 2px solid var(--card-line); }
+.illus .bars i { flex: 1; height: var(--h); background: var(--good); border-radius: 6px 6px 0 0; } .illus .bars i.lo { background: var(--warn); }
+.illus .bars i.sw { background: var(--warn); }
+.illus .axis { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 8px; font: 500 12.5px var(--mono); color: var(--muted); } .illus .axis span:first-child { grid-column: 1 / 6; } .illus .axis .mk { grid-column: 6 / 11; color: var(--ink); font-weight: 700; }
+
 /* savings: the bill */
 .stackh { display: flex; flex-direction: column; gap: 10px; }
 .bigcalc { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 22px; align-items: stretch; }
@@ -272,7 +279,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
   <header class="top">
     <div class="brand">Krypton</div>
     <ol class="steps" id="steps" aria-label="Progress">
-      <li data-s="start">1 · Connect</li><li data-s="optimizing">2 · Optimize</li><li data-s="compare">3 · Compare</li><li data-s="savings">4 · Savings</li>
+      <li data-s="start">1 · Connect</li><li data-s="optimizing">2 · Optimize</li><li data-s="compare">3 · Compare</li><li data-s="savings">4 · Savings</li><li data-s="models">5 · Models</li>
     </ol>
     <div class="navright">
       <a class="docs" href="https://pinklamb.github.io/Krypton/" target="_blank" rel="noopener">Docs <span aria-hidden="true">&#8599;</span><span class="sr">(opens the documentation in a new tab)</span></a>
@@ -284,9 +291,9 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
   <section class="screen show" id="s-start" aria-labelledby="h-start">
     <div class="hero">
       <div class="stack">
-        <span class="eyebrow">The compiler for AI agents</span>
-        <h1 id="h-start">Your AI agents re&#8209;read your whole codebase every turn. Krypton makes that cheaper.</h1>
-        <p class="lede">Krypton keeps the files that rarely change at the front of every request, so the AI provider can reuse more of what it has already read. A 25,000-line codebase is roughly 175,000 tokens, read again on every turn.</p>
+        <span class="eyebrow">The guardrail for coding agents</span>
+        <h1 id="h-start">Your AI agent is fast. Is your code still pure?</h1>
+        <p class="lede">Agents write code in seconds and keep adding to it. Krypton scores how bloated or pure that code is to understand, after every change, so the agent has a limit to stay under. Bloat is also a bill: a 25,000-line codebase is roughly 175,000 tokens, read again on every turn.</p>
         <div class="cta"><button class="btn" id="go" type="button">Optimize this codebase →</button><button class="btn link" id="gh2" type="button">or connect your own repository</button></div>
         <div class="card repos" id="repoPanel" hidden><h3>Your repositories</h3><p class="muted small" id="repoNote"></p><div class="chips" id="repoChips"></div><div class="cta" style="margin-top:8px"><button class="btn" id="analyze" type="button" hidden>Analyze</button></div><p class="small muted" id="picked"></p>
           <div class="treestep" id="treeStep" hidden aria-live="polite"><div class="treehead"><b id="treeTitle"></b><span id="treePct"></span></div><div class="bar"><i id="treeBar"></i></div><ol class="treestages" id="treeStages"></ol><p id="treeMsg"></p><div class="cta" id="treeAsk" hidden><button class="btn" id="treeYes" type="button">Yes, send it to Krypton</button><button class="btn ghost" id="treeNo" type="button">Cancel</button></div></div></div>
@@ -451,7 +458,20 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
       </tbody></table></div>
       <p style="margin-top:12px"><a class="btn link" href="benchmarks.html" style="padding:0">Full benchmark data →</a></p>
     </div>
-    <div><button class="btn ghost" id="again" type="button">↺ Start over</button></div>
+    <div class="cta"><button class="btn" id="toModels" type="button">Next: which model keeps code pure? →</button><button class="btn ghost" id="again" type="button">↺ Start over</button></div>
+  </section>
+
+  <!-- 5 · models: the transparency idea, in words and one clearly labelled illustration -->
+  <section class="screen" id="s-models" aria-labelledby="h-mod">
+    <div class="stackh"><span class="eyebrow">Models</span><h2 id="h-mod">Which model keeps your code pure?</h2>
+      <p class="lede">Models differ in price, and they differ in what they leave behind. A cheap one that bloats your code costs you later; an expensive one that keeps it pure may not. Krypton keeps the purity score after every change, so you can see it yourself, on your own repository. It does not know which model wrote a change, and it does not rank models.</p></div>
+    <div class="card"><h3>See it on your repository in three steps</h3>
+      <ol class="howto"><li><b>Score around every change.</b> Run <code>krypton scan . --log</code> before the work and after it.</li><li><b>Note which model did the work.</b> In your own log, or in the commit.</li><li><b>Compare.</b> Did purity go down after you switched models? Set that beside what each cost you, and choose per repository.</li></ol></div>
+    <div class="card illus"><span class="eyebrow">Illustration, not measured data</span>
+      <div class="strip" role="img" aria-label="Illustration: purity stays high for five changes, then drops after the model is switched"><div class="bars"><i style="--h:88%"></i><i style="--h:89%"></i><i style="--h:88%"></i><i style="--h:90%"></i><i style="--h:89%"></i><i class="sw" style="--h:74%"></i><i class="lo" style="--h:62%"></i><i class="lo" style="--h:50%"></i><i class="lo" style="--h:42%"></i><i class="lo" style="--h:36%"></i></div>
+        <div class="axis"><span>purity after each change</span><span class="mk">↑ model switched here</span></div></div>
+      <p class="small muted" style="margin:10px 0 0">This is what a drop after a switch would look like in your own scores. Nothing here is a result for any real model.</p></div>
+    <div class="cta"><button class="btn ghost" id="modelsBack" type="button">← Back to savings</button><button class="btn" id="again2" type="button">↺ Start over</button><a class="btn link" href="https://pinklamb.github.io/Krypton/#models" target="_blank" rel="noopener" style="padding:0">How to log your runs →</a></div>
   </section>
 
   <footer><span>Replay of measured results · garth (MIT license) · caching from live Claude runs, cleanup from six runs</span><span class="mono">Estimates from measured results · <a href="https://pinklamb.github.io/Krypton/privacy.html" target="_blank" rel="noopener">Privacy</a></span></footer>
@@ -475,7 +495,7 @@ const OPT = { repo: null };   // set while a connected repository is being analy
 
 
 /* flow */
-const ORDER = ['start', 'optimizing', 'compare', 'savings'];
+const ORDER = ['start', 'optimizing', 'compare', 'savings', 'models'];
 let reached = 0, timer = null;
 function go(name) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('show', s.id === 's-' + name));
@@ -885,7 +905,7 @@ function applyScan(d) {
 
 /* wire up */
 function bindFlow() {
-  $('go').onclick = () => { setOptMode(null); go('optimizing'); }; $('analyze').onclick = buildTree; $('treeYes').onclick = confirmTree; $('treeNo').onclick = cancelTree; $('scanBack').onclick = () => { setOptMode(null); go('start'); }; $('scanSave').onclick = () => { applyScan(SCAN.data); go('savings'); }; $('tosave').onclick = () => go('savings'); $('again').onclick = () => { setOptMode(null); go('start'); };
+  $('go').onclick = () => { setOptMode(null); go('optimizing'); }; $('analyze').onclick = buildTree; $('treeYes').onclick = confirmTree; $('treeNo').onclick = cancelTree; $('scanBack').onclick = () => { setOptMode(null); go('start'); }; $('scanSave').onclick = () => { applyScan(SCAN.data); go('savings'); }; $('tosave').onclick = () => go('savings'); $('again').onclick = () => { setOptMode(null); go('start'); }; $('again2').onclick = $('again').onclick; $('toModels').onclick = () => go('models'); $('modelsBack').onclick = () => go('savings');
   $('yoursSave').onclick = () => go('savings'); $('yoursBack').onclick = () => { setOptMode(null); go('start'); };
   $('gh2').onclick = connectGithub; $('mOk').onclick = closeNotice;
   $('veil').addEventListener('click', (e) => { if (e.target === $('veil')) closeNotice(); });

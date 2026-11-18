@@ -1,13 +1,18 @@
-"""GitHub sign-in for the demo: OAuth authorization code flow with PKCE, standard library only.
+"""GitHub sign-in for the site: a GitHub App's user authorization (code flow with PKCE), standard library only.
+
+The GitHub App asks for Contents: read-only and Metadata: read-only, and each visitor chooses which repositories it may read, so the token a
+visitor's tab receives can read code and nothing else. It is revoked at sign-out, and the server forgets it after an hour.
 
 Settings come from the environment (see .env.example):
-  GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET   the OAuth App's credentials
+  GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET   the GitHub App's client id and a client secret
+  GITHUB_APP_SLUG                           the app's name in its URL (github.com/apps/<slug>), for the "choose repositories" link
   BASE_URL                                  public address of this server, no trailing slash (the callback is BASE_URL/auth/github/callback)
   SESSION_SECRET                            random string that signs cookies; sessions reset on restart if it is unset
   GITHUB_SCOPES                             default "read:user repo"; use "read:user public_repo" to ask for less
   GITHUB_OAUTH_BASE, GITHUB_API_BASE        only for tests against a fake GitHub
 
-The access token stays on the server. The browser only holds a signed session id.
+The browser holds a signed session id; its own page may fetch the read-only token for this visit (/api/github-token) to read the chosen
+repository straight from GitHub in the tab.
 """
 
 from __future__ import annotations
@@ -46,6 +51,7 @@ class Config:
     secret: bytes = b""
     oauth_base: str = "https://github.com"
     api_base: str = "https://api.github.com"
+    app_slug: str = ""
 
     @property
     def configured(self) -> bool:
@@ -74,6 +80,7 @@ def load_config(env=os.environ) -> Config:
         secret=secret.encode(),
         oauth_base=env.get("GITHUB_OAUTH_BASE", "https://github.com").rstrip("/"),
         api_base=env.get("GITHUB_API_BASE", "https://api.github.com").rstrip("/"),
+        app_slug=env.get("GITHUB_APP_SLUG", "").strip(),
     )
 
 
@@ -162,6 +169,32 @@ def github_get(cfg: Config, path: str, token: str):
     return _request(urllib.request.Request(f"{cfg.api_base}{path}", headers={**API_HEADERS, "Authorization": f"Bearer {token}"}))
 
 
+def install_url(cfg: Config) -> str | None:
+    """Where a visitor chooses which repositories the app may read."""
+    return f"https://github.com/apps/{cfg.app_slug}/installations/new" if cfg.app_slug else None
+
+
+def granted_repos(cfg: Config, token: str) -> list[dict]:
+    """The repositories this visitor let the app read, across every installation they can see."""
+    repos: list[dict] = []
+    for installation in github_get(cfg, "/user/installations?per_page=100", token).get("installations", []):
+        page = github_get(cfg, f"/user/installations/{int(installation['id'])}/repositories?per_page=100", token)
+        repos.extend(page.get("repositories", []))
+    return public_repos(sorted(repos, key=lambda r: r.get("pushed_at") or "", reverse=True))
+
+
+def revoke(cfg: Config, token: str) -> None:
+    """Tell GitHub the token is finished (sign-out): DELETE /applications/{client_id}/token with the app's own credentials."""
+    basic = base64.b64encode(f"{cfg.client_id}:{cfg.client_secret}".encode()).decode()
+    req = urllib.request.Request(f"{cfg.api_base}/applications/{cfg.client_id}/token", data=json.dumps({"access_token": token}).encode(), method="DELETE",
+                                 headers={**API_HEADERS, "Authorization": f"Basic {basic}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+    except (urllib.error.URLError, TimeoutError) as error:
+        raise OAuthError(type(error).__name__) from error
+
+
 def public_user(raw: dict) -> dict:
     """The few profile fields the browser may see."""
     return {key: raw.get(key) for key in ("login", "name", "avatar_url")}
@@ -194,11 +227,11 @@ class Sessions:
             self._purge()   # an expired session's token is gone the moment anyone asks, not at the next sign-in
             return self._items.get(sid or "")
 
-    def delete(self, cookies: dict[str, str]) -> None:
-        """Forget the request's session."""
+    def delete(self, cookies: dict[str, str]) -> dict | None:
+        """Forget the request's session; the session that was forgotten, so its token can be revoked."""
         sid = unsign(self.cfg.secret, cookies.get(SESSION_COOKIE))
         with self._lock:
-            self._items.pop(sid or "", None)
+            return self._items.pop(sid or "", None)
 
     def _purge(self) -> None:
         """Drop expired sessions, and the oldest ones if the store is full (caller holds the lock)."""

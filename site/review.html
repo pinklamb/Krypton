@@ -2,21 +2,88 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Review | Krypton</title>
 <meta name="description" content="Let a person approve what a coding agent could not simplify, keep a purity score on your README, and see each pull request's effect on it.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
+<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html" aria-current="page">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
-<div class="wrap">
-<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#flow">The review step</a></li><li><a href="#commands">Commands</a></li><li><a href="#page">The review page</a></li><li><a href="#github">On GitHub</a></li><li><a href="#limits">Limits</a></li></ul></aside>
-<main id="content">
+<header class="top"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs.html">Overview</a></li></ul><h2>Guides</h2><ul><li><a href="review.html" aria-current="page">Review and setup</a><ul class="sub"><li><a href="#setup">Set it up once</a></li><li><a href="#flow">The review step</a></li><li><a href="#commands">Commands</a></li><li><a href="#page">The review page</a></li><li><a href="#github">On GitHub</a></li><li><a href="#limits">Limits</a></li></ul></li><li><a href="prompt-caching.html">Prompt caching</a></li><li><a href="order.html">File ordering</a></li><li><a href="integrations.html">Integrations</a></li><li><a href="case-study.html">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference.html">Commands</a></li><li><a href="api.html">API</a></li><li><a href="wire-format.html">Wire format</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="faq.html">FAQ</a></li></ul></details></nav><main id="content">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <div class="eyebrow">Review</div>
 <h1>A person approves what the agent could not simplify</h1>
 <p>An agent refactoring toward a better score sometimes gets stuck: three tries later a function is barely better. Krypton keeps a log of every try, says which functions are stuck, and puts any earlier try back. Your coding agent turns that into a small page on your own computer where you approve the best try or send it back, <b>before anything goes to GitHub</b>.</p>
+<div class="glance"><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg><b>Every try is logged</b><span>Each run's score and files are kept on your machine.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><b>You decide, or it does</b><span>Ask me opens a local review page; Auto keeps the best run.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg><b>Before GitHub</b><span>Nothing is pushed until the stuck functions are settled.</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h2 id="setup">Set it up once</h2>
+<p>The first time you run the Krypton image in a repository, it maps the whole codebase and shows its score today, then asks three things: the <b>target</b> score each ticket's code must reach, how many <b>tries</b> the agent gets on a function before it counts as stuck, and whether a stuck function should <b>ask you</b> or be <b>approved automatically</b>. Answer in the terminal, or pick the browser and it prints a one-time link to a local settings dashboard where you click them instead.</p>
+<p>Set the target above today's score. If the codebase scores 28 and the target is 70, every ticket has to leave the code it touches at 70 or better, so the rest of the codebase gets cleaner one ticket at a time.</p>
+<pre><code>docker run -it --rm -p 127.0.0.1:7777:7777 -v "$PWD:/repo" krypton   # terminal or local dashboard
+krypton setup --page                                                  # straight to the dashboard link
+krypton setup --mode manual|auto --target 70 --runs 3                 # no questions</code></pre>
+<ul><li><b>Ask me</b> (manual): your agent builds a review page on your computer for the ticket it is working on, styled by your <code>themes.md</code> (setup writes a starter one if you have none). You keep the best try or send it back before anything goes to GitHub.</li>
+<li><b>Auto</b>: <code>krypton review</code> puts back the best run itself and the agent carries on.</li></ul>
+<p>You can change these later in the terminal (<code>krypton setup</code>) or on the review page your agent builds, which has a small Settings panel styled by your <code>themes.md</code>. The answer is kept in <code>.krypton/settings.json</code>, which git never sees. <code>krypton review --auto</code> or <code>--manual</code> overrides it for one run.</p>
 
 <h2 id="flow">The review step</h2>
 <ol class="steps">
@@ -33,7 +100,7 @@
 <p>Scores as usual, then adds the run to the log and saves its attempt. <code>--ticket</code> names the piece of work; the first run of a ticket is run 0. It needs a git repository with a first commit and must be run from the repository's top folder. The <code>.krypton/</code> folder ignores itself (it holds a <code>.gitignore</code> of its own), so the log and the saved code cannot be committed by accident.</p>
 
 <h3>review</h3>
-<pre><code>krypton review [REPO] [--ticket TEXT] [--json]</code></pre>
+<pre><code>krypton review [REPO] [--ticket TEXT] [--json] [--auto|--manual]</code></pre>
 <p>Without <code>--json</code> it prints a short summary. With it:</p>
 <pre><code>{
   "ticket": "fix discount rounding",
@@ -52,36 +119,33 @@
 <pre><code>krypton restore --run N [REPO] [--ticket TEXT] [--dry-run] [--force]</code></pre>
 <p>Puts the files back to how they were at run N. It refuses if the files have changed since the last logged run, so nothing unsaved is lost; <code>--force</code> skips that check after saving what is there to <code>.krypton/attempts/before-restore.patch</code>. <code>--dry-run</code> lists the files it would change and touches nothing. If a patch does not apply cleanly, everything is put back and the reason is printed. No commits or branches are made.</p>
 
-<h3>comment, badge, and scan --summary</h3>
+<h3>comment (the scorecard) and scan --summary</h3>
 <pre><code>krypton scan . --summary head.json
-krypton comment base.json head.json [--badge FILE] [--fail-if-worse]
-krypton badge head.json purity.json</code></pre>
-<p><code>--summary</code> writes the run's scores to a file and does not fail on a flagged review. <code>comment</code> prints the pull request comment as markdown; <code>badge</code> writes the README badge as a <a href="https://shields.io/badges/endpoint-badge">shields.io endpoint</a> file.</p>
+krypton comment base.json head.json [--line FILE] [--fail-if-worse]</code></pre>
+<p><code>--summary</code> writes the run's scores to a file and does not fail on a flagged review. <code>comment</code> prints the pull request scorecard as markdown, and <code>--line</code> writes the gate line.</p>
 
 <h2 id="page">The review page</h2>
 <p>Krypton does not build the page and does not read <code>themes.md</code>. The agent you already use builds it, following <a href="https://github.com/pinklamb/Krypton/blob/main/agent/review-brief.md"><code>agent/review-brief.md</code></a>: the same outline every time (the ticket, purity now and if you approve, one card per stuck function with its scores and two buttons, and a footer), styled the way <code>themes.md</code> describes in your own words. See the <a href="review-preview.html">preview</a>.</p>
 
 <h2 id="github">On GitHub</h2>
-<p>The action in this repository's root scores a pull request against its base, keeps one comment up to date, and refreshes a badge when you push.</p>
+<p>The action in this repository's root scores a pull request against its base and puts <b>one line</b> in its checks. Nothing is posted in the conversation, so there is no comment to scroll past and no notification on every push.</p>
 <pre><code>name: Krypton
 on:
   pull_request:
-  push:
-    branches: [main]
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  statuses: write
+  id-token: write
 jobs:
   structure:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: pinklamb/Krypton@main
-        with:
-          server: ${{ secrets.KRYPTON_SERVER }}
-          fail-on-worse: "false"</code></pre>
-<p>The comment looks like this, and is edited in place on every push:</p>
+      - uses: pinklamb/Krypton@main</code></pre>
+<p>The line is green unless you turn on <code>fail-on-worse</code> and the score went down: add <code>with: { fail-on-worse: "true" }</code> to the action step.</p>
+<p>The action logs in to Krypton as your repository with the run's own GitHub identity (<code>id-token: write</code>), so there is no secret to store. <code>statuses: write</code> lets it set the line.</p>
+<p>The scorecard in the run summary looks like this:</p>
 <pre><code>### Krypton · ▲ 71% → 74% (+3)
 
 | | Before | After |
@@ -92,9 +156,6 @@ jobs:
 **2 functions got worse**
 - `billing.py · apply_discount` 40× → 44×
 - `auth.ts · refresh_session` under the limit → 2×</code></pre>
-<p>For the badge, add this to your README with your own name and repository:</p>
-<pre><code>![Krypton](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPO/krypton-badge/purity.json)</code></pre>
-<p>The badge file is read from a public address, so it shows only on public repositories. For a private repository, commit a badge image instead.</p>
 
 <h2 id="limits">Limits</h2>
 <ul>
@@ -104,9 +165,8 @@ jobs:
 <li>The wording bands in the preview ("very hard to read") are only examples; the commands report numbers.</li>
 </ul>
 
-<div class="pager"><a href="integrations.html">← Integrations</a><a href="faq.html">FAQ →</a></div>
-</main>
-</div>
-<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+<nav class="pager" aria-label="Previous and next"><a class="prev" href="docs.html"><span><svg class="ar lf" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> Previous</span>Overview</a><a class="next" href="prompt-caching.html"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>Prompt caching</a></nav>
+</main></div>
+<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

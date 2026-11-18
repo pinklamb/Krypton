@@ -2,21 +2,51 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Command reference | Krypton</title>
 <meta name="description" content="Every Krypton client command: scan, order and wire, with their options, token counting and exit codes.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
+<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html" aria-current="page">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
-<div class="wrap">
-<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#scan">scan</a></li><li><a href="#order">order</a></li><li><a href="#wire">wire</a></li><li><a href="#exit">Exit codes</a></li><li><a href="#scanned">What gets scanned</a></li><li><a href="#notyet">Not in version 2 yet</a></li><li><a href="#examples">Examples</a></li></ul></aside>
-<main id="content">
+<header class="top"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs.html">Overview</a></li></ul><h2>Guides</h2><ul><li><a href="review.html">Review and setup</a></li><li><a href="prompt-caching.html">Prompt caching</a></li><li><a href="order.html">File ordering</a></li><li><a href="integrations.html">Integrations</a></li><li><a href="case-study.html">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference.html" aria-current="page">Commands</a><ul class="sub"><li><a href="#scan">krypton scan</a></li><li><a href="#order">krypton order</a></li><li><a href="#wire">krypton wire</a></li><li><a href="#exit">Exit codes</a></li><li><a href="#scanned">What gets scanned</a></li><li><a href="#examples">Examples</a></li></ul></li><li><a href="api.html">API</a></li><li><a href="wire-format.html">Wire format</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="faq.html">FAQ</a></li></ul></details></nav><main id="content">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <div class="eyebrow">Command reference</div>
 <h1>Command reference</h1>
-<p class="lede">Everything the <code>krypton</code> client can do. Every command that talks to a server uses <code>--server URL</code>, or the <code>KRYPTON_SERVER</code> environment variable.</p>
+<p class="lede">Everything the <code>krypton</code> client can do.</p>
 
 <h2 id="scan">krypton scan</h2>
 <pre><code>krypton scan REPO [options]</code></pre>
@@ -27,13 +57,13 @@
 <tr><td><code>--base REF</code></td><td>Score only files and lines changed since a git ref (new files count in full).</td></tr>
 <tr><td><code>--names</code></td><td>Put your real function names back into the review. They never left your machine.</td></tr>
 <tr><td><code>--json</code></td><td>Print the server's result as JSON instead of the review.</td></tr>
+<tr><td><code>--no-loader</code></td><td>Do not draw the lavender crystal while the scan runs. It only appears on a real terminal (never in a pipe, in CI or with <code>--json</code> output) and is also switched off by <code>KRYPTON_NO_LOADER</code>; <code>NO_COLOR</code> draws it without colour.</td></tr>
 <tr><td><code>--save FILE</code></td><td>Also write the server's whole answer to a file.</td></tr>
-<tr><td><code>--server URL</code></td><td>The server. Default: <code>KRYPTON_SERVER</code>, else <code>http://localhost:8080</code>.</td></tr>
 </table></div>
 
 <h2 id="order">krypton order</h2>
 <pre><code>krypton order REPO [options]</code></pre>
-<p>Reads the repository's git history on this machine and builds a request that holds only file names, token counts and which files each recent commit touched. With <code>--post</code> (or <code>--server</code>) it sends the request and prints the server's decision: <code>keep</code> (send your request unchanged) or <code>reorder</code> with the order to use. Without them it prints the request. See <a href="order.html">file ordering</a>.</p>
+<p>Reads the repository's git history on this machine and builds a request that holds only file names, token counts and which files each recent commit touched. With <code>--post</code> it sends the request and prints the server's decision: <code>keep</code> (send your request unchanged) or <code>reorder</code> with the order to use. Without them it prints the request. See <a href="order.html">file ordering</a>.</p>
 <div class="scroll"><table>
 <tr><th>Option</th><th>What it does</th></tr>
 <tr><td><code>--subdir DIR</code>, <code>--ext .py,.ts</code></td><td>Which folder and file suffixes go in the prompt. Default: the whole repository, <code>.py</code>.</td></tr>
@@ -41,7 +71,7 @@
 <tr><td><code>--model NAME</code></td><td>Which model the prompt is for, so file sizes are counted in that model's tokens. See <a href="#tokens">Token counts</a>.</td></tr>
 <tr><td><code>--tokenizer o200k_base|cl100k_base|estimate</code></td><td>Choose the tokenizer directly.</td></tr>
 <tr><td><code>--tokens-from FILE.json</code></td><td>Counts you computed yourself: <code>{"path": tokens}</code>.</td></tr>
-<tr><td><code>--post</code>, <code>--server URL</code></td><td>Send the request and print the decision.</td></tr>
+<tr><td><code>--post</code></td><td>Send the request and print the decision.</td></tr>
 <tr><td><code>--json</code></td><td>Print the decision as JSON.</td></tr>
 </table></div>
 
@@ -76,9 +106,6 @@ krypton wire --stdin-json &lt; files.json</code></pre>
 <li>A <code>krypton: ignore -- reason</code> comment above a function waives it. The review lists every waiver with its reason.</li>
 </ul>
 
-<h2 id="notyet">Not in version 2 yet</h2>
-<p>These options of the earlier Python command line have not been rebuilt: <code>--top</code>, <code>--no-worse</code>, <code>--config</code> on <code>scan</code>, and the loading animation. <code>--base</code> and <code>--json</code> are back, and the run log and the stalled hand-off came back as <code>--log</code>, <code>review</code> and <code>restore</code> (see <a href="review.html">Review</a>). See the <a href="https://github.com/pinklamb/Krypton/blob/main/CHANGELOG.md">changelog</a>.</p>
-
 <h2 id="examples">Examples</h2>
 <pre><code><span class="c"># everything on this branch, for CI (exit code 1 on failure)</span>
 krypton scan . --base origin/main
@@ -92,9 +119,8 @@ krypton wire src/app.py &gt; request.json
 <span class="c"># should I reorder this prompt? count in GPT-4o tokens</span>
 krypton order . --subdir src --ext .py,.ts --model gpt-4o --post</code></pre>
 
-<div class="pager"><a href="how-it-works.html">← How it works</a><a href="integrations.html">Integrations →</a></div>
-</main>
-</div>
-<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+<nav class="pager" aria-label="Previous and next"><a class="prev" href="case-study.html"><span><svg class="ar lf" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> Previous</span>Case study</a><a class="next" href="api.html"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>API</a></nav>
+</main></div>
+<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

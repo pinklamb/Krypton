@@ -1,11 +1,12 @@
-"""A stand-in for GitHub's OAuth and API, for tests and for trying the sign-in flow locally with no credentials.
+"""A stand-in for GitHub's sign-in and API, for tests and for trying the sign-in flow locally with no credentials.
 
     python fake_github.py 9001
     GITHUB_CLIENT_ID=cid GITHUB_CLIENT_SECRET=shh BASE_URL=http://127.0.0.1:8080 \\
     GITHUB_OAUTH_BASE=http://127.0.0.1:9001 GITHUB_API_BASE=http://127.0.0.1:9001 python server.py
 
-It approves every sign-in, checks the PKCE verifier the way GitHub does, serves one fake user with two repositories,
-and hands out a repository archive (including hostile members) through a redirect, like GitHub's tarball endpoint.
+It approves every sign-in, checks the PKCE verifier the way GitHub does, serves one fake user who granted the app two repositories (through
+one installation, as a GitHub App sees them), hands out a repository archive (including hostile members) through a redirect like GitHub's
+tarball endpoint, and records the tokens revoked at sign-out.
 """
 
 import io
@@ -25,6 +26,7 @@ REPOS = [
     {"full_name": "octotest/garth", "private": False, "language": "Python", "pushed_at": "2026-09-01T00:00:00Z"},
 ]
 TOKEN = "gho_FAKE_TOKEN"
+INSTALLATION = 7
 KNOWN = {r["full_name"] for r in REPOS}
 
 
@@ -57,11 +59,12 @@ def archive(marker: str = "") -> bytes:
 
 
 class FakeGitHub(BaseHTTPRequestHandler):
-    """Authorize (auto-approve), exchange a code for a token (PKCE-checked), then /user and /user/repos."""
+    """Authorize (auto-approve), exchange a code for a token (PKCE-checked), /user, the installations, and token revocation."""
 
     challenges: dict = {}
     fail_exchange = False
     secret = "shh"
+    revoked: list = []  # tokens deleted through DELETE /applications/{client_id}/token
     redirect_to = ""  # set to send the archive redirect somewhere else
     download_auth: list = []  # Authorization header seen on each archive download
     marker = ""  # a path the hostile setup.py would write if anything ever ran it
@@ -87,7 +90,7 @@ class FakeGitHub(BaseHTTPRequestHandler):
         form = parse_qs(self.rfile.read(int(self.headers["Content-Length"])).decode())
         code, verifier = form["code"][0], form["code_verifier"][0]
         bad = self.fail_exchange or self.challenges.get(code) != auth.code_challenge(verifier) or form["client_secret"][0] != self.secret
-        self._json({"error": "bad_verification_code"} if bad else {"access_token": TOKEN, "token_type": "bearer", "scope": "read:user"})
+        self._json({"error": "bad_verification_code"} if bad else {"access_token": TOKEN, "token_type": "bearer"})
 
     def _redirect(self, location):
         self.send_response(302)
@@ -109,6 +112,15 @@ class FakeGitHub(BaseHTTPRequestHandler):
             return self._json({"message": "Not Found"}, 404)
         self._redirect(self.redirect_to or f"http://{self.headers['Host']}/codeload/{repo}")
 
+    def do_DELETE(self):
+        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])) or b"{}")
+        if not self.path.startswith("/applications/") or not (self.headers.get("Authorization") or "").startswith("Basic "):
+            return self._json({"message": "Not Found"}, 404)
+        self.revoked.append(body.get("access_token"))
+        self.send_response(204)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_GET(self):
         url = urlsplit(self.path)
         if url.path == "/login/oauth/authorize":
@@ -119,7 +131,13 @@ class FakeGitHub(BaseHTTPRequestHandler):
             return self._json({"message": "Bad credentials"}, 401)
         if url.path.startswith("/repos/") and url.path.endswith("/tarball"):
             return self._tarball(url.path[len("/repos/") : -len("/tarball")])
-        self._json(USER if url.path == "/user" else REPOS)
+        if url.path == "/user":
+            return self._json(USER)
+        if url.path == "/user/installations":
+            return self._json({"total_count": 1, "installations": [{"id": INSTALLATION}]})
+        if url.path == f"/user/installations/{INSTALLATION}/repositories":
+            return self._json({"total_count": len(REPOS), "repositories": REPOS})
+        self._json({"message": "Not Found"}, 404)
 
     def log_message(self, *args):
         pass

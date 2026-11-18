@@ -103,7 +103,7 @@ class SignInTests(unittest.TestCase):
     # Full flow connects and never leaks the token.
     def test_sign_in_flow(self):
         reply, _ = self.finish_login()
-        self.assertEqual((reply.status, reply.getheader("Location")), (302, "/?github=connected"))
+        self.assertEqual((reply.status, reply.getheader("Location")), (302, "/tree.html?github=connected"))
         _, body = self.me.call("GET", "/api/session")
         data = json.loads(body)
         self.assertTrue(data["connected"])
@@ -128,16 +128,16 @@ class SignInTests(unittest.TestCase):
         _, query = self.start_login()
         FakeGitHub.challenges["c"] = "a-different-challenge"
         reply, _ = self.me.call("GET", f"/auth/github/callback?code=c&state={query['state'][0]}")
-        self.assertEqual(reply.getheader("Location"), "/?github=error")
+        self.assertEqual(reply.getheader("Location"), "/tree.html?github=error")
         self.assertFalse(json.loads(self.me.call("GET", "/api/session")[1])["connected"])
 
     # Denied and failed exchange redirect with a reason.
     def test_denied_exchange(self):
         reply, _ = self.me.call("GET", "/auth/github/callback?error=access_denied")
-        self.assertEqual(reply.getheader("Location"), "/?github=denied")
+        self.assertEqual(reply.getheader("Location"), "/tree.html?github=denied")
         FakeGitHub.fail_exchange = True
         reply, _ = self.finish_login("code-2")
-        self.assertEqual(reply.getheader("Location"), "/?github=error")
+        self.assertEqual(reply.getheader("Location"), "/tree.html?github=error")
 
     # The sign in cookie ends with the browser session.
     def test_session_cookie(self):
@@ -194,16 +194,24 @@ class SignInTests(unittest.TestCase):
             off.shutdown()
             off.server_close()
 
-    # Pages still served with connect src.
-    def test_connect_src(self):
+    # The site's files are served with the policy; nothing outside the site folder or hidden is.
+    def test_site_files(self):
         reply, body = self.me.call("GET", "/")
         self.assertEqual(reply.status, 200)
-        self.assertIn("connect-src 'self'", reply.getheader("Content-Security-Policy"))
-        self.assertEqual(self.me.call("GET", "/benchmarks")[0].status, 200)
-        reply, body = self.me.call("GET", "/security")
-        self.assertEqual(reply.status, 200)
-        self.assertIn("HTTPS protects the road", body)
-        self.assertEqual(self.me.call("GET", "/nope")[0].status, 404)
+        self.assertIn("connect-src 'self';", reply.getheader("Content-Security-Policy"))
+        self.assertEqual(self.me.call("GET", "/docs.html")[0].status, 200)
+        css, _ = self.me.call("GET", "/assets/site.css")
+        self.assertTrue(css.getheader("Content-Type").startswith("text/css"))
+        for missing in ("/nope", "/../dashboard/auth.py", "/%2e%2e/dashboard/auth.py", "/.git/config"):
+            self.assertEqual(self.me.call("GET", missing)[0].status, 404, missing)
+
+
+    # Signing out revokes the token with GitHub.
+    def test_logout_revokes(self):
+        FakeGitHub.revoked = []
+        self.finish_login()
+        self.me.call("POST", "/auth/logout", {"X-Requested-With": "krypton"})
+        self.assertEqual(FakeGitHub.revoked, ["gho_FAKE_TOKEN"])
 
 
 class SessionLifetimeTests(unittest.TestCase):

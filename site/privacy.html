@@ -2,21 +2,76 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Privacy | Krypton</title>
 <meta name="description" content="What Krypton sees of your code: the command line, the demo and hosted scoring, and what is and is not sent.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
+<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html" aria-current="page">Privacy</a></nav></div></header>
-<div class="wrap single">
+<header class="top"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs.html">Overview</a></li></ul><h2>Guides</h2><ul><li><a href="review.html">Review and setup</a></li><li><a href="prompt-caching.html">Prompt caching</a></li><li><a href="order.html">File ordering</a></li><li><a href="integrations.html">Integrations</a></li><li><a href="case-study.html">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference.html">Commands</a></li><li><a href="api.html">API</a></li><li><a href="wire-format.html">Wire format</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="privacy.html" aria-current="page">Privacy</a><ul class="sub"><li><a href="#ways">Two ways to run Krypton</a></li><li><a href="#two-grids">Two grids, no source</a></li><li><a href="#sent">What is sent, and what stays on your machine</a></li><li><a href="#limits">What the server sees, and why</a></li></ul></li><li><a href="faq.html">FAQ</a></li></ul></details></nav><main id="content">
 
-<main id="content">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <div class="eyebrow">Privacy</div>
 <h1>What Krypton sees of your code</h1>
 <p class="lede">Krypton is built so that scoring never needs your source files. This page says exactly what each way of running it reads, and what it does not.</p>
+<div class="glance"><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>No source sent</b><span>Scoring works from structure alone.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></svg><b>Names become hashes</b><span>The table back to names stays with you.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>Check it yourself</b><span>krypton wire prints the exact request.</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <h2 id="ways">Two ways to run Krypton</h2>
 <div class="scroll"><table>
@@ -24,7 +79,6 @@
 <tr><td><b>Command line (<code>krypton</code>)</b></td><td>Your machine reads the code and sends the server only a description of its structure. <b>The server never receives your source files.</b> <code>krypton wire</code> prints exactly what would be sent.</td><td>Available</td></tr>
 <tr><td><b>The hosted demo</b></td><td>The repository you connect is fetched from GitHub by the demo's server with <i>your</i> GitHub access (GitHub authenticates you; Krypton keeps no accounts), read in memory and turned into a syntax tree there; only the tree goes on to the scoring server. Nothing is written to disk, run or kept after the scan, and your GitHub token is forgotten when you sign out or after an hour. <b>The demo does read your code.</b></td><td>Live</td></tr>
 </table></div>
-<p>The rest of this page is about the command line, because it is the one built to keep your code private.</p>
 
 <h2 id="two-grids">Two grids, no source</h2>
 <p>A small program on your machine parses your files and sends the server two things.</p>
@@ -38,28 +92,22 @@
 <div class="scroll"><table>
 <tr><th>Sent to the server</th><th>Stays on your machine</th></tr>
 <tr><td>Tree structure and positions of every node</td><td>The source text itself</td></tr>
-<tr><td>Names as short fingerprints (a hash), so the server can tell "the same name" from "a different name"</td><td>The names in readable form, and the map from fingerprint back to name</td></tr>
-<tr><td>For expressions it only needs to compare (a returned value, the object a method is called on): a fingerprint</td><td>The text of those expressions</td></tr>
+<tr><td>Names as keyed hashes, so the server can tell "the same name" from "a different name"</td><td>The names in readable form, the key, and the map from hash back to name</td></tr>
+<tr><td>For expressions it only needs to compare (a returned value, the object a method is called on): a keyed hash</td><td>The text of those expressions</td></tr>
 <tr><td>Per line: length and where the visible characters are</td><td>Every string, number and comment, and the words in them</td></tr>
 <tr><td>Which of your files import which, as file paths</td><td>The import statements as written</td></tr>
-<tr><td>File path, language and size</td><td>Waiver comments and their reasons (the server learns only that a waiver exists, and a fingerprint of its reason)</td></tr>
+<tr><td>File path, language and size</td><td>Waiver comments and their reasons (the server learns only that a waiver exists, and a keyed hash of its reason)</td></tr>
 </table></div>
 
-<h2 id="limits">The honest limits</h2>
+<h2 id="limits">What the server sees, and why</h2>
 <div class="note">
-<p><b>Fingerprints are not encryption.</b> A name is replaced by a hash. Someone who could guess a name could hash the guess and compare, but nobody can read a name they cannot guess.</p>
-<p><b>File paths are visible.</b> They are sent and they appear in the results, so folder and file names are not private from the server.</p>
-<p><b>Structure and layout are visible.</b> The server can see how many functions a file has, how large they are and how deeply they nest, and how long your lines are. That is what it needs to score them.</p>
-<p><b>The demo is different.</b> It fetches and reads the repository you connect. It does not keep it, but it does see it.</p>
-<p><b>Nothing is stored.</b> The scoring server keeps no tree and no result. Its logs record a request id and a size, never code, and it counts requests per address for a minute to enforce its rate limit.</p>
+<p><b>Your code's shape.</b> To score code, the server needs its structure: how many functions a file has, how large they are, how deeply they nest and how long the lines are. That is what it scores, and all it needs.</p>
+<p><b>File paths.</b> Folder and file names are sent and appear in the results, so the report can point you to the right file.</p>
+<p><b>Names, keyed.</b> Each name is sent as a keyed hash (HMAC-SHA256). The key is made fresh for every scan, stays in memory on your machine and is thrown away afterwards, so nobody can test a guess against the hashes or link one request to another.</p>
 </div>
 
-<h2 id="check">How we check it</h2>
-<p>This is not left to review. An automated test takes real files, collects every word their code contains (names, string contents, comment text, import paths, waiver reasons) and fails if any of those words appears anywhere in the request or in the server's answer. It runs on more than 60 real files, and the same check run on the Rust program's output across 240 files found none. A deliberate leak is planted in a test to prove the check can fail.</p>
-
-<div class="pager"><a href="faq.html">← FAQ</a><a href="architecture.html">Architecture →</a></div>
-</main>
-</div>
-<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+<nav class="pager" aria-label="Previous and next"><a class="prev" href="architecture.html"><span><svg class="ar lf" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> Previous</span>Architecture</a><a class="next" href="faq.html"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>FAQ</a></nav>
+</main></div>
+<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

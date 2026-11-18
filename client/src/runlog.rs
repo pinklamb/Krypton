@@ -110,6 +110,11 @@ fn now() -> Result<u64, Failure> {
     Ok(since.as_secs())
 }
 
+/// A function's name with every dotted part put back: a method arrives as `class_digest.method_digest`, each part hashed on its own.
+fn real_name(digest: &str, names: &Names) -> String {
+    digest.split('.').map(|part| names.get(part).map_or(part, String::as_str)).collect::<Vec<_>>().join(".")
+}
+
 /// `file::function` and how many times over the limit, for every function in the answer that is at or over it.
 fn over_the_limit(file: &Value, names: &Names) -> Vec<(String, f64)> {
     let Some(filename) = file.get("filename").and_then(Value::as_str) else { return Vec::new() };
@@ -118,7 +123,7 @@ fn over_the_limit(file: &Value, names: &Names) -> Vec<(String, f64)> {
         .filter_map(|function| {
             let times = function.get("times_over_limit").and_then(Value::as_f64)?;
             let digest = function.get("name").and_then(Value::as_str)?;
-            Some((format!("{filename}::{}", names.get(digest).map_or(digest, String::as_str)), times))
+            Some((format!("{filename}::{}", real_name(digest, names)), times))
         })
         .collect()
 }
@@ -175,6 +180,15 @@ mod tests {
         let keys: Vec<&str> = run.functions.keys().map(String::as_str).collect();
         assert_eq!(keys, ["a.py::apply", "a.py::edge", "b.ts::apply"], "the null function is left out and names are real");
         assert_eq!((run.purity, run.number), (74, 0), "purity and run number");
+    }
+
+    // A method's class and name are each hashed, and both come back.
+    #[test]
+    fn test_method_names() {
+        let names: Names = [("c1".to_string(), "Client".to_string()), ("m1".to_string(), "connect".to_string())].into_iter().collect();
+        let answer = json!({ "purity_score": 60, "files": [ { "filename": "a.py", "functions": [ { "name": "c1.m1", "times_over_limit": 2.0 } ] } ] });
+        let run = from_answer(&answer, &names, "t", 0).unwrap();
+        assert_eq!(run.functions.keys().next().map(String::as_str), Some("a.py::Client.connect"), "both parts are real names");
     }
 
     // An answer without a purity score is an error, not a zero.

@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+- `krypton setup`, run once per repository (the first `docker run -it ... krypton` starts it): maps the whole codebase and shows its purity today, then asks for a **target** purity per ticket (set it above today's score so each ticket lifts the code it touches), **max tries** before a function counts as stuck (1-10, default 3), and what happens then: **ask me** (a local review page for the current ticket, styled by `themes.md`; a starter file is written if you have none) or **auto** (`krypton review` puts back the best run). Kept in `.krypton/settings.json`; flags `--mode --target --runs --no-map` skip the questions. `krypton review --auto|--manual` overrides the mode once. The review JSON adds `mode`, `target`, `max_runs`, `meets_target` and `auto_approved`.
+- `krypton setup` asks first where to choose the settings: in the terminal, or on a local settings dashboard. The dashboard is a one-time link (`http://localhost:7777/<secret>`) served by the CLI itself; it stops once you save. `--page` goes straight to it, `--listen HOST:PORT` (or `KRYPTON_LISTEN`) moves it. In Docker, publish the port with `-p 127.0.0.1:7777:7777`; the README helper does this for `setup`.
+- Names are keyed. Every name and compared expression is now sent as HMAC-SHA256 under a 256-bit key made fresh for each scan, held in memory and thrown away, so nobody can recover a name by hashing guesses or link two requests. Only the short public list of framework names the server recognises (`addEventListener`, Celery's `task`, ...) keeps the plain hash. Scores are unchanged (checked on a 145-file codebase: same purity, same 1,115 functions). `KRYPTON_KEY` (64 hex) fixes the key for reproducible `krypton wire` output.
+- The terminal crystal is lavender now, and setup opens with it.
+- The review page your agent builds now has a Settings panel (target, max tries, ask me / auto), styled by `themes.md`; it saves through `krypton setup`, so the CLI checks every value.
+- `krypton order` now tries several file orders against your git history (stable files first, big files that rarely change first, least recently changed first, alphabetical, reverse alphabetical) and uses the one that would have kept the most of the prompt cached, still only when it clearly beats your own order. The summary lists every order tried; `--json` adds `strategy` and `tried`.
+- Login. The server now scores only for a logged-in user or a GitHub Actions run. `krypton login` uses GitHub's device flow (a short code you approve at github.com/login/device); the server trades GitHub's answer for a 30-day Krypton token and keeps no GitHub token. `krypton setup` logs you in first, the token lives in `$KRYPTON_HOME/credentials` (the Docker helper keeps it in the `krypton-home` volume), `KRYPTON_TOKEN` overrides it, and `krypton logout` removes it. In CI, `krypton login --github-actions` trades the run's own OIDC identity (`permissions: id-token: write`) for a one-hour token, so no secret is stored.
+- Pull requests get one line and no comment: the Krypton gate line now also says how many functions got worse (`Purity ▲ 71% → 74% (+3) · 2 functions worse`), its Details opens the repository's tree on the Krypton site when the Action's new `site` input is set, and the scorecard goes to the Actions run summary. The Action no longer needs `pull-requests: write`.
+- Removed the README purity badge: `krypton badge`, `krypton comment --badge`, the Action's push step and its `badge-branch` input, and the `contents: write` permission it needed. The pull request comment and the Krypton gate line stay.
+- A "Krypton gate" line in the checks on every pull request, such as `Purity ▲ 71% → 74% (+3)`: the purity before and after and the change, at a glance. It fails only when `fail-on-worse` is on and the score went down. `krypton comment --line FILE` writes the line; the action needs `statuses: write`.
+
+## 2.2.0
+
+- A green crystal draws itself in the terminal while `krypton scan` runs, and closes when the run is done. It writes to standard error only, appears only on a real terminal (never in a pipe, in CI, on a dumb terminal or with `--json` output), erases itself before the report prints, and gives the cursor back even when the run fails. `--no-loader` or `KRYPTON_NO_LOADER` turn it off; `NO_COLOR` draws it without colour.
+- The guardrail angle: the docs and the demo now lead with the purity score and the idea that every fast agent needs a limit, and explain how to compare models by what they do to your own code. The demo has a fifth step, Models.
+
 ## 2.1.0
 
 A review step for the work of coding agents, and the pull request pieces around it.
@@ -11,6 +29,9 @@ A review step for the work of coding agents, and the pull request pieces around 
 - `krypton scan --summary FILE`, `krypton comment BEFORE AFTER [--badge FILE] [--fail-if-worse]` and `krypton badge SUMMARY OUT` write the pull request comment (one comment, edited in place) and the README badge.
 
 ### Around it
+- The client talks to the hosted Krypton server by default, so there is no server address to set. `--server` or `KRYPTON_SERVER` still point it somewhere else.
+- `client/Dockerfile`: build the client as a local Docker image and run it with `docker run`; nothing else to install.
+- The documentation is one scrolling guide (get started, how it works, what the server receives, review) with a simpler navigation; the detailed pages are under Reference.
 - `action.yml`: a GitHub Action that scores a pull request against its base, posts or updates the comment, and refreshes the badge on a push.
 - `themes.md` and `agent/review-brief.md`: your coding agent builds a local review page from them (the outline is fixed; `themes.md` only styles it). Krypton itself builds no page. See `site/review.html` and `site/review-preview.html`.
 
@@ -25,7 +46,7 @@ Krypton is now written in Rust, in two parts.
 - No fallback anywhere: a file that cannot be read, parsed or sent is an error with a reason and a non-zero exit code.
 
 ### The server (private)
-- An axum server: `POST /v1/score`, `POST /v1/order`, `GET /v1/capabilities`, `GET /v1/health`. It has no accounts or API keys, limits each address to a few requests a minute, refuses `detail: "full"` unless started to allow it, and stores nothing.
+- An axum server: `POST /v1/score`, `POST /v1/order`, `GET /v1/capabilities`, `GET /v1/health`. It refuses `detail: "full"` unless started to allow it.
 - The scoring engine is a Rust port that gives the same answers as the Python engine it replaces on every check: 976 source files, 388 requests, 6,000 damaged trees, 2,516 ordering requests, and the garth repository at all three levels.
 - Memory is budgeted: each request reserves its share of the container's memory from the size its gzip stream declares, before anything is decompressed, so an oversized or lying upload is refused with a 413 (a 300 MB gzip bomb peaks at 5 MB), and large scans queue instead of running all at once (six 110,000-line scans at once peak at 300 MB in a 512 MB container).
 - Scoring runs off the async threads, one job per core, and the permit is held until the work really finishes; when too many requests are waiting the answer is a clean `503 busy` with `Retry-After`, so a rush of requests cannot pile up memory or oversubscribe the cores.
@@ -38,7 +59,7 @@ Krypton is now written in Rust, in two parts.
 - The Python engine and the `krypton` Python package. The Rust server replaces them, and the scoring maths now lives only on the server.
 
 ### Not rebuilt yet
-- `--top`, `--no-worse`, `--config` on `scan`, and the loading animation of the Python command line (`--history` and `--handoff-stalled` are now `--log` and `krypton review`).
+- `--top`, `--no-worse`, `--config` on `scan` (`--history` and `--handoff-stalled` are now `--log` and `krypton review`).
 - An MCP tool for agents.
 
 ## 1.x (Python)

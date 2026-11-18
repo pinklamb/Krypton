@@ -2,23 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Integrations | Krypton</title>
 <meta name="description" content="Use Krypton with coding agents, CI, Docker and the hosted demo.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
+<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html" aria-current="page">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
-<div class="wrap">
-<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#agents">Coding agents</a></li><li><a href="#ci">Pre-commit and CI</a></li><li><a href="#docker">Docker</a></li><li><a href="#demo">Hosted demo</a></li></ul></aside>
-<main id="content">
+<header class="top"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs.html">Overview</a></li></ul><h2>Guides</h2><ul><li><a href="review.html">Review and setup</a></li><li><a href="prompt-caching.html">Prompt caching</a></li><li><a href="order.html">File ordering</a></li><li><a href="integrations.html" aria-current="page">Integrations</a><ul class="sub"><li><a href="#agents">Coding agents</a></li><li><a href="#ci">Pre-commit and CI</a></li><li><a href="#docker">Docker</a></li><li><a href="#demo">The hosted demo</a></li></ul></li><li><a href="case-study.html">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference.html">Commands</a></li><li><a href="api.html">API</a></li><li><a href="wire-format.html">Wire format</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="faq.html">FAQ</a></li></ul></details></nav><main id="content">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <div class="eyebrow">Integrations</div>
 <h1>Use Krypton where your agent and your team already work</h1>
 
 <h2 id="agents">Coding agents</h2>
-<p>Any agent that can run a command can use Krypton. Add the rules from <a href="getting-started.html#agent">Getting started</a> to <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your tool's rules file. Use <code>--json</code> if a hook needs structured output.</p>
+<p>Any agent that can run a command can use Krypton. Add the rules from <a href="docs.html#agent">Getting started</a> to <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your tool's rules file. Use <code>--json</code> if a hook needs structured output.</p>
+<div class="glance"><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="m7 9 3 3-3 3M13 15h4"/></svg><b>Coding agents</b><span>A few lines in your rules file.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 1.3-4-2-6-2.5M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6.2 0C6.6 2.8 5.6 3.1 5.6 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4.2 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg><b>GitHub Action</b><span>A check and a comment on every pull request.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/></svg><b>Docker</b><span>One image; nothing else to install.</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <h2 id="ci">Pre-commit and CI</h2>
 <pre><code>krypton scan . --base origin/main || { echo "Krypton: structure check failed"; exit 1; }</code></pre>
@@ -28,20 +83,17 @@ on: pull_request
 jobs:
   structure:
     runs-on: ubuntu-latest
-    env:
-      KRYPTON_SERVER: ${{ secrets.KRYPTON_SERVER }}
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - run: cargo build --release --manifest-path path/to/client/Cargo.toml
-      - run: path/to/client/target/release/krypton scan . --base origin/${{ github.base_ref }}</code></pre>
-<p>The job needs a route to the Krypton server and nothing else.</p>
-<p>Or use the Krypton action, which also keeps one comment on each pull request up to date with the change in purity and refreshes a README badge. See <a href="review.html#github">Review</a>.</p>
+      - run: docker build -t krypton path/to/client
+      - run: docker run --rm -v "$PWD:/repo" krypton scan . --base origin/${{ github.base_ref }}</code></pre>
+<p>Or use the Krypton action, which sets one Krypton gate line in each pull request's checks and writes the scorecard to the run summary; it posts no comments. See <a href="review.html#github">Review</a>.</p>
 
 <h2 id="docker">Docker</h2>
-<pre><code>docker run --rm -v "$PWD:/work" -w /work rust:1 cargo build --release     # in client
-docker run --rm -e KRYPTON_SERVER -v "$PWD:/repo:ro" -v krypton_target:/target:ro \
-  debian:bookworm-slim /target/release/krypton scan /repo</code></pre>
+<pre><code>docker build -t krypton client
+docker run --rm -v "$PWD:/repo" krypton scan .</code></pre>
+<p>The image has git in it, so <code>--base</code>, <code>order</code> and <code>--log</code> work on the mounted repository.</p>
 
 <h2 id="demo">The hosted demo</h2>
 <p>The repository includes a small web app that shows what a codebase costs to read and what a refactor could save.</p>
@@ -52,9 +104,8 @@ docker run --rm -e KRYPTON_SERVER -v "$PWD:/repo:ro" -v krypton_target:/target:r
 </ol>
 <p>The savings use the rates measured on one repository (see <a href="prompt-caching.html">Prompt caching</a>), scaled to the visitor's repository, so treat them as estimates. Deployment steps (Docker and Railway) are in <a href="https://github.com/pinklamb/Krypton/blob/main/dashboard/DEPLOY.md">dashboard/DEPLOY.md</a>.</p>
 
-<div class="pager"><a href="command-reference.html">← Command reference</a><a href="prompt-caching.html">Prompt caching →</a></div>
-</main>
-</div>
-<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+<nav class="pager" aria-label="Previous and next"><a class="prev" href="order.html"><span><svg class="ar lf" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> Previous</span>File ordering</a><a class="next" href="case-study.html"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>Case study</a></nav>
+</main></div>
+<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

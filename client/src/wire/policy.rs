@@ -6,8 +6,6 @@
 
 use tree_sitter::Node;
 
-use super::digest::expression_digest;
-
 /// Names: sent as a digest, turned back into the real name by the client.
 pub const NAME_KINDS: &[&str] = &[
     "identifier",
@@ -102,9 +100,4 @@ fn decorator_target(decorator: Node) -> Option<Node> {
         target = target.and_then(|found| found.child_by_field_name("attribute"));
     }
     target
-}
-
-/// The digest of a node's text.
-pub fn digest_of(text: &str) -> String {
-    expression_digest(text)
 }

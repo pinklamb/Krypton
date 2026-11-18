@@ -14,9 +14,7 @@
 
 use std::collections::BTreeSet;
 
-use krypton_client::{
-    dirname, expression_digest, import_candidates, normpath, posix_join, Builder, ClientConfig, ImportConfig, Names, PythonImport, RawImports,
-};
+use krypton_client::{dirname, import_candidates, normpath, posix_join, Builder, ClientConfig, ImportConfig, NameKey, Names, PythonImport, RawImports};
 use serde_json::Value;
 
 #[test]
@@ -422,7 +420,8 @@ fn waiver_table() -> Vec<(&'static str, WaiverRows)> {
 
 #[test]
 fn test_waiver_facts() {
-    let builder = Builder::new(ClientConfig::from_overrides(Value::Null).expect("no overrides")).expect("patterns compile");
+    let key = NameKey::new([7; 32]);
+    let builder = Builder::new(ClientConfig::from_overrides(Value::Null).expect("no overrides"), key.clone()).expect("patterns compile");
     for (text, expected) in waiver_table() {
         let mut names = Names::new();
         let file = builder.file("a.py", text.as_bytes(), &BTreeSet::new(), &mut names).expect("a file");
@@ -430,11 +429,11 @@ fn test_waiver_facts() {
             file.waivers.iter().map(|(line, waiver)| (line.parse().expect("number"), waiver.comment_only, waiver.reason.clone())).collect();
         got.sort();
         let wanted: Vec<(usize, bool, Option<String>)> =
-            expected.iter().map(|(line, alone, reason)| (*line, *alone, (!reason.is_empty()).then(|| expression_digest(reason)))).collect();
+            expected.iter().map(|(line, alone, reason)| (*line, *alone, (!reason.is_empty()).then(|| key.digest(reason)))).collect();
         assert_eq!(got, wanted, "{text:?}");
         for (_, _, reason) in &expected {
             if !reason.is_empty() {
-                assert_eq!(names.get(&expression_digest(reason)).map(String::as_str), Some(*reason), "the client keeps the reason");
+                assert_eq!(names.get(&key.digest(reason)).map(String::as_str), Some(*reason), "the client keeps the reason");
             }
         }
     }

@@ -9,8 +9,8 @@ use std::fs;
 use std::io::{self, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 
-use krypton_client::{linguist_globs, Builder, ClientConfig, Names};
-use serde_json::{json, Value};
+use krypton_client::{build_repository, Builder, ClientConfig, Names};
+use serde_json::Value;
 
 use crate::Failure;
 
@@ -116,19 +116,6 @@ fn read_repository() -> Result<BTreeMap<String, String>, Failure> {
     serde_json::from_slice(&bytes).map_err(|error| Failure::Usage(format!("standard input must be a JSON object of path -> text: {error}")))
 }
 
-/// The config with the repository's own vendored and generated patterns added (only when it declares some). They go as `*_extra`: the server
-/// adds them to its own defaults, so the client never needs to know the defaults.
-fn with_attributes(mut config: Value, attributes: &str) -> Value {
-    let (vendored, generated) = linguist_globs(attributes);
-    let Some(map) = config.as_object_mut() else { return config };
-    for (key, extra) in [("vendored_path_globs_extra", vendored), ("generated_path_globs_extra", generated)] {
-        if !extra.is_empty() && !map.contains_key(key) {
-            map.insert(key.to_string(), json!(extra));
-        }
-    }
-    config
-}
-
 fn finish(builder: &Builder, files: Vec<krypton_client::WireFile>, names: &Names, options: &Options) -> Result<(), Failure> {
     if let Some(path) = &options.names_out {
         write_names(path, names)?;
@@ -140,22 +127,15 @@ fn finish(builder: &Builder, files: Vec<krypton_client::WireFile>, names: &Names
 }
 
 fn run_stdin(options: &Options) -> Result<(), Failure> {
-    let mut repository = read_repository()?;
-    let attributes = repository.remove(".gitattributes").unwrap_or_default();
-    let config = with_attributes(
-        match read_config(options.config.as_deref())? {
-            Value::Null => json!({}),
-            other => other,
-        },
-        &attributes,
-    );
-    let builder = Builder::new(ClientConfig::from_overrides(config)?)?;
-    let known: BTreeSet<String> = repository.keys().cloned().collect();
-    let (mut files, mut names) = (Vec::new(), Names::new());
-    for (path, text) in &repository {
-        files.push(builder.file(path, text.as_bytes(), &known, &mut names)?);
+    let repository = read_repository()?;
+    let config = read_config(options.config.as_deref())?;
+    let (request, names) = build_repository(repository, config, crate::name_key::for_this_run()?, &options.level, &options.detail)?;
+    if let Some(path) = &options.names_out {
+        write_names(path, &names)?;
     }
-    finish(&builder, files, &names, options)
+    let mut out = BufWriter::new(io::stdout().lock());
+    serde_json::to_writer(&mut out, &request).map_err(|error| Failure::Output(error.to_string()))?;
+    out.flush().map_err(|error| Failure::Output(error.to_string()))
 }
 
 pub fn run(args: &[String]) -> Result<(), Failure> {
@@ -163,7 +143,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     if options.stdin_json {
         return run_stdin(&options);
     }
-    let builder = Builder::new(ClientConfig::from_overrides(read_config(options.config.as_deref())?)?)?;
+    let builder = Builder::new(ClientConfig::from_overrides(read_config(options.config.as_deref())?)?, crate::name_key::for_this_run()?)?;
     let known = known_paths(&options)?;
     let (mut files, mut names) = (Vec::new(), Names::new());
     for file in &options.files {

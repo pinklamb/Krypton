@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your tree | Krypton</title>
+<meta name="description" content="See your own repository's tree: read and built in your browser, only the tree is scored.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
+<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap single wide"><main id="content">
+<style>
+.steps3 { display:grid; gap:22px; margin-top:6px; }
+.step3 { display:grid; grid-template-columns:44px minmax(0,1fr); gap:16px; align-items:start; }
+.step3 .n { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font:400 14px var(--mono); color:var(--acc); border:1px solid var(--acc); background:var(--card); }
+.step3.off { opacity:.45; } .step3 h3 { margin:4px 0 10px; }
+.pick { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px; }
+.pick input { flex:1 1 260px; min-width:0; font:400 15px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:11px 18px; }
+.pick input:focus { outline:2px solid var(--acc); outline-offset:2px; }
+.signed { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; font-size:15px; color:var(--ink2); }
+.signed img { width:28px; height:28px; border-radius:50%; }
+.repos { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.repos button { font:400 14px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:7px 14px; cursor:pointer; }
+.repos button:hover { border-color:var(--acc); } .repos button i { font-style:normal; color:var(--ink3); margin-left:6px; font-size:12px; }
+.btn.small { padding:9px 18px; font-size:14px; } .linkbtn { background:none; border:0; color:var(--acc); font:inherit; cursor:pointer; padding:0; text-decoration:underline; }
+.ticks { list-style:none; padding:0; display:flex; flex-wrap:wrap; gap:6px 18px; margin:12px 0 0; font:italic 400 16px var(--serif); color:var(--ink3); }
+.ticks li::before { content:"\2713  "; color:var(--acc); }
+.meterbar { height:10px; border-radius:999px; background:var(--well); overflow:hidden; margin:6px 0 10px; } .meterbar i { display:block; height:100%; width:0; background:var(--acc); border-radius:999px; transition:width .2s; }
+.say { font-size:15px; color:var(--ink2); }
+.err { color:var(--bad); font-size:15px; margin-top:10px; }
+.stage { position:relative; height:min(58vh,520px); border-radius:var(--r); overflow:hidden; background:var(--card); margin:6px 0 18px; touch-action:none; }
+.stage canvas { width:100%; height:100%; display:block; cursor:grab; } .stage canvas:active { cursor:grabbing; }
+.stage .pill { position:absolute; transform:translate(-50%,-100%); font:400 11.5px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px 11px; white-space:nowrap; pointer-events:none; opacity:0; }
+.stage .pill.top { border-color:var(--acc); box-shadow:0 0 18px var(--glow); }
+.stage .hint { position:absolute; left:16px; bottom:12px; font:italic 400 15px var(--serif); color:var(--ink3); }
+.worst { display:grid; margin:6px 0 22px; border:1px solid var(--line); border-radius:var(--r); background:var(--card); overflow:hidden; }
+.worst div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; padding:10px 16px; border-bottom:1px solid var(--line); font:400 13.5px var(--mono); }
+.worst div:last-child { border-bottom:0; } .worst span { min-width:0; overflow-wrap:anywhere; } .worst b { color:var(--acc); font-weight:400; }
+</style>
+
+<div class="eyebrow">See your own tree</div>
+<h1>Visualize your code with your GitHub repo</h1>
+<p class="lede">Connect GitHub with read-only access and pick a repository. Krypton reads it in memory, builds its tree and finds the most tangled functions, then lets it go.</p>
+
+<div class="steps3">
+  <section class="step3" id="s1" aria-labelledby="h1s">
+    <span class="n">1</span>
+    <div>
+      <h3 id="h1s">Connect GitHub</h3>
+      <div id="signedOut">
+        <a class="btn small" href="/auth/github"><svg class="gh-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Continue with GitHub</a>
+        <ul class="ticks"><li>Read-only access</li><li>Scored in memory, never stored</li><li>Access ends with your visit</li></ul>
+      </div>
+      <div id="signedIn" hidden>
+        <div class="signed"><img id="avatar" alt=""><span>Signed in as <b id="login"></b></span><a id="choose" target="_blank" rel="noopener">Choose repositories</a><button class="linkbtn" type="button" id="signOut">Sign out</button></div>
+        <div class="repos" id="repoList"></div>
+        <form class="pick" id="pickForm"><input id="repoName" placeholder="or type owner/name" aria-label="Repository" autocomplete="off" spellcheck="false"><button class="btn small" type="submit">See its tree</button></form>
+      </div>
+      <p class="err" id="err1" role="alert" hidden></p>
+    </div>
+  </section>
+
+  <section class="step3 off" id="s2" aria-labelledby="h2s">
+    <span class="n">2</span>
+    <div>
+      <h3 id="h2s">Build the tree</h3>
+      <div class="meterbar"><i id="barFill"></i></div>
+      <p class="say" id="say">Waiting for a repository.</p>
+      <p class="err" id="err2" role="alert" hidden></p>
+    </div>
+  </section>
+
+  <section class="step3 off" id="s3" aria-labelledby="h3s">
+    <span class="n">3</span>
+    <div style="min-width:0">
+      <h3 id="h3s">Your tree</h3>
+      <div id="result" hidden>
+        <div class="stats" id="facts"></div>
+        <div class="stage" id="stage"><canvas id="scene" aria-label="Your repository's syntax tree, tangled functions in lavender"></canvas><span class="hint">Drag to turn it</span></div>
+        <div id="worstWrap"><p>The most tangled functions:</p><div class="worst" id="worst"></div></div>
+        <div class="cta"><a class="btn" href="savings.html">See the savings</a><button class="btn ghost" type="button" id="again">Another repository</button></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="assets/tree3d.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var SAME = { 'X-Requested-With': 'krypton' }, drawing = null, timer = null;
+  var STAGES = ['Reading the repository with your read-only access', 'Building its tree', 'Scoring it', 'Finding the tangled functions'];
+  function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
+  function step(n) { ['s1', 's2', 's3'].forEach(function (id, i) { $(id).classList.toggle('off', i + 1 > n); }); }
+  function fail(where, message) { $(where).textContent = message; $(where).hidden = false; }
+  function progress(p, text) { $('barFill').style.width = p + '%'; $('say').textContent = text; }
+
+  function loadSession() {
+    return fetch('/api/session').then(function (r) { return r.json(); }).then(function (s) {
+      if (!s.connected) { return; }
+      $('signedOut').hidden = true; $('signedIn').hidden = false;
+      $('login').textContent = s.user.login; $('avatar').src = s.user.avatar_url || '';
+      if (s.install_url) { $('choose').href = s.install_url; } else { $('choose').hidden = true; }
+      return fetch('/api/repos').then(function (r) { return r.ok ? r.json() : []; }).then(function (repos) {
+        $('repoList').textContent = repos.length ? '' : 'No repositories yet: use Choose repositories to give Krypton read access.';
+        repos.forEach(function (r) {
+          var b = document.createElement('button'), tag = document.createElement('i');
+          b.type = 'button'; b.textContent = r.full_name; tag.textContent = r.private ? 'private' : 'public'; b.appendChild(tag);
+          b.onclick = function () { scan(r.full_name); }; $('repoList').appendChild(b);
+        });
+      });
+    }).catch(function () { /* the page still works signed out */ });
+  }
+
+  function scan(repo) {
+    $('err1').hidden = true; $('err2').hidden = true; $('result').hidden = true;
+    if (drawing) { drawing.stop(); drawing = null; }
+    step(2); var t0 = performance.now(), p = 0;
+    clearInterval(timer);
+    timer = setInterval(function () { p = Math.min(90, p + 1.2); progress(p, STAGES[Math.min(STAGES.length - 1, Math.floor(p / 25))] + ' …'); }, 120);
+    fetch('/api/scan', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, SAME), body: JSON.stringify({ repo: repo }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (x) {
+        clearInterval(timer);
+        if (!x.ok) { progress(0, 'Stopped.'); return fail('err2', x.d.error || 'The analysis failed.'); }
+        progress(100, 'Done in ' + ((performance.now() - t0) / 1000).toFixed(1) + ' s. Nothing was kept.');
+        show(x.d);
+      })
+      .catch(function () { clearInterval(timer); fail('err2', 'The site could not be reached.'); });
+  }
+
+  function show(d) {
+    $('facts').innerHTML = [[d.purity + ' / 100', 'purity'], [fmt(d.files), 'files'], [fmt(d.lines), 'lines'], [fmt(d.tangled), 'tangled functions']]
+      .map(function (x) { return '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('');
+    $('worst').innerHTML = '';
+    (d.worst || []).forEach(function (w) {
+      var row = document.createElement('div'), a = document.createElement('span'), b = document.createElement('b');
+      a.textContent = w.file + ' · ' + w.function; b.textContent = w.times + '× the limit'; row.appendChild(a); row.appendChild(b); $('worst').appendChild(row);
+    });
+    $('worstWrap').hidden = !(d.worst || []).length;
+    $('result').hidden = false; step(3);
+    if (d.tree && window.THREE) { drawing = KryptonTree.draw($('scene'), d.tree, { labels: $('stage') }); }
+    try { sessionStorage.setItem('kr-repo', JSON.stringify({ repo: d.repo, files: d.files, lines: d.lines, characters: d.tokens * 3.5, functions: d.functions, tangled: d.tangled })); } catch (e) { /* the savings page then shows the example team */ }
+    $('s3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('pickForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var t = $('repoName').value.trim().replace(/^https?:\/\/(www\.)?github\.com\//i, '').replace(/\.git$/, '').replace(/\/+$/, '');
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(t)) { return fail('err1', 'Give a repository as owner/name.'); }
+    scan(t);
+  });
+  $('again').addEventListener('click', function () { if (drawing) { drawing.stop(); drawing = null; } $('result').hidden = true; step(1); });
+  $('signOut').addEventListener('click', function () { fetch('/auth/logout', { method: 'POST', headers: SAME }).then(function () { location.href = 'tree.html'; }); });
+  var said = { denied: 'GitHub sign-in was cancelled.', error: 'GitHub sign-in did not work. Try again.' }[new URLSearchParams(location.search).get('github')];
+  if (said) { fail('err1', said); }
+  loadSession().then(function () { var q = new URLSearchParams(location.search).get('repo'); if (q && !$('signedIn').hidden) { $('repoName').value = q; scan(q); } });
+})();
+</script>
+
+</main></div>
+<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+</body>
+</html>

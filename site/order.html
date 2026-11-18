@@ -2,21 +2,76 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>File ordering | Krypton</title>
 <meta name="description" content="krypton order reorders a request's files for prompt caching only when Krypton's order would have beaten yours. Otherwise it does nothing.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
+<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html" aria-current="page">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
-<div class="wrap">
-<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#idea">The idea</a></li><li><a href="#use">Using it</a></li><li><a href="#decision">How it decides</a></li><li><a href="#output">The answer</a></li><li><a href="#results">Measured results</a></li><li><a href="#store">What it keeps</a></li><li><a href="#limits">Limits</a></li></ul></aside>
-<main id="content">
+<header class="top"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs.html">Overview</a></li></ul><h2>Guides</h2><ul><li><a href="review.html">Review and setup</a></li><li><a href="prompt-caching.html">Prompt caching</a></li><li><a href="order.html" aria-current="page">File ordering</a><ul class="sub"><li><a href="#idea">The idea</a></li><li><a href="#use">Using it</a></li><li><a href="#decision">How it decides</a></li><li><a href="#output">The answer</a></li><li><a href="#learned">What we learned</a></li><li><a href="#store">What it keeps</a></li><li><a href="#limits">Limits</a></li></ul></li><li><a href="integrations.html">Integrations</a></li><li><a href="case-study.html">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference.html">Commands</a></li><li><a href="api.html">API</a></li><li><a href="wire-format.html">Wire format</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="faq.html">FAQ</a></li></ul></details></nav><main id="content">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <div class="eyebrow">File ordering</div>
 <h1>Reorder only when Krypton would win</h1>
 <p class="lede">Before a request, <code>krypton order</code> asks the server to check whether Krypton's file order would have reused more of a prompt cache than yours. If it would not, it does nothing: your request goes out exactly as you built it.</p>
+<div class="glance"><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg><b>Replays your history</b><span>Only file names and numbers leave your machine.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg><b>Tries several orders</b><span>Stable first, token-weighted, least recent, alphabetical, reverse.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>Changes only on a clear win</b><span>Otherwise your order goes out untouched.</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <div class="note"><b>The rule.</b> Krypton never intervenes on a guess. It replays your repository's own history, and only a clear, repeated win changes the order. In every other case the answer is <code>keep</code>.</div>
 
@@ -34,25 +89,26 @@
 <tr><td><code>--ext .py,.ts</code></td><td>Which file suffixes count. Default <code>.py</code>.</td></tr>
 <tr><td><code>--files FILE</code></td><td>The files in this request, one per line, in your order. <code>-</code> reads standard input. Without it, all matching files in alphabetical order stand in for your order.</td></tr>
 <tr><td><code>--model NAME</code>, <code>--tokenizer</code>, <code>--tokens-from FILE</code></td><td>How file sizes are counted: in the tokens of the model the prompt is for. See <a href="command-reference.html#tokens">Token counts</a>.</td></tr>
-<tr><td><code>--post</code>, <code>--server URL</code></td><td>Send the request and print the decision (without them, the request itself is printed).</td></tr>
+<tr><td><code>--post</code></td><td>Send the request and print the decision (without it, the request itself is printed).</td></tr>
 <tr><td><code>--json</code></td><td>Print the full decision as JSON, for an agent harness or a tool.</td></tr>
 </table></div>
 <p>The exit code is <code>0</code> whenever the server answered; read the <code>action</code> field. It is <code>1</code> when it could not be asked or refused the request, and <code>2</code> for a usage error, with a message saying what to do.</p>
 
 <h2 id="decision">How it decides</h2>
-<p>For each past change that touched files in the request, Krypton builds its order from the commits <em>before</em> that change only, and measures how much of the prompt each order, yours and Krypton's, would have kept in a cache when that change landed. Each order is judged on a change it could not have seen. The answer is <b>keep</b> unless all of these hold:</p>
+<p>Krypton tries several orders: stable files first, token-weighted, least recently changed first, alphabetical and reverse alphabetical. For each past change that touched files in the request, it builds each order from the commits <em>before</em> that change only, and measures how much of the prompt each order, yours and Krypton's, would have kept in a cache when that change landed. Each order is judged on a change it could not have seen. The answer is <b>keep</b> unless all of these hold:</p>
 <ul>
 <li>Enough past changes touched the files in this request: enough evidence.</li>
 <li>Krypton's order is different from yours.</li>
 <li>On average it would have kept clearly more of the prompt.</li>
 <li>It was ahead in <b>more changes than it was behind</b>, among the changes where the two orders differ.</li>
 </ul>
-<p>Uncommitted files go last, since they are the ones in flux. The ordering itself is not published, and it never changes a score.</p>
+<p>Uncommitted files go last, since they are the ones in flux. Ordering never changes a score.</p>
 
 <h2 id="output">The answer</h2>
 <pre><code><span class="c"># when Krypton would not win (illustrative numbers)</span>
 KEEP: only 5 past changes touched these files: too little history
-  12 files; backtest over 5 past changes: yours kept 41.2% of the prompt, Krypton's 44.0%
+  12 files; backtest over 5 past changes: yours kept 41.2% of the prompt, the best order (stable-first) 44.0%
+  orders tried: stable-first 44.0%, least-recent 43.1%, alphabetical 41.2%, token-weighted 40.9%, reverse-alphabetical 12.5%
   send the request unchanged.
 
 <span class="c"># when it would (illustrative numbers)</span>
@@ -65,6 +121,8 @@ REORDER: Krypton's order would have kept +13.4% more of the prompt, ahead in 9 o
 <pre><code>{
   "action": "keep",              <span class="c">// or "reorder"</span>
   "reason": "...",
+  "strategy": "stable-first",    <span class="c">// the order that kept the most</span>
+  "tried": [{ "strategy": "stable-first", "kept": 0.44 }, "..."],
   "order": ["..."],              <span class="c">// your order when keep, Krypton's when reorder</span>
   "backtest": { "changes": 5, "differing": 3, "wins": 1, "losses": 2,
                 "gain": 0.028, "baseline_kept": 0.412, "krypton_kept": 0.44 }
@@ -72,16 +130,8 @@ REORDER: Krypton's order would have kept +13.4% more of the prompt, ahead in 9 o
 <p>When the answer is <code>keep</code>, <code>order</code> is your own order, so a caller can always send <code>order</code> as is.</p>
 <p>Token counts come from the model you name (see <a href="command-reference.html#tokens">Token counts</a>); without a model they are a stated estimate, and the command says so on standard error.</p>
 
-<h2 id="results">Measured results</h2>
-<p>We tested the decision on <b>garth</b> without peeking: the decision is made from history alone, then the next 12 commits are replayed with exact token prefixes. This was repeated from 14 starting points, and for three kinds of caller order.</p>
-<div class="scroll"><table>
-<tr><th>Your order</th><th class="n">Reordered</th><th class="n">Gain when reordered</th><th class="n">Reordered and worse</th><th class="n">Kept but would have gained</th></tr>
-<tr><td>Alphabetical</td><td class="n">13 of 14</td><td class="n">+13.4 points</td><td class="n">1</td><td class="n">1</td></tr>
-<tr><td>Shuffled</td><td class="n">10 of 14</td><td class="n">+27.1 points</td><td class="n">0</td><td class="n">4</td></tr>
-<tr><td>Worst case (most volatile first)</td><td class="n">14 of 14</td><td class="n">+47.9 points</td><td class="n">0</td><td class="n">0</td></tr>
-</table></div>
-<p>Two things to read from it. When your order is already poor, it reorders and the gain is large. When it hesitates, it keeps, which in the shuffled case means missing some gains: the guard is deliberately conservative, because a missed gain costs nothing and a bad reorder does.</p>
-<div class="note"><b>What this does not show.</b> This is one repository. The <a href="prompt-caching.html#survey">20-repository survey</a> shows that Krypton's order beat alphabetical on 12 and lost on 7, which is exactly why the guard exists. A live check against measured provider cache reads is planned and has not been run.</div>
+<h2 id="learned">What we learned</h2>
+<p>Tested on history it had not seen, the guard reordered when it would help and kept your order when it would not. It is deliberately cautious: when it hesitates it keeps, so it sometimes misses a gain, because a missed gain costs nothing and a bad reorder does. <a href="case-study.html#order-results">The test, step by step</a>.</p>
 
 <h2 id="store">What it keeps</h2>
 <p>On your machine, only if you name a Claude model, token counts from Anthropic's counter are cached by content hash in <code>.krypton/tokens.json</code> (numbers, no file names or source), so a second run asks for nothing. If you name a Claude model, each file's text goes to Anthropic to be counted, with your own API key; it never goes to Krypton.</p>
@@ -89,13 +139,12 @@ REORDER: Krypton's order would have kept +13.4% more of the prompt, ahead in 9 o
 <h2 id="limits">Limits</h2>
 <ul>
 <li>It needs a git repository with history for the files in the request. With too little, the honest answer is <code>keep</code>.</li>
-<li>It judges a file order, not a prompt. How much a reordering saves also depends on where your provider's cache breakpoints sit; with a single breakpoint at the end of the prompt no order helped in our replays.</li>
-<li>An agent or editor integration (an MCP tool) is planned. Today it is a command and its JSON output. An agent harness that knows the model can pass it with <code>--model</code>; Krypton cannot see which model your agent calls.</li>
+<li>It judges a file order, not a prompt. How much a reordering saves also depends on where your provider's cache breakpoints sit; with a single breakpoint at the end of the prompt no order helped in our tests.</li>
+<li>It is a command with JSON output. An agent harness that knows the model can pass it with <code>--model</code>; Krypton cannot see which model your agent calls.</li>
 </ul>
 
-<div class="pager"><a href="api.html">&larr; API reference</a><a href="command-reference.html">Command reference &rarr;</a></div>
-</main>
-</div>
-<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+<nav class="pager" aria-label="Previous and next"><a class="prev" href="prompt-caching.html"><span><svg class="ar lf" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> Previous</span>Prompt caching</a><a class="next" href="integrations.html"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>Integrations</a></nav>
+</main></div>
+<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

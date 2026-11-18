@@ -1,13 +1,14 @@
 # [Krypton](https://pinklamb.github.io/Krypton/)
 
-**The compiler for AI agents.** Site and docs: https://pinklamb.github.io/Krypton/
+**The guardrail for coding agents.** Site and docs: https://pinklamb.github.io/Krypton/
 
-Krypton measures how structurally heavy code is (decisions, nesting, bloated functions, tangled wiring) for JavaScript, TypeScript and Python. A small Rust client parses your code **on your machine** and sends only the syntax tree to a Krypton server, which scores it and sends back the review; your source never leaves your machine. It is built to sit beside a coding agent: after each change the agent runs Krypton, sees what got heavy, and splits it before the weight costs tokens and invites mistakes. It also tells you whether a different file order would let a model provider reuse more of your prompt cache. It is not a linter; run yours too.
+Agents are strong and fast, and every strong thing needs a check. Krypton is that check for code: it gives the code an agent writes a **purity score**, so you can see how bloated or pure it is to understand, after every change. It measures structure (decisions, nesting, bloated functions, tangled wiring) for JavaScript, TypeScript and Python. A small Rust client parses your code **on your machine** and sends only the syntax tree to a Krypton server, which scores it and sends back the review; your source never leaves your machine. It is built to sit beside a coding agent: after each change the agent runs Krypton, sees what got heavy, and splits it before the weight costs tokens and invites mistakes. Because the score is kept after every change, you can also see whether your codebase got more or less pure after you switched models, and choose by cost and by what each model does to your code. It is not a linter; run yours too.
 
 ```bash
-cd client
-docker run --rm -v "$PWD:/work" -w /work rust:1 cargo build --release       # builds target/release/krypton (or: cargo build --release)
-export KRYPTON_SERVER=https://YOUR-SERVER
+docker build -t krypton client            # once: the client as a local Docker image
+krypton() { docker run --rm $([ -t 0 ] && echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] && echo -p 127.0.0.1:7777:7777) -v krypton-home:/krypton-home -v "$PWD:/repo" krypton "$@"; }
+
+krypton                                   # once per repository: logs you in with GitHub, then asks for your settings here or on a local dashboard
 
 krypton scan src --names                  # the review for a folder
 krypton scan . --base origin/main         # only what this branch changed (exit code 1 when it fails)
@@ -15,7 +16,7 @@ krypton order . --subdir src --model gpt-4o --post    # should this prompt's fil
 krypton wire src/app.py                   # print exactly what would be sent
 ```
 
-The server is a separate program (it holds the scoring); there are no accounts or API keys, it limits each address to a few requests a minute.
+The server is a separate program that holds the scoring.
 
 ## What Krypton is
 

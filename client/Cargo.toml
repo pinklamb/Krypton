@@ -2,7 +2,7 @@
 
 [package]
 name = "krypton"
-version = "2.1.0"
+version = "2.2.0"
 edition = "2021"
 description = "Krypton client: parses code into a syntax tree on this machine and posts only the tree to a Krypton server"
 publish = false
@@ -13,6 +13,13 @@ name = "krypton_client"
 [[bin]]
 name = "krypton"
 path = "src/main.rs"
+required-features = ["cli"]
+
+# The library (parse, walk, build the wire request) has no network, tokenizer or OS-randomness dependency, so it builds on its own;
+# the `cli` feature adds what only the command line needs.
+[features]
+default = ["cli"]
+cli = ["dep:flate2", "dep:ureq", "dep:tiktoken-rs", "dep:getrandom"]
 
 [dependencies]
 tree-sitter = "0.27"
@@ -23,10 +30,11 @@ tree-sitter-typescript = "0.23"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }  # config order matters: tsconfig aliases are tried in the order written
 sha2 = "0.10"
+getrandom = { version = "0.2", optional = true }  # the per-run name key (src/name_key.rs)
 regex = "1"
-flate2 = "1"
-ureq = "2"
-tiktoken-rs = "0.7"
+flate2 = { version = "1", optional = true }
+ureq = { version = "2", optional = true }
+tiktoken-rs = { version = "0.7", optional = true }
 
 [profile.release]
 overflow-checks = true  # a wrapped number is a wrong answer: an overflow must stop the request instead (the server answers 500, never a wrong score)

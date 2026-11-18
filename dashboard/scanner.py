@@ -20,7 +20,7 @@ from repo_fetch import GITATTRIBUTES, Limits, ScanError, fetch_sources
 
 WORKER = Path(__file__).with_name("scan_worker.py")
 WORKER_SECONDS = 60
-PASSED_ENV = ("PATH", "SYSTEMROOT", "LANG", "LC_ALL", "KRYPTON_BIN", "KRYPTON_SCORE_URL")  # the Krypton ones say where the Rust tree builder and the scoring server are
+PASSED_ENV = ("PATH", "SYSTEMROOT", "LANG", "LC_ALL", "KRYPTON_BIN", "KRYPTON_SCORE_URL", "KRYPTON_SERVICE_TOKEN")  # where the Rust tree builder and the scoring server are, and the site's token for it
 
 
 def worker_env() -> dict[str, str]:

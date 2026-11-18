@@ -1,7 +1,7 @@
-//! `krypton order REPO [--subdir DIR] [--ext .py,.ts] [--files LIST|-] [--tokens-from COUNTS.json] [--server URL | --post] [--json]`
+//! `krypton order REPO [--subdir DIR] [--ext .py,.ts] [--files LIST|-] [--tokens-from COUNTS.json] [--post] [--json]`
 //! reads the repository's git history on this machine and builds the `POST /v1/order` body: the prompt's files with token counts, and which of
 //! them each recent commit touched. `--model` picks the tokenizer the counts come from (see `tokens.rs`). File names and numbers only: no source text, commit messages or authors leave the machine. With
-//! `--server` (or `--post`) it sends the body and prints the server's decision; without, it prints the body.
+//! `--post` it sends the body and prints the server's decision; without, it prints the body.
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fs;
@@ -28,7 +28,7 @@ fn read_input(path: &str) -> Result<Vec<u8>, Failure> {
 /// The newest this many commits are read: the decision looks at the latest 200 and replays against the 200 before them.
 const COMMITS: &str = "-n400";
 const USAGE: &str =
-    "usage: krypton order REPO [--subdir DIR] [--ext .py,.ts] [--files LIST.txt|-] [--model NAME | --tokenizer o200k_base|cl100k_base|estimate | --tokens-from COUNTS.json] [--server URL | --post] [--json]";
+    "usage: krypton order REPO [--subdir DIR] [--ext .py,.ts] [--files LIST.txt|-] [--model NAME | --tokenizer o200k_base|cl100k_base|estimate | --tokens-from COUNTS.json] [--post] [--json]";
 
 struct Options {
     repo: PathBuf,
@@ -207,7 +207,20 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     out.flush().map_err(|error| Failure::Output(error.to_string()))
 }
 
-/// The human summary of the server's decision: what it decided and why, then the order when it changed.
+/// The orders the server tried, best first: `name 63.0%, name 61.2%, ...`.
+fn tried_line(result: &Value) -> String {
+    let mut tried: Vec<(String, f64)> = result
+        .get("tried")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .map(|row| (row.get("strategy").and_then(Value::as_str).unwrap_or_default().to_string(), row.get("kept").and_then(Value::as_f64).unwrap_or(0.0)))
+        .collect();
+    tried.sort_by(|a, b| b.1.total_cmp(&a.1));
+    tried.iter().map(|(name, kept)| format!("{name} {:.1}%", kept * 100.0)).collect::<Vec<_>>().join(", ")
+}
+
+/// The human summary of the server's decision: what it decided and why, every order it tried, then the order when it changed.
 fn render(result: &Value, files: usize) -> String {
     let text = |key: &str| result.get(key).and_then(Value::as_str).unwrap_or_default().to_string();
     let backtest = result.get("backtest").cloned().unwrap_or(Value::Null);
@@ -215,11 +228,13 @@ fn render(result: &Value, files: usize) -> String {
     let mut lines = vec![
         format!("{}: {}", text("action").to_uppercase(), text("reason")),
         format!(
-            "  {files} files; backtest over {} past changes: yours kept {:.1}% of the prompt, Krypton's {:.1}%",
+            "  {files} files; backtest over {} past changes: yours kept {:.1}% of the prompt, the best order ({}) {:.1}%",
             backtest.get("changes").and_then(Value::as_u64).unwrap_or(0),
             share("baseline_kept"),
+            text("strategy"),
             share("krypton_kept")
         ),
+        format!("  orders tried: {}", tried_line(result)),
     ];
     if text("action") == "reorder" {
         lines.push("  send the files in this order:".to_string());
@@ -228,4 +243,18 @@ fn render(result: &Value, files: usize) -> String {
         lines.push("  send the request unchanged.".to_string());
     }
     lines.join("\n")
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::tried_line;
+
+    // The orders tried are listed best first.
+    #[test]
+    fn test_tried_line() {
+        let result = json!({ "tried": [{ "strategy": "alphabetical", "kept": 0.47 }, { "strategy": "stable-first", "kept": 0.71 }] });
+        assert_eq!(tried_line(&result), "stable-first 71.0%, alphabetical 47.0%");
+    }
 }

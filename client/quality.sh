@@ -20,6 +20,7 @@ docker run --rm -v "$here:/work" -v krypton_cargo:/usr/local/cargo/registry -v k
     rustup component add clippy rustfmt >/dev/null 2>&1
     echo "== formatting";                cargo fmt --all --check
     echo "== production code (strict)";  cargo clippy --workspace --lib --bins -- -D warnings
+    echo "== the library alone (no network or tokenizer)"; cargo clippy --lib --no-default-features -- -D warnings
     echo "== tests (same lints, tests may unwrap and panic)"; cargo clippy --workspace --tests -- -D warnings
     echo "== documentation";           RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --lib --quiet
     echo "== tests pass";                cargo test --workspace --quiet

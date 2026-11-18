@@ -11,8 +11,9 @@ use std::collections::{BTreeMap, HashMap};
 use tree_sitter::Node;
 
 use super::imports::{observe, RawImports};
+use super::key::NameKey;
 use super::model::{WireTree, ERROR, EXTRA, MISSING, NAMED};
-use super::policy::{digest_of, digest_targets, is_masked, is_name, mask_of};
+use super::policy::{digest_targets, is_masked, is_name, mask_of};
 use crate::error::WalkError;
 use crate::events::{walk_fields, Visit};
 use crate::lang::Lang;
@@ -86,6 +87,7 @@ pub struct TreeWriter<'s> {
     fields: Interner,
     path: Vec<usize>,
     wanted: HashMap<usize, String>,
+    key: &'s NameKey,
 }
 
 fn flags_of(node: Node) -> u8 {
@@ -96,7 +98,7 @@ fn flags_of(node: Node) -> u8 {
 }
 
 impl<'s> TreeWriter<'s> {
-    pub fn new(source: &'s str) -> Self {
+    pub fn new(source: &'s str, key: &'s NameKey) -> Self {
         Self {
             source,
             chars: CharIndex::new(source),
@@ -106,6 +108,7 @@ impl<'s> TreeWriter<'s> {
             fields: Interner::default(),
             path: Vec::new(),
             wanted: HashMap::new(),
+            key,
         }
     }
 
@@ -158,12 +161,12 @@ impl<'s> TreeWriter<'s> {
         let parent_kind = node.parent().map_or("", |parent| parent.kind());
         if is_name(kind, visit.field, parent_kind) {
             let text = self.slice(node)?;
-            let digest = digest_of(text);
+            let digest = self.key.digest(text);
             self.tree.digest.insert(index.to_string(), digest.clone());
             self.names.insert(digest, text.to_string());
         }
         for target in digest_targets(node) {
-            let digest = digest_of(self.slice(target)?);
+            let digest = self.key.digest(self.slice(target)?);
             self.wanted.insert(target.id(), digest);
         }
         if let Some(digest) = self.wanted.get(&node.id()) {
@@ -183,8 +186,8 @@ impl<'s> TreeWriter<'s> {
 /// Walk `root` depth-first and write every node; also reads the imports on the way (the client resolves them).
 pub type Written = (WireTree, Names, RawImports);
 
-pub fn write_tree(source: &str, root: Node, lang: Lang) -> Result<Written, WalkError> {
-    let mut writer = TreeWriter::new(source);
+pub fn write_tree(source: &str, root: Node, lang: Lang, key: &NameKey) -> Result<Written, WalkError> {
+    let mut writer = TreeWriter::new(source, key);
     let mut raw = RawImports::default();
     let mut failure = None;
     walk_fields(root, |visit| {

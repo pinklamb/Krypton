@@ -1,12 +1,16 @@
-"""Serve the Krypton demo (index.html), the full benchmark data (benchmarks.html) and GitHub sign-in on $PORT, the way Railway expects.
+"""Serve the Krypton site (landing, docs, the savings screen and "see your own tree") with GitHub sign-in, on $PORT, the way Railway expects.
 
-Pages:    GET /  /benchmarks  /security  /healthz
-Sign-in:  GET /auth/github  /auth/github/callback    POST /auth/logout
-JSON:     GET /api/session  /api/repos               (the access token never leaves the server)
-Analyze:  POST /api/scan {"repo": "owner/name"}      (reads the repository in memory and scores it; runs none of its code)
+Pages:    GET /  and every file of the site folder (SITE_DIR, default ../site)       GET /healthz
+Sign-in:  GET /auth/github  /auth/github/callback    POST /auth/logout   (GitHub App, read-only contents; revoked at sign-out)
+JSON:     GET /api/session  /api/repos
+Analyze:  POST /api/scan {"repo": "owner/name"}   reads the repository in memory with the visitor's read-only access, builds its tree here,
+          has it scored (the site's own KRYPTON_SERVICE_TOKEN), and answers numbers, the worst functions and a tree outline to draw
+
+Nothing from the repository is written to disk, run or kept; the visitor's GitHub token is revoked at sign-out and forgotten after an hour.
 """
 
 import json
+import mimetypes
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -17,25 +21,31 @@ import scanner
 from repo_fetch import ScanError, valid_repo
 
 HERE = Path(__file__).parent
-PAGES = {name: (HERE / name).read_bytes() for name in ("index.html", "benchmarks.html", "security.html")}
-ROUTES = {"/": "index.html", "/index.html": "index.html", "/benchmarks": "benchmarks.html", "/benchmarks.html": "benchmarks.html", "/security": "security.html", "/security.html": "security.html"}
+mimetypes.add_type("text/javascript", ".js")
 HEADERS = {
     "Cache-Control": "public, max-age=300",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
-    # self-contained apart from Google Fonts and GitHub avatars; fetch() may only call this server
-    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
-                               "script-src 'unsafe-inline'; img-src data: https://avatars.githubusercontent.com; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+    # three.js from cdnjs, fonts from Google, GitHub avatars; the page may call this server and nothing else
+    "Content-Security-Policy": "default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
+                               "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://avatars.githubusercontent.com; "
+                               "connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
 }
 NO_STORE = {**HEADERS, "Cache-Control": "no-store"}
 
 
+def site_dir() -> Path:
+    """Where the site's files are: SITE_DIR, else the repository's site folder next to this one."""
+    return Path(os.environ.get("SITE_DIR") or HERE.parent / "site").resolve()
+
+
 class Handler(BaseHTTPRequestHandler):
-    """Routes requests; `cfg` and `sessions` are bound by make_server."""
+    """Routes requests; `cfg`, `sessions`, `gate` and `site` are bound by make_server."""
 
     cfg = auth.Config()
     sessions = auth.Sessions(cfg)
     gate = scanner.Gate()
+    site = site_dir()
 
     # ---------------------------------------------------------------- plumbing
     def _send(self, status: int, body: bytes, kind: str, headers=HEADERS, cookies=(), with_body=True) -> None:
@@ -69,8 +79,20 @@ class Handler(BaseHTTPRequestHandler):
     def _cookies(self) -> dict:
         return auth.parse_cookies(self.headers.get("Cookie"))
 
-    def _page(self, name: str) -> None:
-        self._send(200, PAGES[name], "text/html; charset=utf-8", with_body=self.command != "HEAD")
+    # ---------------------------------------------------------------- the site's files
+    def _file(self, path: str) -> None:
+        """A file of the site folder; nothing outside it, no hidden files."""
+        relative = path.lstrip("/") or "index.html"
+        if relative.endswith("/"):
+            relative += "index.html"
+        target = (self.site / relative).resolve()
+        hidden = any(part.startswith(".") for part in Path(relative).parts)
+        if hidden or self.site not in target.parents or not target.is_file():
+            return self._text(404, "not found")
+        kind = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+        if kind.startswith("text/") or kind in ("application/javascript", "application/json"):
+            kind += "; charset=utf-8"
+        self._send(200, target.read_bytes(), kind, with_body=self.command != "HEAD")
 
     # ---------------------------------------------------------------- sign-in
     def _login(self) -> None:
@@ -83,7 +105,7 @@ class Handler(BaseHTTPRequestHandler):
         params = parse_qs(urlsplit(self.path).query)
         done = [auth.clear_cookie(self.cfg, auth.FLOW_COOKIE)]
         if "error" in params:
-            return self._redirect("/?github=denied", done)
+            return self._redirect("/tree.html?github=denied", done)
         verifier = auth.verifier_for(self.cfg, self._cookies(), (params.get("state") or [None])[0])
         if not verifier or "code" not in params:
             return self._text(400, "Sign-in could not be verified. Start again from the Connect GitHub button.", done)
@@ -92,22 +114,22 @@ class Handler(BaseHTTPRequestHandler):
             user = auth.public_user(auth.github_get(self.cfg, "/user", token))
         except auth.OAuthError as error:
             print(f"sign-in failed: {error}", flush=True)
-            return self._redirect("/?github=error", done)
-        self._redirect("/?github=connected", [self.sessions.create(user, token), *done])
+            return self._redirect("/tree.html?github=error", done)
+        self._redirect("/tree.html?github=connected", [self.sessions.create(user, token), *done])
 
     def _session(self) -> None:
         session = self.sessions.get(self._cookies())
-        self._json({"available": True, "configured": self.cfg.configured, "connected": bool(session), "user": session["user"] if session else None})
+        self._json({"configured": self.cfg.configured, "connected": bool(session), "user": session["user"] if session else None,
+                    "install_url": auth.install_url(self.cfg)})
 
     def _repos(self) -> None:
         session = self.sessions.get(self._cookies())
         if not session:
             return self._json({"error": "not connected"}, 401)
         try:
-            raw = auth.github_get(self.cfg, "/user/repos?per_page=40&sort=pushed&affiliation=owner,collaborator,organization_member", session["token"])
+            self._json(auth.granted_repos(self.cfg, session["token"]))
         except auth.OAuthError:
-            return self._json({"error": "GitHub did not answer"}, 502)
-        self._json(auth.public_repos(raw))
+            self._json({"error": "GitHub did not answer"}, 502)
 
     def _same_origin(self) -> bool:
         """State-changing requests must come from this site's own page (custom header, matching Origin)."""
@@ -116,10 +138,16 @@ class Handler(BaseHTTPRequestHandler):
     def _logout(self) -> None:
         if not self._same_origin():
             return self._text(403, "forbidden")
-        self.sessions.delete(self._cookies())
+        session = self.sessions.delete(self._cookies())
+        if session and self.cfg.configured:
+            try:
+                auth.revoke(self.cfg, session["token"])
+            except auth.OAuthError as error:
+                print(f"revoking a token failed: {error}", flush=True)
         headers = {**NO_STORE, "Clear-Site-Data": '"cookies"'}   # ask the browser to drop every cookie for this site, not only ours
         self._send(200, b"ok", "text/plain; charset=utf-8", headers, [auth.clear_cookie(self.cfg, auth.SESSION_COOKIE)], self.command != "HEAD")
 
+    # ---------------------------------------------------------------- analysis
     def _repo_from_body(self) -> str | None:
         """The `repo` field of a small JSON body, or None if it is missing or malformed."""
         length = int(self.headers.get("Content-Length") or 0)
@@ -161,10 +189,8 @@ class Handler(BaseHTTPRequestHandler):
         action = self._get_routes().get(path)
         if action:
             action()
-        elif path in ROUTES:
-            self._page(ROUTES[path])
         else:
-            self._text(404, "not found")
+            self._file(path)
 
     def do_GET(self) -> None:
         self._route()
@@ -189,26 +215,28 @@ class Handler(BaseHTTPRequestHandler):
         print(f"{self.address_string()} {fmt % args}", flush=True)
 
 
-def make_server(cfg: auth.Config, port: int, host: str = "0.0.0.0", gate: scanner.Gate | None = None) -> ThreadingHTTPServer:
-    """A server whose handler uses `cfg`, its own session store and its own analysis limits."""
-    handler = type("BoundHandler", (Handler,), {"cfg": cfg, "sessions": auth.Sessions(cfg), "gate": gate or scanner.Gate()})
-    return ThreadingHTTPServer((host, port), handler)
+def make_server(cfg: auth.Config, port: int, host: str = "0.0.0.0", gate: scanner.Gate | None = None, site: Path | None = None) -> ThreadingHTTPServer:
+    """A server whose handler uses `cfg`, its own session store, its own analysis limits and the given site folder."""
+    bound = {"cfg": cfg, "sessions": auth.Sessions(cfg), "gate": gate or scanner.Gate(), "site": (site or site_dir()).resolve()}
+    return ThreadingHTTPServer((host, port), type("BoundHandler", (Handler,), bound))
 
 
 def main() -> None:
     """Start the server from the environment (Railway sets PORT)."""
     config = auth.load_config()
-    print(announce(config), flush=True)
+    scoring = bool(os.environ.get("KRYPTON_SCORE_URL", "").strip() and os.environ.get("KRYPTON_SERVICE_TOKEN", "").strip())
+    print(announce(config, scoring), flush=True)
     port = int(os.environ.get("PORT", "8080"))
-    print(f"serving the dashboard on 0.0.0.0:{port}", flush=True)
+    print(f"serving {site_dir()} on 0.0.0.0:{port}", flush=True)
     make_server(config, port).serve_forever()
 
 
-def announce(config: auth.Config) -> str:
-    """What the server says about sign-in and sessions at startup."""
+def announce(config: auth.Config, scoring: bool) -> str:
+    """What the server says about sign-in, scoring and sessions at startup."""
     state = "on" if config.configured else "off (set GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET and BASE_URL)"
+    score = "on" if scoring else "off (set KRYPTON_SCORE_URL and KRYPTON_SERVICE_TOKEN)"
     note = "" if os.environ.get("SESSION_SECRET") else " (SESSION_SECRET is not set, so sessions reset whenever the server restarts)"
-    return f"GitHub sign-in: {state}{note}"
+    return f"GitHub sign-in: {state}; scoring: {score}{note}"
 
 
 if __name__ == "__main__":

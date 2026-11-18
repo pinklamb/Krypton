@@ -13,15 +13,18 @@
 )]
 
 use krypton_client::{
-    collapsed, expression_digest, line_shapes, longest_line, parse, split_lines, walk_events, Builder, CharIndex, ClientConfig, Lang, Names, Vendored,
+    collapsed, expression_digest, line_shapes, longest_line, parse, split_lines, walk_events, Builder, CharIndex, ClientConfig, Lang, NameKey, Names, Vendored,
     WalkError, WireError, WireFile,
 };
 use std::collections::BTreeSet;
 
 use serde_json::{json, Value};
 
+/// A fixed key, so a test can compute the digest the request should hold.
+const KEY: NameKey = NameKey::new([7; 32]);
+
 fn builder() -> Builder {
-    Builder::new(ClientConfig::from_overrides(Value::Null).expect("no overrides")).expect("patterns compile")
+    Builder::new(ClientConfig::from_overrides(Value::Null).expect("no overrides"), KEY).expect("patterns compile")
 }
 
 /// Build one file the way the command does for a single-file request: no other files, so no imports resolve.
@@ -191,8 +194,9 @@ fn test_no_text() {
     for word in ["calc", "secret", "hunter2", "TOP-SECRET-NOTE", "password"] {
         assert!(!sent.contains(word), "{word} reached the request");
     }
-    assert_eq!(names.get(&expression_digest("calc")).map(String::as_str), Some("calc"), "the client keeps the names");
-    assert!(file.tree.digest.values().any(|digest| *digest == expression_digest("secret")));
+    assert_eq!(names.get(&KEY.digest("calc")).map(String::as_str), Some("calc"), "the client keeps the names");
+    assert!(file.tree.digest.values().any(|digest| *digest == KEY.digest("secret")), "names are sent keyed");
+    assert!(!file.tree.digest.values().any(|digest| *digest == expression_digest("calc")), "a plain hash of a name is never sent");
 }
 
 #[test]
@@ -224,7 +228,7 @@ fn test_facts() {
     assert!(file.flags.generated_marker);
     assert_eq!(file.waivers.keys().collect::<Vec<_>>(), ["2"]);
     assert!(file.waivers["2"].comment_only);
-    assert_eq!(file.waivers["2"].reason, Some(expression_digest("legacy")));
+    assert_eq!(file.waivers["2"].reason, Some(KEY.digest("legacy")));
     assert_eq!((file.path.as_str(), file.language, file.bytes), ("pkg/a.py", "python", 64));
     assert_eq!(wire("a\\b.py", "x = 1\n").path, "a/b.py");
 }
@@ -266,7 +270,7 @@ fn test_bad_config() {
 #[test]
 fn test_config_markers() {
     let config = ClientConfig::from_overrides(json!({"generated_markers": ["MAGIC"], "detect_vendored_content": false})).expect("valid");
-    let custom = Builder::new(config).expect("patterns compile");
+    let custom = Builder::new(config, KEY).expect("patterns compile");
     let file = file_of(&custom, "static/chart.js", b"// MAGIC\nvar a=1;").expect("file");
     assert!(file.flags.generated_marker);
     assert_eq!(file.flags.vendored, None, "vendored detection was switched off");

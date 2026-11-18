@@ -1,19 +1,20 @@
-//! `krypton review [REPO] [--ticket TEXT] [--json]`: reads the run log and says what a person should look at. A function is stuck when, after the
-//! start and 3 runs, it is still over the limit and no run got it more than 10% better than where it started. The answer is the data a coding
-//! agent turns into the review page (see `agent/review-brief.md`).
+//! `krypton review [REPO] [--ticket TEXT] [--json] [--auto|--manual]`: reads the run log and says what a person should look at. A function is
+//! stuck when, after the start and 3 runs, it is still over the limit and no run got it more than 10% better than where it started. The answer
+//! is the data a coding agent turns into the review page for the current ticket (see `agent/review-brief.md`). In auto mode (chosen with
+//! `krypton setup`, or `--auto`) nobody is asked: when something is stuck, the best run is put back here and the answer says so.
 
 use std::path::PathBuf;
 
 use serde_json::{json, Value};
 
+use crate::attempts::{restore, Request};
 use crate::runlog::{self, Run};
+use crate::setup_command::{saved, Mode, Settings};
 use crate::Failure;
 
-/// Runs after the start before a function can count as stuck.
-const STALL_RUNS: usize = 3;
 /// A run must get a function at least this much better than the start to count as an improvement.
 const IMPROVEMENT: f64 = 0.10;
-const USAGE: &str = "usage: krypton review [REPO] [--ticket TEXT] [--json]";
+const USAGE: &str = "usage: krypton review [REPO] [--ticket TEXT] [--json] [--auto|--manual]";
 
 #[derive(Debug, PartialEq)]
 struct Stuck {
@@ -26,10 +27,10 @@ fn series(runs: &[&Run], key: &str) -> Vec<Option<f64>> {
     runs.iter().map(|run| run.functions.get(key).copied()).collect()
 }
 
-/// Still over the limit in every run after the start, with enough runs, and never 10% better than the start.
-fn is_stuck(series: &[Option<f64>]) -> bool {
+/// Still over the limit in every run after the start, with at least `tries` runs, and never 10% better than the start.
+fn is_stuck(series: &[Option<f64>], tries: usize) -> bool {
     let (Some(Some(start)), Some(after)) = (series.first(), series.get(1..)) else { return false };
-    after.len() >= STALL_RUNS && after.iter().all(|value| value.is_some_and(|times| times > start * (1.0 - IMPROVEMENT)))
+    after.len() >= tries && after.iter().all(|value| value.is_some_and(|times| times > start * (1.0 - IMPROVEMENT)))
 }
 
 /// The run with the lowest score (the earliest on a tie).
@@ -44,11 +45,11 @@ fn start_of(stuck: &Stuck) -> f64 {
     stuck.ratings.first().copied().flatten().unwrap_or(0.0)
 }
 
-fn stuck_functions(runs: &[&Run]) -> Vec<Stuck> {
+fn stuck_functions(runs: &[&Run], tries: usize) -> Vec<Stuck> {
     let Some(first) = runs.first() else { return Vec::new() };
     let all = first.functions.keys().map(|key| (key, series(runs, key)));
     let mut found: Vec<Stuck> =
-        all.filter(|(_, ratings)| is_stuck(ratings)).map(|(key, ratings)| Stuck { best_run: best_run(&ratings), key: key.clone(), ratings }).collect();
+        all.filter(|(_, ratings)| is_stuck(ratings, tries)).map(|(key, ratings)| Stuck { best_run: best_run(&ratings), key: key.clone(), ratings }).collect();
     found.sort_by(|left, right| start_of(right).total_cmp(&start_of(left)));
     found
 }
@@ -72,15 +73,19 @@ fn stuck_json(stuck: &Stuck) -> Value {
     json!({ "file": file, "function": function, "ratings": stuck.ratings, "best_run": stuck.best_run, "best": best })
 }
 
-fn review_json(ticket: &str, runs: &[&Run]) -> Value {
-    let best = restore_run(runs);
-    let stuck = stuck_functions(runs);
+fn review_json(ticket: &str, runs: &[&Run], settings: &Settings) -> Value {
+    let (best, tries) = (restore_run(runs), settings.max_runs);
+    let stuck = stuck_functions(runs, tries);
+    let now = runs.last().map(|run| run.purity);
     let purity_of = |number: usize| runs.iter().find(|run| run.number == number).map(|run| run.purity);
-    let note = (runs.len() <= STALL_RUNS).then(|| format!("{} runs are logged; stuck functions need the start and {STALL_RUNS} runs after it", runs.len()));
+    let note = (runs.len() <= tries).then(|| format!("{} runs are logged; stuck functions need the start and {tries} runs after it", runs.len()));
     json!({
         "ticket": ticket,
         "runs": runs.iter().map(|run| json!({ "run": run.number, "purity": run.purity })).collect::<Vec<_>>(),
-        "purity": { "start": runs.first().map(|run| run.purity), "now": runs.last().map(|run| run.purity), "if_approved": purity_of(best) },
+        "purity": { "start": runs.first().map(|run| run.purity), "now": now, "if_approved": purity_of(best) },
+        "target": settings.target,
+        "max_runs": tries,
+        "meets_target": now.is_some_and(|score| score >= settings.target),
         "restore_run": best,
         "needs_review": !stuck.is_empty(),
         "improved": improved(runs),
@@ -112,12 +117,19 @@ fn print_text(review: &Value) {
         text_of(purity, "if_approved"),
         text_of(review, "restore_run")
     );
+    let met = if review.get("meets_target") == Some(&Value::Bool(true)) { "met" } else { "not met yet" };
+    println!("Target: {} ({met})", text_of(review, "target"));
     let stuck = review.get("stuck").and_then(Value::as_array).map_or(&[][..], Vec::as_slice);
-    println!("Stuck after {STALL_RUNS} runs: {}", stuck.len());
+    println!("Stuck after {} runs: {}", text_of(review, "max_runs"), stuck.len());
     stuck.iter().for_each(print_stuck);
     println!("Improved by more than 10%: {}", text_of(review, "improved"));
     if let Some(note) = review.get("note").and_then(Value::as_str) {
         println!("Note: {note}");
+    }
+    if let Some(done) = review.get("auto_approved").filter(|value| !value.is_null()) {
+        println!("Auto-approved: put back run {} ({} files)", text_of(done, "run"), done.get("files").and_then(Value::as_array).map_or(0, Vec::len));
+    } else if review.get("needs_review") == Some(&Value::Bool(true)) {
+        println!("Mode: manual. Your agent builds the review page for this ticket from themes.md; you approve the best run or send it back.");
     }
 }
 
@@ -125,14 +137,17 @@ struct Options {
     repo: PathBuf,
     ticket: Option<String>,
     json: bool,
+    mode: Option<Mode>,
 }
 
 fn parse_options(args: &[String]) -> Result<Options, Failure> {
-    let mut options = Options { repo: PathBuf::from("."), ticket: None, json: false };
+    let mut options = Options { repo: PathBuf::from("."), ticket: None, json: false, mode: None };
     let mut words = args.iter();
     while let Some(word) = words.next() {
         match word.as_str() {
             "--json" => options.json = true,
+            "--auto" => options.mode = Some(Mode::Auto),
+            "--manual" => options.mode = Some(Mode::Manual),
             "--ticket" => options.ticket = Some(words.next().cloned().ok_or_else(|| Failure::Usage(format!("--ticket needs a value\n{USAGE}")))?),
             flag if flag.starts_with("--") => return Err(Failure::Usage(format!("unknown option {flag}\n{USAGE}"))),
             path => options.repo = PathBuf::from(path),
@@ -150,13 +165,33 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     if mine.is_empty() {
         return Err(Failure::Log(format!("no runs are logged for the ticket {ticket:?}")));
     }
-    let review = review_json(&ticket, &mine);
+    let mut settings = saved(&options.repo)?.unwrap_or(Settings::DEFAULT);
+    if let Some(mode) = options.mode {
+        settings.mode = mode;
+    }
+    let mode = settings.mode;
+    let mut review = review_json(&ticket, &mine, &settings);
+    let approved = auto_approve(&options.repo, &ticket, &mine, &review, mode)?;
+    if let Some(fields) = review.as_object_mut() {
+        fields.insert("mode".to_string(), Value::from(mode.name()));
+        fields.insert("auto_approved".to_string(), approved);
+    }
     if options.json {
         println!("{}", serde_json::to_string_pretty(&review).map_err(|error| Failure::Output(error.to_string()))?);
     } else {
         print_text(&review);
     }
     Ok(())
+}
+
+/// In auto mode, with something stuck: put back the best run now, as "approve best" would. Otherwise nothing happens (`null`).
+fn auto_approve(repo: &std::path::Path, ticket: &str, runs: &[&Run], review: &Value, mode: Mode) -> Result<Value, Failure> {
+    if mode != Mode::Auto || review.get("needs_review") != Some(&Value::Bool(true)) {
+        return Ok(Value::Null);
+    }
+    let target = review.get("restore_run").and_then(Value::as_u64).and_then(|run| usize::try_from(run).ok()).unwrap_or(0);
+    let outcome = restore(&Request { repo, ticket, runs, target, dry_run: false, force: false })?;
+    Ok(json!({ "run": target, "files": outcome.files, "already": outcome.already }))
 }
 
 #[cfg(test)]
@@ -182,7 +217,7 @@ mod tests {
     fn stuck_of(values: &[Step]) -> Vec<Stuck> {
         let owned = runs(values);
         let all: Vec<&Run> = owned.iter().collect();
-        stuck_functions(&all)
+        stuck_functions(&all, 3)
     }
 
     // Three runs that barely help leave a function stuck, and the best of them is named.
@@ -219,10 +254,21 @@ mod tests {
     fn test_review_data() {
         let owned = runs(&[(Some(46.0), 70), (Some(45.0), 71), (Some(43.0), 74), (Some(44.0), 72)]);
         let all: Vec<&Run> = owned.iter().collect();
-        let review = review_json("fix rounding", &all);
+        let review = review_json("fix rounding", &all, &Settings::DEFAULT);
         assert_eq!(review.pointer("/purity/if_approved"), Some(&json!(74)), "the best run's purity");
         assert_eq!(review.get("restore_run"), Some(&json!(2)), "the run to put back");
         assert_eq!(review.pointer("/stuck/0/function"), Some(&json!("f")), "the function name");
         assert_eq!(review.pointer("/stuck/0/best"), Some(&json!(43.0)), "its best score");
+        assert_eq!(review.get("meets_target"), Some(&json!(true)), "72 meets the default target of 70");
+    }
+
+    // More tries in the settings means a function is not called stuck as early.
+    #[test]
+    fn test_more_tries() {
+        let steps = [(Some(46.0), 70), (Some(45.0), 71), (Some(43.0), 72), (Some(44.0), 71)];
+        let owned = runs(&steps);
+        let all: Vec<&Run> = owned.iter().collect();
+        assert_eq!(stuck_functions(&all, 3).len(), 1, "stuck after 3 tries");
+        assert!(stuck_functions(&all, 5).is_empty(), "not yet with 5 tries");
     }
 }

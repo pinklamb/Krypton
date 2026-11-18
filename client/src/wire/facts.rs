@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 
 use regex::Regex;
 
-use super::digest::expression_digest;
+use super::key::NameKey;
 use super::lines::{is_py_space, split_lines};
 use super::model::WireWaiver;
 use super::tree::Names;
@@ -44,11 +44,11 @@ fn reason_of(line: &str, pattern: &Regex) -> Option<String> {
 }
 
 /// For each line holding a waiver: whether it is a comment by itself, and the digest of its reason (the reason stays on the client).
-pub fn waiver_facts(text: &str, pattern: &Regex, names: &mut Names) -> BTreeMap<String, WireWaiver> {
+pub fn waiver_facts(text: &str, pattern: &Regex, names: &mut Names, key: &NameKey) -> BTreeMap<String, WireWaiver> {
     let mut facts = BTreeMap::new();
     for (number, line) in split_lines(text).into_iter().enumerate() {
         let Some(reason) = reason_of(line, pattern) else { continue };
-        let digest = (!reason.is_empty()).then(|| expression_digest(&reason));
+        let digest = (!reason.is_empty()).then(|| key.digest(&reason));
         if let Some(digest) = &digest {
             names.insert(digest.clone(), reason);
         }

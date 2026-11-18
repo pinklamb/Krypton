@@ -2,22 +2,77 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>API reference | Krypton</title>
 <meta name="description" content="The Krypton scoring server's HTTP API: authentication, endpoints, request and response, errors and limits.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
+<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar"><a class="brand" href="index.html">Krypton</a><nav class="main" aria-label="Documentation"><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="how-it-works.html">How it works</a><a href="architecture.html">Architecture</a><a href="wire-format.html">Wire format</a><a href="api.html" aria-current="page">API</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="command-reference.html">Commands</a><a href="integrations.html">Integrations</a><a href="review.html">Review</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a></nav></div></header>
-<div class="wrap">
-<aside class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#overview">Overview</a></li><li><a href="#auth">Access</a></li><li><a href="#health">GET /v1/health</a></li><li><a href="#capabilities">GET /v1/capabilities</a></li><li><a href="#score">POST /v1/score</a></li><li><a href="#order">POST /v1/order</a></li><li><a href="#response">The response</a></li><li><a href="#errors">Errors</a></li><li><a href="#limits">Limits</a></li><li><a href="#versioning">Versioning</a></li><li><a href="#notyet">Not built yet</a></li></ul></aside>
-<main id="content">
+<header class="top"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs.html">Overview</a></li></ul><h2>Guides</h2><ul><li><a href="review.html">Review and setup</a></li><li><a href="prompt-caching.html">Prompt caching</a></li><li><a href="order.html">File ordering</a></li><li><a href="integrations.html">Integrations</a></li><li><a href="case-study.html">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference.html">Commands</a></li><li><a href="api.html" aria-current="page">API</a><ul class="sub"><li><a href="#overview">Overview</a></li><li><a href="#health">GET /v1/health</a></li><li><a href="#capabilities">GET /v1/capabilities</a></li><li><a href="#score">POST /v1/score</a></li><li><a href="#order">POST /v1/order</a></li><li><a href="#response">The response</a></li><li><a href="#errors">Errors</a></li><li><a href="#limits">Limits</a></li><li><a href="#versioning">Versioning</a></li></ul></li><li><a href="wire-format.html">Wire format</a></li><li><a href="architecture.html">Architecture</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="faq.html">FAQ</a></li></ul></details></nav><main id="content">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <div class="eyebrow">API reference</div>
 <h1>The scoring server API</h1>
 <p class="lede">A small JSON API: send the trees of your files, get back a score, flags and refactoring hints.</p>
-<div class="note"><b>No accounts, no keys.</b> The server answers anyone and rate limits each address. Examples use <code>YOUR-SERVER</code> where the address goes.</div>
+<div class="glance"><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/><path d="M8 7.5h.01M8 16.5h.01"/></svg><b>A small JSON API</b><span>Health, capabilities, score and order.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></svg><b>Structure in, numbers out</b><span>Trees and hashes go in; scores, flags and hints come back.</span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>Stores nothing</b><span>Each request is scored and forgotten.</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="note">Examples use <code>YOUR-SERVER</code> where the address goes.</div>
 
 <h2 id="overview">Overview</h2>
 <div class="scroll"><table>
@@ -29,8 +84,6 @@
 </table></div>
 <p>Requests and responses are JSON. A request body may be gzip-compressed. Every response carries an <code>X-Request-Id</code> header, repeated as <code>request_id</code> in the body, to quote when asking for support.</p>
 
-<h2 id="auth">Access</h2>
-<p>There are no accounts or keys. Every request counts against its sender's address, which is limited to a few requests a minute; over that the answer is <code>429</code> with a <code>Retry-After</code>. A client that sends a <code>Authorization</code> header is not refused, and the header is ignored.</p>
 
 <h2 id="health">GET /v1/health</h2>
 <pre><code>curl https://YOUR-SERVER/v1/health
@@ -101,7 +154,7 @@
 <ul>
 <li><b>Names are fingerprints.</b> A function's <code>name</code> comes back as the fingerprint the client sent. The client looks it up in its names book to show the real name; the server never knew it.</li>
 <li><b><code>detail</code>.</b> <code>summary</code> (the default) returns scores, flags, hints and the Markdown summary. <code>full</code> also returns the raw metric columns and is refused (<code>403</code>) unless the server was started to allow it, which a public server is not.</li>
-<li><b>Flags and hints.</b> Each flagged file carries a <code>flag_reason</code>, and <code>hints</code> maps a function to refactoring advice. What the flags mean is in <a href="how-it-works.html">How it works</a>.</li>
+<li><b>Flags and hints.</b> Each flagged file carries a <code>flag_reason</code>, and <code>hints</code> maps a function to refactoring advice. What the flags mean is in <a href="docs.html#how">How it works</a>.</li>
 </ul>
 
 <h2 id="errors">Errors</h2>
@@ -132,20 +185,13 @@
 <tr><td>Nodes per file</td><td class="n">500,000</td></tr>
 <tr><td>Nodes per request</td><td class="n">3,000,000</td></tr>
 </table></div>
-<p>The same numbers are in <code>GET /v1/capabilities</code>. Files the engine's own size rules skip (very large files, extremely long lines, single nodes with a huge number of children) are reported in <code>errors</code>, not refused.</p>
+<p>A request over its address's per-minute limit is answered with <code>429</code> and a <code>Retry-After</code>. The same numbers are in <code>GET /v1/capabilities</code>. Files the engine's own size rules skip (very large files, extremely long lines, single nodes with a huge number of children) are reported in <code>errors</code>, not refused.</p>
 
 <h2 id="versioning">Versioning</h2>
 <p>The request names its <code>wire_version</code>. A server answers <code>426</code> to a version it does not speak, and <code>capabilities</code> lists the versions it does. Adding an optional field does not change the version; changing the meaning of an existing one does.</p>
 
-<h2 id="notyet">Not built yet</h2>
-<ul>
-<li><b><code>Idempotency-Key</code> and asynchronous jobs.</b> Scoring is synchronous.</li>
-<li><b>An MCP tool</b> that calls this API. (The <code>krypton</code> command line already does.)</li>
-</ul>
-
-<div class="pager"><a href="wire-format.html">&larr; Wire format</a><a href="order.html">File ordering &rarr;</a></div>
-</main>
-</div>
-<footer class="site"><div class="bar"><span>Krypton, the compiler for AI agents</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+<nav class="pager" aria-label="Previous and next"><a class="prev" href="command-reference.html"><span><svg class="ar lf" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> Previous</span>Commands</a><a class="next" href="wire-format.html"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>Wire format</a></nav>
+</main></div>
+<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

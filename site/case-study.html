@@ -83,7 +83,7 @@
 <tr><td>Worst case (most volatile first)</td><td class="n">14 of 14</td><td class="n">+47.9 points</td><td class="n">0</td><td class="n">0</td></tr>
 </table></div>
 <p>Two things to read from it. When your order is already poor, it reorders and the gain is large. When it hesitates, it keeps, which in the shuffled case means missing some gains: the guard is deliberately conservative, because a missed gain costs nothing and a bad reorder does.</p>
-<div class="note"><b>What this does not show.</b> This is one repository. The <a href="#survey">20-repository survey</a> shows that Krypton's order beat alphabetical on 12 and lost on 7, which is exactly why the guard exists.</div>
+
 
 <h2 id="refactor">Refactoring and the payback</h2>
 <p>A Krypton-guided refactor of garth took the logic-complexity flags from 9 to 0 with all 163 tests passing, where an unguided refactor left 8 of 9. We then asked whether the cleaned code is cheaper for an agent to change. Fresh agents made the same five change tickets on the original code and after each of two cleanups, six runs each, with real token usage priced at list prices:</p>
@@ -114,11 +114,15 @@
 <tr><td>Structure score at the end</td><td class="n">55</td><td class="n">72</td></tr>
 <tr><td>Revisions done correctly</td><td class="n">60 of 60</td><td class="n">60 of 60</td></tr>
 </table></div>
-<p>The gate kept the code far healthier, at a cost of about 62% more per chain, most of it the fix rounds. Cost per revision did not keep rising with the tangle: in the plain chains it rose about 30% over the first ten revisions and then stayed flat while the worst function grew from about 56× to about 1,900× over the limit. So within 20 revisions we found no saving from cleaner code, and the case for it rests on the people who read the code and on future risk, which we did not measure.</p>
 
 
 <nav class="pager" aria-label="Previous and next"><a class="prev" href="integrations.html"><span><svg class="ar lf" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> Previous</span>Integrations</a><a class="next" href="command-reference.html"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>Commands</a></nav>
 </main></div>
-<footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
+<footer class="site"><div class="bar"><a class="mark" href="index.html" aria-label="Krypton, home"><pre class="xtal" aria-hidden="true">   /\   
+  /  \  
+ /    \ 
+ \    / 
+  \  /  
+   \/   </pre><b>Kr</b><span>ypton</span></a><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>
 </html>

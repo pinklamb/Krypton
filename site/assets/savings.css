@@ -23,6 +23,7 @@ body:has(.save) { display:flex; flex-direction:column; min-height:100svh; }
 body:has(.save) .wrap { padding-block:clamp(22px,4vh,44px) 12px; flex:1 0 auto; display:flex; flex-direction:column; width:100%; } body:has(.save) .wrap > main { flex:1 0 auto; display:flex; flex-direction:column; } body:has(.save) .save { flex:1 0 auto; }
 body:has(.save) footer.site { border-top-color:rgba(255,255,255,.14); }
 body:has(.save) footer.site .bar { color:var(--sv-ink3); padding-block:10px; } body:has(.save) footer.site a { color:var(--sv-ink2); }
+body:has(.save) footer.site .mark, body:has(.save) footer.site .mark b { color:var(--sv-ink); } body:has(.save) footer.site .xtal { color:var(--sv-money); } body:has(.save) footer.site .mark span { color:var(--sv-ink2); }
 
 .save { position:relative; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.95fr) minmax(0,1fr); gap:14px; align-items:stretch; height:100%; overflow:clip; }
 .save .art { position:absolute; left:4%; bottom:-12%; width:58%; height:auto; pointer-events:none; opacity:.9; }

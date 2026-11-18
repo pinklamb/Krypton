@@ -26,13 +26,11 @@
 .step3 .n { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font:400 14px var(--mono); color:var(--acc); border:1px solid var(--acc); background:var(--card); }
 .step3.off { opacity:.45; } .step3 h3 { margin:4px 0 10px; }
 .pick { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px; }
-.pick input { flex:1 1 260px; min-width:0; font:400 15px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:11px 18px; }
-.pick input:focus { outline:2px solid var(--acc); outline-offset:2px; }
+.pick select { flex:1 1 260px; min-width:0; font:400 15px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:11px 18px; }
+.pick select:focus { outline:2px solid var(--acc); outline-offset:2px; }
 .signed { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; font-size:15px; color:var(--ink2); }
 .signed img { width:28px; height:28px; border-radius:50%; }
-.repos { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-.repos button { font:400 14px var(--mono); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:7px 14px; cursor:pointer; }
-.repos button:hover { border-color:var(--acc); } .repos button i { font-style:normal; color:var(--ink3); margin-left:6px; font-size:12px; }
+.pick select:disabled { opacity:.65; cursor:wait; }
 .btn.small { padding:9px 18px; font-size:14px; } .linkbtn { background:none; border:0; color:var(--acc); font:inherit; cursor:pointer; padding:0; text-decoration:underline; }
 .ticks { list-style:none; padding:0; display:flex; flex-wrap:wrap; gap:6px 18px; margin:12px 0 0; font:italic 400 16px var(--serif); color:var(--ink3); }
 .ticks li::before { content:"\2713  "; color:var(--acc); }
@@ -66,8 +64,7 @@
       </div>
       <div id="signedIn" hidden>
         <div class="signed"><img id="avatar" alt=""><span>Signed in as <b id="login"></b></span><a id="choose" target="_blank" rel="noopener">Choose repositories</a><button class="linkbtn" type="button" id="signOut">Sign out</button></div>
-        <div class="repos" id="repoList"></div>
-        <form class="pick" id="pickForm"><input id="repoName" placeholder="or type owner/name" aria-label="Repository" autocomplete="off" spellcheck="false"><button class="btn small" type="submit">See its tree</button></form>
+        <div class="pick"><select id="repoSelect" aria-label="Choose a GitHub repository" disabled><option value="">Loading your repositories…</option></select></div>
       </div>
       <p class="err" id="err1" role="alert" hidden></p>
     </div>
@@ -116,13 +113,17 @@
       $('signedOut').hidden = true; $('signedIn').hidden = false;
       $('login').textContent = s.user.login; $('avatar').src = s.user.avatar_url || '';
       if (s.install_url) { $('choose').href = s.install_url; } else { $('choose').hidden = true; }
-      return fetch('/api/repos').then(function (r) { return r.ok ? r.json() : []; }).then(function (repos) {
-        $('repoList').textContent = repos.length ? '' : 'No repositories yet: use Choose repositories to give Krypton read access.';
+      return fetch('/api/repos').then(function (r) { if (!r.ok) { throw new Error('Could not load repositories.'); } return r.json(); }).then(function (repos) {
+        var select = $('repoSelect'); select.replaceChildren();
+        var first = document.createElement('option'); first.value = ''; first.textContent = repos.length ? 'Select a repository…' : 'No repositories available'; select.appendChild(first);
         repos.forEach(function (r) {
-          var b = document.createElement('button'), tag = document.createElement('i');
-          b.type = 'button'; b.textContent = r.full_name; tag.textContent = r.private ? 'private' : 'public'; b.appendChild(tag);
-          b.onclick = function () { scan(r.full_name); }; $('repoList').appendChild(b);
+          var option = document.createElement('option'); option.value = r.full_name; option.textContent = r.full_name + (r.private ? ' · private' : ' · public'); select.appendChild(option);
         });
+        select.disabled = !repos.length;
+        if (!repos.length) { fail('err1', 'No repositories available yet. Use Choose repositories to grant access.'); }
+      }).catch(function () {
+        var select = $('repoSelect'); select.replaceChildren(); var option = document.createElement('option'); option.textContent = 'Could not load repositories'; select.appendChild(option); select.disabled = true;
+        fail('err1', 'Could not load your repositories. Try refreshing or reconnecting GitHub.');
       });
     }).catch(function () { /* the page still works signed out */ });
   }
@@ -159,17 +160,12 @@
     $('s3').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  $('pickForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var t = $('repoName').value.trim().replace(/^https?:\/\/(www\.)?github\.com\//i, '').replace(/\.git$/, '').replace(/\/+$/, '');
-    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(t)) { return fail('err1', 'Give a repository as owner/name.'); }
-    scan(t);
-  });
+  $('repoSelect').addEventListener('change', function () { if (this.value) { scan(this.value); } });
   $('again').addEventListener('click', function () { if (drawing) { drawing.stop(); drawing = null; } $('result').hidden = true; step(1); });
   $('signOut').addEventListener('click', function () { fetch('/auth/logout', { method: 'POST', headers: SAME }).then(function () { location.href = 'tree.html'; }); });
   var said = { denied: 'GitHub sign-in was cancelled.', error: 'GitHub sign-in did not work. Try again.' }[new URLSearchParams(location.search).get('github')];
   if (said) { fail('err1', said); }
-  loadSession().then(function () { var q = new URLSearchParams(location.search).get('repo'); if (q && !$('signedIn').hidden) { $('repoName').value = q; scan(q); } });
+  loadSession().then(function () { var q = new URLSearchParams(location.search).get('repo'); if (q && !$('signedIn').hidden) { var select = $('repoSelect'); if (Array.prototype.some.call(select.options, function (o) { return o.value === q; })) { select.value = q; scan(q); } } });
 })();
 </script>
 

@@ -51,7 +51,7 @@
 .meterbar { height:10px; border-radius:999px; background:var(--well); overflow:hidden; margin:6px 0 10px; } .meterbar i { display:block; height:100%; width:0; background:var(--acc); border-radius:999px; transition:width .2s; }
 .say { font-size:15px; color:var(--ink2); }
 .err { color:var(--bad); font-size:15px; margin-top:10px; }
-.stage { position:relative; height:min(58vh,520px); border-radius:var(--r); overflow:hidden; background:var(--card); margin:6px 0 18px; touch-action:none; }
+.stage { position:relative; height:min(58vh,520px,110vw); border-radius:var(--r); overflow:hidden; background:var(--card); margin:6px 0 18px; touch-action:none; }
 .stage canvas { width:100%; height:100%; display:block; cursor:grab; } .stage canvas:active { cursor:grabbing; }
 .stage .pill { position:absolute; transform:translate(-50%,-100%); display:inline-flex; align-items:baseline; gap:7px; font:400 13px var(--sans); color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px 12px 5px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .25s; }
 .stage .pill i { font:italic 400 15px var(--serif); color:var(--acc); } .stage .pill em { font:italic 400 14px var(--serif); color:var(--ink3); }

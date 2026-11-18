@@ -133,7 +133,11 @@
     });
     function size() {
       var w = canvas.clientWidth, h = canvas.clientHeight; R3.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
-      U.k.value = h / (2 * Math.tan(cam.fov * Math.PI / 360)) * .0055;
+      // A narrow stage (a phone held upright) would crop the tree's sides, so the camera steps back until the whole width
+      // fits; the dots shrink by only part of that step so they stay easy to see.
+      var back = Math.min(2.2, Math.max(1, 1.5 / cam.aspect));
+      cam.position.z = 5.4 * back;
+      U.k.value = h / (2 * Math.tan(cam.fov * Math.PI / 360)) * .0055 * Math.sqrt(back);
     }
     function frame(now) {
       if (!running) { return; }

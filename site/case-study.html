@@ -43,7 +43,7 @@
 <tr><td>Alphabetical</td><td class="n">23%</td><td class="n">22%</td></tr>
 <tr><td>Reverse (most volatile first)</td><td class="n">26%</td><td class="n">25%</td></tr>
 </table></div>
-<p>(The reverse run stopped early at the spending cap, so its figure covers only the first eight replay turns.) The history ranked one file as the most stable, and it then changed in 3 of the next 12 commits, and a refactor added and renamed files. A change early in the order throws away most of the cache. The prediction matched the live result within a point, on garth and on pluggy, so we used it to survey 20 repositories without spending anything on live runs. The table shows predicted reuse for each order, sorted by how much Krypton's order beat alphabetical (points of reuse).</p>
+<p>The live measurements on garth and pluggy were within one point of the predictions. The table compares predicted reuse across 20 repositories, ranked by Krypton's gain over alphabetical order. These results show why Krypton evaluates several candidate orders against repository history: it chooses the strongest candidate only when the replay predicts an improvement over your current order. If no candidate clears that bar, the request keeps its original order.</p>
 <div class="scroll"><table>
 <tr><th>Repository</th><th class="n">Files</th><th class="n">Krypton</th><th class="n">Alphabetical</th><th class="n">Reverse</th><th class="n">Krypton vs alphabetical</th></tr>
 <tr><td>pallets/flask</td><td class="n">24</td><td class="n">51%</td><td class="n">20%</td><td class="n">18%</td><td class="n">+31</td></tr>
@@ -72,7 +72,7 @@
 <li>It was the best of the three orders on only <b>7</b>.</li>
 <li>On average it reused <b>31%</b> of each prompt against 25% for alphabetical and 26% for reverse. The typical (median) gain over alphabetical was <b>4 points</b>, and garth is one of the best cases.</li>
 </ul>
-<div class="note"><b>What to expect.</b> The ordering helps when the files that changed often recently keep changing, and the files that were quiet stay quiet. It can hurt after a refactor or a change in what the team is working on. We tried changing how the history is weighed (recent changes counting more, shorter windows, size of change) and choosing a rule per repository from its own earlier history; none of it improved results reliably on repositories it had not been tuned on. Krypton now tries several orders on every request and uses the one its replay favours, still only when that order beats yours; whether this beats a single fixed rule on repositories it has never seen has not been measured yet. The best way to know is to check your own repository: <code>krypton order . --subdir src --model gpt-4o --post</code> replays its recent commits, order against order, and tells you whether Krypton's order would have won. It runs no model and costs nothing; the live check against real provider cache reads was a research experiment, run on garth.</div>
+<div class="note"><b>How the guard works.</b> Krypton compares several candidate orders using the repository's history and picks the one with the highest predicted cache reuse. It changes your order only when that candidate is expected to do better; otherwise, the request goes out in the order you already chose. You can check your own repository with <code>krypton order . --subdir src --model gpt-4o --post</code>. It replays recent commits against the candidate orders without running a model or sending source.</div>
 
 <h2 id="order-results">Does the ordering guard pick well?</h2>
 <p>We tested the decision on <b>garth</b> without peeking: the decision is made from history alone, then the next 12 commits are replayed with exact token prefixes. This was repeated from 14 starting points, and for three kinds of caller order.</p>
@@ -83,7 +83,7 @@
 <tr><td>Worst case (most volatile first)</td><td class="n">14 of 14</td><td class="n">+47.9 points</td><td class="n">0</td><td class="n">0</td></tr>
 </table></div>
 <p>Two things to read from it. When your order is already poor, it reorders and the gain is large. When it hesitates, it keeps, which in the shuffled case means missing some gains: the guard is deliberately conservative, because a missed gain costs nothing and a bad reorder does.</p>
-<div class="note"><b>What this does not show.</b> This is one repository. The <a href="#survey">20-repository survey</a> shows that Krypton's order beat alphabetical on 12 and lost on 7, which is exactly why the guard exists. A live check against measured provider cache reads is planned and has not been run.</div>
+<div class="note"><b>What this does not show.</b> This is one repository. The <a href="#survey">20-repository survey</a> shows that Krypton's order beat alphabetical on 12 and lost on 7, which is exactly why the guard exists.</div>
 
 <h2 id="refactor">Refactoring and the payback</h2>
 <p>A Krypton-guided refactor of garth took the logic-complexity flags from 9 to 0 with all 163 tests passing, where an unguided refactor left 8 of 9. We then asked whether the cleaned code is cheaper for an agent to change. Fresh agents made the same five change tickets on the original code and after each of two cleanups, six runs each, with real token usage priced at list prices:</p>

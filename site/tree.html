@@ -68,7 +68,7 @@
 .worst div[role=button] { cursor:pointer; } .worst div:focus-visible { outline:2px solid var(--acc); outline-offset:-2px; }
 .worst div.on { background:color-mix(in srgb, var(--acc) 18%, var(--card)); box-shadow:inset 3px 0 0 var(--acc); }
 .listhint { font:italic 400 16px var(--serif); color:var(--ink3); }
-.deque { margin:-8px 0 22px; padding:12px 16px; border-left:3px solid var(--acc); background:var(--card); border-radius:0 14px 14px 0; font-size:15px; color:var(--ink2); max-width:78ch; } .deque b { display:block; font:italic 400 18px var(--serif); color:var(--acc); font-weight:400; margin-bottom:2px; }
+
 .worst .name { font:400 16px var(--sans); color:var(--ink); } .worst .file { grid-column:1; font:400 13px var(--sans); color:var(--ink3); }
 .worst div:last-child { border-bottom:0; } .worst span { min-width:0; overflow-wrap:anywhere; } .worst b { grid-column:2; grid-row:1; font:italic 400 17px var(--serif); color:var(--acc); font-weight:400; white-space:nowrap; }
 </style>
@@ -115,7 +115,7 @@
       <div id="result" hidden>
         <div class="stats" id="facts"></div>
         <div class="stage" id="stage"><canvas id="scene" aria-label="Your repository's syntax tree, tangled functions in lavender. Hover a lavender cluster to see which function it is; drag to turn the tree."></canvas><span class="hint">Hover a lavender cluster to see its function · drag to turn</span><div class="selection" id="selection" role="status" aria-live="polite" hidden></div></div>
-        <div id="worstWrap"><p>The most tangled functions <span class="listhint">· click one to find it in the tree</span></p><div class="worst" id="worst"></div><p class="deque"><b>Lots of lavender? You don&rsquo;t clean it all first.</b> Krypton works a codebase like a deque, from both ends: new code goes in clean at the front, and the worst tangles come off the back a few at a time, starting at the top of this list. A pull request fails only if it makes purity worse, and each ticket aims for the target you set (say 70, even when the whole repository scans 56 today), so nothing waits for a big refactor.</p></div>
+        <div id="worstWrap"><p>The most tangled functions <span class="listhint">· click one to find it in the tree</span></p><div class="worst" id="worst"></div></div>
         <div class="cta"><a class="btn" href="savings.html">See the savings</a><button class="btn ghost" type="button" id="again">Another repository</button></div>
       </div>
     </div>

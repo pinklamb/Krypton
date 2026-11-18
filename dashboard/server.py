@@ -128,8 +128,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"error": "not connected"}, 401)
         try:
             self._json(auth.granted_repos(self.cfg, session["token"]))
-        except auth.OAuthError:
-            self._json({"error": "GitHub did not answer"}, 502)
+        except auth.OAuthError as error:
+            print(f"listing repositories failed: {error}", flush=True)
+            hint = " The site may be using an OAuth App's client id; it needs the GitHub App's (it starts with Iv)." if " 403 " in str(error) else ""
+            self._json({"error": f"GitHub would not list your repositories.{hint}"}, 502)
 
     def _same_origin(self) -> bool:
         """State-changing requests must come from this site's own page (custom header, matching Origin)."""
@@ -236,6 +238,8 @@ def announce(config: auth.Config, scoring: bool) -> str:
     state = "on" if config.configured else "off (set GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET and BASE_URL)"
     score = "on" if scoring else "off (set KRYPTON_SCORE_URL and KRYPTON_SERVICE_TOKEN)"
     note = "" if os.environ.get("SESSION_SECRET") else " (SESSION_SECRET is not set, so sessions reset whenever the server restarts)"
+    if config.configured and not config.app_slug:
+        note += " (GITHUB_APP_SLUG is not set, so visitors get no link to choose which repositories the app may read)"
     return f"GitHub sign-in: {state}; scoring: {score}{note}"
 
 

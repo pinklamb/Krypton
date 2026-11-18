@@ -39,6 +39,8 @@ def run_worker(sources: dict[str, str], seconds: int = WORKER_SECONDS) -> dict:
         print(f"scan worker exited with {done.returncode}", flush=True)
         down = b"cannot reach the scoring server" in done.stderr or b"No such file" in done.stderr or b"FileNotFoundError" in done.stderr
         print(done.stderr.decode(errors="replace")[-300:], flush=True)
+        if b"refused the tree (401)" in done.stderr:
+            raise ScanError(503, "The site is not logged in to the scoring server: set KRYPTON_SERVICE_TOKEN (krypton-server --mint website 365).")
         raise ScanError(503 if down else 500, "The analysis engine is not available on this server." if down else "The analysis failed.")
     return json.loads(done.stdout)
 

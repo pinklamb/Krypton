@@ -53,7 +53,8 @@ fn read_tokens(dir: &std::path::Path) -> Result<Tokens, Failure> {
 }
 
 fn write_tokens(dir: &std::path::Path, tokens: &Tokens) -> Result<(), Failure> {
-    fs::create_dir_all(dir).map_err(|error| Failure::Log(format!("cannot create {}: {error}", dir.display())))?;
+    // ignored by git like `.krypton`, in case KRYPTON_HOME points inside a repository
+    crate::runlog::ensure_ignored(dir).map_err(|error| Failure::Log(format!("cannot create {}: {error}", dir.display())))?;
     let path = dir.join(CREDENTIALS);
     let text = serde_json::to_string_pretty(tokens).map_err(|error| Failure::Output(error.to_string()))?;
     fs::write(&path, text).map_err(|error| Failure::Log(format!("cannot write {}: {error}", path.display())))?;

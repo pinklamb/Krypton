@@ -192,7 +192,7 @@ impl Anthropic {
 
     fn save(&self) {
         let stored = json!({ "model": self.model, "counts": self.counts });
-        let written = self.cache_path.parent().map(fs::create_dir_all).transpose().and_then(|_| fs::write(&self.cache_path, stored.to_string()));
+        let written = self.cache_path.parent().map(crate::runlog::ensure_ignored).transpose().and_then(|_| fs::write(&self.cache_path, stored.to_string()));
         if let Err(error) = written {
             eprintln!("could not save the token cache {}: {error}", self.cache_path.display());
         }

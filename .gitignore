@@ -6,12 +6,17 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# secrets
+# secrets: environment files, keys, and a Krypton login copied by mistake
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+keys.json
+credentials
+credentials.json
 
-# the client's local token-count cache (krypton order --model claude-...)
+# Krypton's own folder (run log, attempts, settings, token counts); it also ignores itself with its own .gitignore
 .krypton/
 
 # demo design scratch and local notes

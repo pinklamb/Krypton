@@ -47,17 +47,22 @@ pub fn folder(repo: &Path) -> PathBuf {
 ///
 /// [`Failure::Log`] when the folder or the file cannot be written.
 pub fn ensure_folder(repo: &Path) -> Result<(), Failure> {
-    let dir = folder(repo);
-    fs::create_dir_all(&dir).map_err(|error| write_failure(&error))?;
+    ensure_ignored(&folder(repo)).map_err(|error| write_failure(&error))
+}
+
+/// Create `dir` with a `.gitignore` of `*` inside, unless it has one: every folder Krypton writes (`.krypton` in a repository, the login
+/// folder) is invisible to git from the moment it exists, whatever the repository's own `.gitignore` says.
+///
+/// # Errors
+///
+/// The I/O error when the folder or the marker cannot be written.
+pub fn ensure_ignored(dir: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(dir)?;
     let marker = dir.join(".gitignore");
     if marker.exists() {
         return Ok(());
     }
-    fs::write(
-        &marker, "*
-",
-    )
-    .map_err(|error| write_failure(&error))
+    fs::write(marker, "*\n")
 }
 
 fn log_path(repo: &Path) -> PathBuf {
@@ -189,6 +194,21 @@ mod tests {
         let answer = json!({ "purity_score": 60, "files": [ { "filename": "a.py", "functions": [ { "name": "c1.m1", "times_over_limit": 2.0 } ] } ] });
         let run = from_answer(&answer, &names, "t", 0).unwrap();
         assert_eq!(run.functions.keys().next().map(String::as_str), Some("a.py::Client.connect"), "both parts are real names");
+    }
+
+    // A folder Krypton writes is invisible to git, even in a repository whose own .gitignore says nothing about it.
+    #[test]
+    fn test_ensure_ignored() {
+        let repo = std::env::temp_dir().join(format!("krypton-ignored-{}", std::process::id()));
+        std::fs::create_dir_all(&repo).unwrap();
+        let git = |args: &[&str]| std::process::Command::new("git").arg("-C").arg(&repo).args(args).output().unwrap();
+        git(&["init", "-q"]);
+        let dir = repo.join(".krypton");
+        ensure_ignored(&dir).unwrap();
+        std::fs::write(dir.join("credentials"), "secret").unwrap();
+        assert!(git(&["check-ignore", "-q", ".krypton/credentials"]).status.success(), "git ignores what is inside");
+        assert!(!String::from_utf8_lossy(&git(&["status", "--porcelain", "--untracked-files=all"]).stdout).contains(".krypton"), "git status does not list it");
+        std::fs::remove_dir_all(&repo).unwrap();
     }
 
     // An answer without a purity score is an error, not a zero.

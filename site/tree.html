@@ -113,7 +113,7 @@
       $('signedOut').hidden = true; $('signedIn').hidden = false;
       $('login').textContent = s.user.login; $('avatar').src = s.user.avatar_url || '';
       if (s.install_url) { $('choose').href = s.install_url; } else { $('choose').hidden = true; }
-      return fetch('/api/repos').then(function (r) { if (!r.ok) { throw new Error('Could not load repositories.'); } return r.json(); }).then(function (repos) {
+      return fetch('/api/repos').then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) { throw new Error(d.error || 'Could not load your repositories.'); } return d; }); }).then(function (repos) {
         var select = $('repoSelect'); select.replaceChildren();
         var first = document.createElement('option'); first.value = ''; first.textContent = repos.length ? 'Select a repository…' : 'No repositories available'; select.appendChild(first);
         repos.forEach(function (r) {
@@ -121,9 +121,9 @@
         });
         select.disabled = !repos.length;
         if (!repos.length) { fail('err1', 'No repositories available yet. Use Choose repositories to grant access.'); }
-      }).catch(function () {
+      }).catch(function (error) {
         var select = $('repoSelect'); select.replaceChildren(); var option = document.createElement('option'); option.textContent = 'Could not load repositories'; select.appendChild(option); select.disabled = true;
-        fail('err1', 'Could not load your repositories. Try refreshing or reconnecting GitHub.');
+        fail('err1', error.message + ' Try signing out and connecting GitHub again.');
       });
     }).catch(function () { /* the page still works signed out */ });
   }

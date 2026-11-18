@@ -146,13 +146,24 @@ def verifier_for(cfg: Config, cookies: dict[str, str], state: str | None) -> str
     return verifier if saved and state and hmac.compare_digest(expected, state) else None
 
 
+def _github_says(error: urllib.error.HTTPError) -> str:
+    """GitHub's own short reason for a refusal (its `message`), for the server log. GitHub never echoes a token in it."""
+    try:
+        return str(json.loads(error.read() or b"{}").get("message", ""))[:200]
+    except ValueError:
+        return ""
+
+
 def _request(req: urllib.request.Request) -> dict:
     """Send a request to GitHub and parse the JSON reply."""
+    path = urllib.parse.urlsplit(req.full_url).path
     try:
         with urllib.request.urlopen(req, timeout=10) as reply:
             return json.load(reply)
+    except urllib.error.HTTPError as error:
+        raise OAuthError(f"GitHub answered {error.code} to {path}: {_github_says(error)}") from error
     except (urllib.error.URLError, ValueError, TimeoutError) as error:
-        raise OAuthError(type(error).__name__) from error
+        raise OAuthError(f"{type(error).__name__} calling {path}: {error}") from error
 
 
 def exchange_code(cfg: Config, code: str, verifier: str) -> str:
@@ -160,7 +171,8 @@ def exchange_code(cfg: Config, code: str, verifier: str) -> str:
     body = urllib.parse.urlencode({"client_id": cfg.client_id, "client_secret": cfg.client_secret, "code": code, "redirect_uri": cfg.redirect_uri, "code_verifier": verifier}).encode()
     reply = _request(urllib.request.Request(f"{cfg.oauth_base}/login/oauth/access_token", data=body, headers={"Accept": "application/json", "User-Agent": "krypton-demo"}))
     if "access_token" not in reply:
-        raise OAuthError(str(reply.get("error", "no_token")))
+        # GitHub explains here: incorrect_client_credentials (wrong client secret), redirect_uri_mismatch (callback URL), bad_verification_code ...
+        raise OAuthError(f"{reply.get('error', 'no_token')}: {reply.get('error_description', '')}")
     return reply["access_token"]
 
 
@@ -175,7 +187,8 @@ def install_url(cfg: Config) -> str | None:
 
 
 def granted_repos(cfg: Config, token: str) -> list[dict]:
-    """The repositories this visitor let the app read, across every installation they can see."""
+    """The repositories this visitor let the GitHub App read, across every installation they can see. Only a GitHub App's user token can
+    list installations: credentials from an OAuth App sign in fine but fail here (GitHub answers 403)."""
     repos: list[dict] = []
     for installation in github_get(cfg, "/user/installations?per_page=100", token).get("installations", []):
         page = github_get(cfg, f"/user/installations/{int(installation['id'])}/repositories?per_page=100", token)

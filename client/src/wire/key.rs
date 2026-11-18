@@ -63,7 +63,7 @@ impl NameKey {
         Self(bytes)
     }
 
-    /// A key written as 64 hex characters (what `.krypton/key` holds).
+    /// A key written as 64 hex characters (what `KRYPTON_KEY` holds).
     ///
     /// # Errors
     ///

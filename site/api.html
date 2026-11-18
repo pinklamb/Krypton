@@ -72,7 +72,7 @@
 
 
 
-<div class="note">Examples use <code>YOUR-SERVER</code> where the address goes.</div>
+<div class="note">Examples use the hosted server, <code>https://krypton-prodserver-production.up.railway.app</code>.<!-- Enterprise, not offered yet: the client uses this server unless --server or KRYPTON_SERVER names another; a private deployment uses its own address. --></div>
 
 <h2 id="overview">Overview</h2>
 <div class="scroll"><table>
@@ -86,12 +86,12 @@
 
 
 <h2 id="health">GET /v1/health</h2>
-<pre><code>curl https://YOUR-SERVER/v1/health
+<pre><code>curl https://krypton-prodserver-production.up.railway.app/v1/health
 <span class="c"># {"status": "ok"}</span></code></pre>
 
 <h2 id="capabilities">GET /v1/capabilities</h2>
 <p>Returns what the server accepts, for a client to check before sending anything.</p>
-<pre><code>curl https://YOUR-SERVER/v1/capabilities</code></pre>
+<pre><code>curl https://krypton-prodserver-production.up.railway.app/v1/capabilities</code></pre>
 <pre><code>{
   "server_version": "0.1.0",
   "wire_versions": [1],
@@ -113,7 +113,7 @@
 <tr><td><code>Content-Encoding</code></td><td>Optional: <code>gzip</code>. Any other encoding is refused.</td></tr>
 </table></div>
 <p>The body is described in <a href="wire-format.html">Wire format</a>. A minimal call, with the request already built and compressed:</p>
-<pre><code>curl -sS https://YOUR-SERVER/v1/score \
+<pre><code>curl -sS https://krypton-prodserver-production.up.railway.app/v1/score \
   -H "Content-Type: application/json" \
   -H "Content-Encoding: gzip" \
   --data-binary @request.json.gz</code></pre>

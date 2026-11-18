@@ -4,12 +4,29 @@
 
 Agents are strong and fast, and every strong thing needs a check. Krypton is that check for code: it gives the code an agent writes a **purity score**, so you can see how bloated or pure it is to understand, after every change. It measures structure (decisions, nesting, bloated functions, tangled wiring) for JavaScript, TypeScript and Python. A small Rust client parses your code **on your machine** and sends only the syntax tree to a Krypton server, which scores it and sends back the review; your source never leaves your machine. It is built to sit beside a coding agent: after each change the agent runs Krypton, sees what got heavy, and splits it before the weight costs tokens and invites mistakes. Because the score is kept after every change, you can also see whether your codebase got more or less pure after you switched models, and choose by cost and by what each model does to your code. It is not a linter; run yours too.
 
+You need Docker ([Docker Desktop](https://docs.docker.com/get-docker/) on macOS and Windows, Docker Engine on Linux) and git; nothing else.
+
 ```bash
-docker build -t krypton client            # once: the client as a local Docker image
-krypton() { docker run --rm $([ -t 0 ] && echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] && echo -p 127.0.0.1:7777:7777) -v krypton-home:/krypton-home -v "$PWD:/repo" krypton "$@"; }
+git clone https://github.com/pinklamb/Krypton.git   # anywhere; it does not go inside your project
+docker build -t krypton Krypton/client               # once: the client as a local Docker image
 
-krypton                                   # once per repository: logs you in with GitHub, then asks for your settings here or on a local dashboard
+# the krypton command (macOS, Linux, Git Bash; add it to ~/.bashrc or ~/.zshrc to keep it)
+krypton() { local here="$PWD"; command -v cygpath >/dev/null && here="$(cygpath -w "$PWD")"; MSYS_NO_PATHCONV=1 docker run --rm $([ -t 0 ] && echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] && echo -p 127.0.0.1:7777:7777) -v krypton-home:/krypton-home -v "$here:/repo" krypton "$@"; }
 
+cd your-project
+krypton                                   # once per project: logs you in with GitHub, asks for your settings here or on a local dashboard, and can write the pull request gate
+git add .github/workflows/krypton.yml && git commit -m "Add the Krypton gate" && git push   # turns the gate on
+```
+
+In PowerShell, the krypton command is (add it to your `$PROFILE` to keep it):
+
+```powershell
+function krypton { $tty = @(); if (-not [Console]::IsInputRedirected) { $tty = @('-it') }; $port = @(); if ($args.Count -eq 0 -or $args[0] -eq 'setup') { $port = @('-p', '127.0.0.1:7777:7777') }; docker run --rm @tty @port -v krypton-home:/krypton-home -v "${PWD}:/repo" krypton @args }
+```
+
+Everyday commands:
+
+```bash
 krypton scan src --names                  # the review for a folder
 krypton scan . --base origin/main         # only what this branch changed (exit code 1 when it fails)
 krypton order . --subdir src --model gpt-4o --post    # should this prompt's files be reordered?

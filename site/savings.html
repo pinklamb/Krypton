@@ -20,161 +20,46 @@
   \  /  
    \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs.html">Docs</a><a class="wide" href="index.html#story">Demo</a><a class="wide" href="docs.html#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review.html">Review and setup</a><a href="prompt-caching.html">Prompt caching</a><a href="order.html">File ordering</a><a href="integrations.html">Integrations</a><a href="case-study.html">Case study</a><a href="command-reference.html">Commands</a><a href="api.html">API</a><a href="wire-format.html">Wire format</a><a href="architecture.html">Architecture</a><a href="privacy.html">Privacy</a><a href="faq.html">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
 <div class="wrap single wide"><main id="content">
-<style>
-.sv { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:22px; align-items:start; margin-top:8px; }
-@media (max-width:900px) { .sv { grid-template-columns:minmax(0,1fr); } }
-.sv-in { display:grid; gap:20px; }
-.sv-in label, .sv-in .lab { display:flex; justify-content:space-between; gap:12px; font:400 16px var(--sans); color:var(--ink); }
-.sv-in output, .sv-in .val { font:400 14px var(--mono); color:var(--acc); font-variant-numeric:tabular-nums; }
-.sv-in input[type=range] { width:100%; accent-color:var(--acc); margin-top:8px; }
-.sv-in .hint { font-size:13.5px; color:var(--ink3); margin-top:4px; }
-.seg2 { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-.seg2 button { font:400 14px var(--sans); color:var(--ink2); background:none; border:1px solid var(--line); border-radius:999px; padding:7px 14px; cursor:pointer; }
-.seg2 button[aria-pressed="true"] { background:var(--acc); border-color:var(--acc); color:var(--acc-ink); }
-.sv-in .check { display:flex; gap:10px; align-items:flex-start; font-size:15px; color:var(--ink2); }
-.sv-in .check input { margin-top:5px; accent-color:var(--acc); }
-.bill { text-align:left; }
-.bill .vs { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:16px; align-items:end; margin:10px 0 18px; }
-.bill small { display:block; font:italic 400 16px var(--serif); color:var(--ink3); }
-.bill b.was { font:250 clamp(36px,4.6vw,56px)/1 var(--sans); color:var(--ink3); text-decoration:line-through; text-decoration-thickness:1px; }
-.bill b.now { font:250 clamp(40px,5.2vw,64px)/1 var(--sans); color:var(--acc); }
-.bill .vs span { display:block; font-size:13.5px; color:var(--ink3); margin-top:6px; }
-.bill .saved { display:flex; flex-wrap:wrap; gap:8px 18px; padding-top:14px; border-top:1px solid var(--line); font-size:15px; color:var(--ink2); }
-.bill .saved b { color:var(--ink); font-weight:480; }
-.stairs { display:grid; gap:12px; margin-top:10px; }
-.stair { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,2fr) auto; gap:14px; align-items:center; }
-.stair .lab2 b { display:block; font:400 15px var(--sans); color:var(--ink); } .stair .lab2 span { font-size:13px; color:var(--ink3); }
-.stair .tr { height:12px; border-radius:999px; background:var(--well); overflow:hidden; } .stair .tr i { display:block; height:100%; border-radius:999px; }
-.stair .num { font:400 14px var(--mono); text-align:right; font-variant-numeric:tabular-nums; } .stair .num em { display:block; font-style:normal; font-size:12px; color:var(--ok); }
-.teams { display:grid; gap:10px; margin-top:8px; }
-.team { display:grid; grid-template-columns:120px minmax(0,1fr) auto; gap:14px; align-items:center; font-size:14.5px; }
-.team .who { color:var(--ink2); } .team .bars { position:relative; height:10px; border-radius:999px; background:var(--well); } .team .bars i { position:absolute; inset:0 auto 0 0; border-radius:999px; background:var(--acc); }
-.team .num { font:400 13.5px var(--mono); text-align:right; }
-.repobadge[hidden] { display:none !important; }
-.repobadge { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; padding:12px 16px; border:1.5px dashed var(--acc); border-radius:14px; margin:0 0 20px; font-size:15px; color:var(--ink2); }
-.repobadge b { color:var(--ink); font-weight:480; }
-.assume { display:grid; gap:6px; margin-top:10px; font-size:14px; } .assume div { display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line); padding:6px 0; } .assume b { font:400 13.5px var(--mono); }
-</style>
-
-<div class="eyebrow" id="svEyebrow">Savings</div>
-<h1>Your AI bill, before and after Krypton</h1>
-<p class="lede">Coding agents send your code to the model on every turn. Cached text costs a fraction of the normal price, so keeping the unchanged part at the front, and keeping the code light, makes every turn cheaper.</p>
-<div class="repobadge" id="repoBadge" hidden></div>
-
-<div class="sv">
-  <div class="tile sv-in" aria-label="Your team">
-    <div><label for="devs">Developers <output id="devsOut"></output></label><input type="range" id="devs" min="1" max="500" step="1"></div>
-    <div><label for="turns">Agent turns per developer per day <output id="turnsOut"></output></label><input type="range" id="turns" min="20" max="300" step="10"></div>
-    <div><label for="lines">Codebase size <output id="linesOut"></output></label><input type="range" id="lines" min="1000" max="300000" step="1000"><div class="hint" id="tokHint"></div></div>
-    <div><span class="lab">Model, at list prices</span><div class="seg2" id="models" role="group" aria-label="Model"></div></div>
-    <div><span class="lab">Cache reuse</span><div class="seg2" id="reuse" role="group" aria-label="Cache reuse rates"></div><div class="hint" id="reuseHint"></div></div>
-    <label class="check" for="refactor"><input type="checkbox" id="refactor" checked><span><span id="effLabel"></span><br><span class="hint" id="effNote"></span></span></label>
-  </div>
-
-  <div class="tile bill" aria-live="polite">
-    <small>Monthly bill for reading your code</small>
-    <div class="vs">
-      <div><small>Today</small><b class="was" id="was"></b><span>caching on, files in default order</span></div>
-      <svg class="ar" viewBox="0 0 16 16" aria-hidden="true" style="width:28px;height:28px;color:var(--acc);margin-bottom:20px"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg>
-      <div><small>With Krypton</small><b class="now" id="now"></b><span id="nowNote"></span></div>
+<link rel="stylesheet" href="assets/savings.css">
+<div class="save">
+  <svg class="art" id="art" viewBox="0 0 800 640" aria-hidden="true"></svg>
+  <section class="col one" aria-label="Your monthly saving">
+    <div class="lead">
+      <p class="eyebrow" id="svEyebrow">Savings · example team</p>
+      <h1 aria-live="polite">Keep <em id="saved"></em><br>every month.</h1>
+      <div class="facts" id="facts"></div>
+      <div class="repo" id="repoBadge" hidden></div>
     </div>
-    <div class="saved"><span><b id="savedMonth"></b> saved a month</span><span><b id="savedYear"></b> a year</span><span><b id="savedPct"></b> lower</span></div>
-  </div>
+    <div class="cta"><a class="btn" href="tree.html">See your own repository</a><a class="btn ghost" href="index.html#story">Back to the demo</a></div>
+  </section>
+  <section class="col two" aria-label="The saving in detail">
+    <div class="pair">
+      <div class="glass"><span>Lower bill</span><strong id="pct"></strong><small id="pctNote"></small></div>
+      <div class="glass"><span>Per developer</span><strong class="m" id="perDev"></strong><small>saved a month</small></div>
+    </div>
+    <div class="glass"><span>With Krypton, by model · a month</span><svg class="models" id="models" viewBox="0 0 300 70" role="img" aria-label="Monthly bill with Krypton for each model"></svg></div>
+    <div class="glass assumptions"><span id="assumptions">Assumptions · an estimate, not your invoice</span>
+      <small>Every turn sends the whole codebase. Reuse and the cleaner-code effect were measured in the <a href="case-study.html">case study</a>; your history decides what you actually save, and <code>krypton order</code> checks it for free.</small>
+      <div class="assume" id="assume"></div></div>
+  </section>
+  <section class="col three" aria-label="Make it your team">
+    <div class="glass"><span>Each prompt reused from cache</span><div class="row"><strong id="reuseNow"></strong><small id="reuseWas"></small></div>
+      <svg class="barcode" id="barcode" viewBox="0 0 300 34" preserveAspectRatio="none" role="img" aria-label="Share of each prompt reused, today against with Krypton"></svg></div>
+    <div class="glass tune"><span>From today&rsquo;s bill to Krypton&rsquo;s · make it your team</span>
+      <svg class="arcs" id="arcs" viewBox="0 0 300 160" role="img" aria-label="Today's monthly bill shrinking to Krypton's"></svg>
+      <div class="row"><small id="arcToday"></small><div><strong id="arcPay"></strong><small>of today&rsquo;s bill</small></div><small id="arcKr" style="text-align:right"></small></div>
+      <div class="lines">
+        <div><label for="devs">Developers <output id="devsOut"></output></label><input type="range" id="devs" min="1" max="500" step="1"></div>
+        <div><label for="turns">Agent turns a day, each <output id="turnsOut"></output></label><input type="range" id="turns" min="20" max="300" step="10"></div>
+        <div><label for="lines">Codebase <output id="linesOut"></output></label><input type="range" id="lines" min="1000" max="300000" step="1000"><small id="tokHint"></small></div>
+        <div><span class="lab">Model, at list prices</span><div class="pills" id="modelPick" role="group" aria-label="Model"></div></div>
+        <label class="check" for="refactor"><input type="checkbox" id="refactor"><span><span id="effLabel"></span><small id="effNote"></small></span></label>
+      </div>
+    </div>
+  </section>
+  <div class="tip" id="tip" hidden></div>
 </div>
-
-<h2 id="build">How the saving builds up</h2>
-<p>Each bar is the monthly bill after one more step; the last is what you pay with Krypton.</p>
-<div class="stairs" id="stairs"></div>
-
-<h2 id="teams">The same maths at other team sizes</h2>
-<div class="teams" id="teamRows"></div>
-
-<h2 id="assumptions">Assumptions</h2>
-<div class="note"><b>An estimate, not your invoice</b>Every turn is assumed to send the whole codebase. Cache reuse and the cleaner-code effect were measured on the repositories in the <a href="case-study.html">case study</a>; your history decides how much you actually save, and <code>krypton order</code> checks it for free.</div>
-<div class="assume" id="assume"></div>
-
-<div class="cta" style="margin-top:28px"><a class="btn" href="tree.html">See your own repository</a><a class="btn ghost" href="index.html#story">Back to the demo</a></div>
-
-<script>
-(function () {
-  'use strict';
-  // Prices per million tokens: normal input, cached read, cache write (list prices).
-  var MODELS = {
-    sonnet: { name: 'Claude Sonnet 5.5', input: 2.0, read: 0.2, write: 2.5 },
-    opus: { name: 'Claude Opus 5.5', input: 4.0, read: 0.2, write: 5.0 },
-    gpt4o: { name: 'GPT-4o', input: 2.5, read: 1.25, write: 2.5 }
-  };
-  // Share of each request the provider reused from cache: alphabetical order against Krypton's order.
-  var REUSE = {
-    garth: { label: 'Measured on garth (best case)', alpha: 0.466, krypton: 0.712, hint: 'Live Claude API, 12 replayed commits: 47% reused in alphabetical order, 71% with stable files first.' },
-  };
-  var REFACTOR = 0.169, GARTH_TANGLED_SHARE = 11 / 111, DAYS = 22, CHARS_PER_TOKEN = 3.5;
-  var $ = function (id) { return document.getElementById(id); };
-  var repo = null;
-  try { repo = JSON.parse(sessionStorage.getItem('kr-repo') || 'null'); } catch (e) { repo = null; }
-  var S = { devs: 50, turns: 100, lines: 25000, tpl: 11.5, model: 'sonnet', reuse: 'garth', refactor: true, effect: REFACTOR };
-  if (repo && repo.lines > 0) {
-    S.devs = 10; S.lines = repo.lines;
-    S.tpl = Math.min(20, Math.max(1, Math.round(10 * (repo.characters / CHARS_PER_TOKEN) / repo.lines) / 10));
-    S.effect = REFACTOR * Math.min(1, (repo.functions ? repo.tangled / repo.functions : 0) / GARTH_TANGLED_SHARE);
-    S.refactor = repo.tangled > 0;
-  }
-  function money(v) { return v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? '$' + (v / 1e3).toFixed(1) + 'K' : v >= 100 ? '$' + Math.round(v).toLocaleString('en-US') : '$' + v.toFixed(2); }
-  function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
-  function tokK(n) { return n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'K'; }
-  function pct(a, b) { return a > 0 ? Math.round(100 * (1 - b / a)) : 0; }
-  function calc(devs) {
-    var m = MODELS[S.model], r = REUSE[S.reuse], C = S.lines * S.tpl, N = devs * S.turns * DAYS;
-    var per = function (h) { return C * (h * m.read + (1 - h) * m.write) / 1e6; };
-    var none = C * m.input / 1e6, orig = per(r.alpha), order = per(r.krypton), full = order * (S.refactor ? 1 - S.effect : 1);
-    return { C: C, none: none * N, orig: orig * N, order: order * N, full: full * N };
-  }
-  function seg(id, items, current, pick) {
-    $(id).innerHTML = Object.keys(items).map(function (k) { return '<button type="button" data-k="' + k + '" aria-pressed="' + (k === current) + '">' + (items[k].name || items[k].label) + '</button>'; }).join('');
-    [].forEach.call($(id).querySelectorAll('button'), function (b) { b.onclick = function () { pick(b.getAttribute('data-k')); render(); }; });
-  }
-  function render() {
-    var b = calc(S.devs), saved = b.orig - b.full, top = b.none || 1;
-    $('devsOut').textContent = fmt(S.devs); $('turnsOut').textContent = S.turns; $('linesOut').textContent = fmt(S.lines) + ' lines';
-    $('tokHint').textContent = 'About ' + tokK(b.C) + ' tokens every time an agent reads it (' + S.tpl + ' tokens a line).';
-    seg('models', MODELS, S.model, function (k) { S.model = k; });
-    seg('reuse', REUSE, S.reuse, function (k) { S.reuse = k; });
-    $('reuseHint').textContent = REUSE[S.reuse].hint;
-    $('effLabel').textContent = 'Include cleaner code: ' + (S.effect * 100).toFixed(1) + '% fewer tokens per change';
-    $('effNote').textContent = repo ? (repo.tangled ? 'Scaled from the 16.9% measured after a cleanup to your share of tangled functions.' : 'No tangled functions were found, so no cleaner-code saving is assumed.') : 'The average over six measured runs after a cleanup; the typical run saved about 6%.';
-    $('was').textContent = money(b.orig); $('now').textContent = money(b.full); $('nowNote').textContent = S.refactor ? 'stable files first, cleaner code' : 'stable files first';
-    $('savedMonth').textContent = money(saved); $('savedYear').textContent = money(saved * 12); $('savedPct').textContent = pct(b.orig, b.full) + '%';
-    var steps = [['No caching', 'every read billed in full', b.none, 'var(--line)'], ['Caching, default file order', Math.round(REUSE[S.reuse].alpha * 100) + '% of each request reused', b.orig, 'var(--ink3)'],
-      ['Krypton’s file order', Math.round(REUSE[S.reuse].krypton * 100) + '% reused: stable files first', b.order, 'var(--acc)']];
-    if (S.refactor) { steps.push(['Plus cleaner code', (S.effect * 100).toFixed(1) + '% fewer tokens per change', b.full, 'var(--ok)']); }
-    $('stairs').innerHTML = steps.map(function (s, i) {
-      var drop = i ? '<em>−' + money(steps[i - 1][2] - s[2]) + '</em>' : '';
-      return '<div class="stair"><div class="lab2"><b>' + s[0] + '</b><span>' + s[1] + '</span></div><div class="tr"><i style="width:' + (100 * s[2] / top).toFixed(1) + '%;background:' + s[3] + '"></i></div><div class="num">' + money(s[2]) + drop + '</div></div>';
-    }).join('');
-    $('teamRows').innerHTML = [1, 10, 50, 200, 500].map(function (n) {
-      var t = calc(n);
-      return '<div class="team"><span class="who">' + n + ' developer' + (n === 1 ? '' : 's') + '</span><span class="bars"><i style="width:' + (100 * t.full / (t.orig || 1)).toFixed(1) + '%"></i></span><span class="num">' + money((t.orig - t.full) * 12) + ' a year</span></div>';
-    }).join('');
-    var m = MODELS[S.model];
-    $('assume').innerHTML = [['Prices per million tokens: input / cached read / cache write', '$' + m.input.toFixed(2) + ' / $' + m.read.toFixed(2) + ' / $' + m.write.toFixed(2)],
-      ['Working days a month', DAYS], ['Each turn sends the whole codebase', 'yes'], ['Tokens per line of code', S.tpl]].map(function (r) { return '<div><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('');
-  }
-  if (repo) {
-    $('svEyebrow').textContent = 'Savings for ' + repo.repo;
-    $('repoBadge').hidden = false;
-    $('repoBadge').innerHTML = 'Based on <b>' + repo.repo.replace(/[<>&]/g, '') + '</b><span>' + fmt(repo.files) + ' files</span><span>' + fmt(repo.lines) + ' lines</span><span>about ' + tokK(repo.characters / CHARS_PER_TOKEN) + ' tokens each time it is read</span><span>' + repo.tangled + ' tangled functions</span>';
-  } else {
-    $('svEyebrow').textContent = 'Savings · example team';
-  }
-  [['devs', 'devs'], ['turns', 'turns'], ['lines', 'lines']].forEach(function (p) {
-    var el = $(p[0]); if (S.lines > +el.max && p[0] === 'lines') { el.max = S.lines; }
-    el.value = S[p[1]]; el.oninput = function () { S[p[1]] = +el.value; render(); };
-  });
-  $('refactor').checked = S.refactor; $('refactor').onchange = function () { S.refactor = $('refactor').checked; render(); };
-  render();
-})();
-</script>
-
+<script src="assets/savings.js" defer></script>
 </main></div>
 <footer class="site"><div class="bar"><span>Krypton scores how easy your code is for the next agent to edit and understand.</span><span><a href="https://github.com/pinklamb/Krypton">Source on GitHub</a></span></div></footer>
 </body>

@@ -1,7 +1,7 @@
 /* Krypton tree: draws a repository as the landing page draws garth, one point per node of its syntax tree, files on a sphere, imports as
    arcs, and the tangled functions lit in lavender. It needs three.js (r128) on the page.
 
-   KryptonTree.draw(canvas, data, { labels: element, selection: element })  ->  { focus(index), stop() }
+   KryptonTree.draw(canvas, data, { labels: element, selection: element })  ->  { focus(index), show(index), release(), stop() }
      data: { files: [{ p, t, h }], edges: [[a, b]], fns: [{ name, times, file }] }, the outline /api/scan answers
 
    Same layout as the landing page (assets of land4.js), without the scroll story: it turns slowly, dragging turns it by hand, and the
@@ -92,7 +92,7 @@
     var tip = null;
     if (opts.labels) { tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; opts.labels.appendChild(tip); }
     var hot = []; for (var n0 = 0; n0 < L.HIT.length; n0++) { if (L.HIT[n0] >= 0) { hot.push(n0); } }
-    var yaw = .4, pitch = .12, drag = null, hover = null, picked = -1, held = -1, still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, running = true, last = performance.now();
+    var yaw = .4, pitch = .12, aim = null, pinned = -1, drag = null, hover = null, picked = -1, held = -1, still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, running = true, last = performance.now();
     var rot = new THREE.Matrix4(), eul = new THREE.Euler(), v = new THREE.Vector3(), pickV = new THREE.Vector3();
 
     function nearest(x, y) {
@@ -117,7 +117,7 @@
       describe(D.fns[id], tip); tip.hidden = false;
       var W = canvas.clientWidth; tip.style.left = Math.min(x + 14, W - tip.offsetWidth - 8) + 'px'; tip.style.top = Math.max(8, y - tip.offsetHeight - 10) + 'px';
     }
-    canvas.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, yaw: yaw, pitch: pitch }; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener('pointerdown', function (e) { aim = null; drag = { x: e.clientX, y: e.clientY, yaw: yaw, pitch: pitch }; canvas.setPointerCapture(e.pointerId); });
     canvas.addEventListener('pointermove', function (e) {
       if (drag) { yaw = drag.yaw + (e.clientX - drag.x) * .008; pitch = Math.max(-1, Math.min(1, drag.pitch + (e.clientY - drag.y) * .006)); if (tip) { tip.hidden = true; } return; }
       var rect = canvas.getBoundingClientRect(); hover = { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -128,7 +128,8 @@
       var moved = Math.hypot(e.clientX - drag.x, e.clientY - drag.y); drag = null;
       if (moved > 5 || !opts.selection) { return; }
       var rect = canvas.getBoundingClientRect(), found = nearest(e.clientX - rect.left, e.clientY - rect.top);
-      if (found >= 0 && D.fns[found]) { describe(D.fns[found], opts.selection); opts.selection.hidden = false; }
+      if (found >= 0 && D.fns[found]) { describe(D.fns[found], opts.selection); opts.selection.hidden = false; pinned = found; }
+      else { pinned = -1; opts.selection.hidden = true; }
     });
     function size() {
       var w = canvas.clientWidth, h = canvas.clientHeight; R3.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
@@ -137,10 +138,16 @@
     function frame(now) {
       if (!running) { return; }
       var dt = Math.min(.1, (now - last) / 1000); last = now;
-      if (!drag && !still && picked < 0 && held < 0) { yaw += dt * .08; }
+      if (aim) {
+        // turning to show a function: ease the yaw (the short way round) and the pitch towards it
+        var dy = Math.atan2(Math.sin(aim.yaw - yaw), Math.cos(aim.yaw - yaw)), k = still ? 1 : 1 - Math.exp(-dt / .25);
+        yaw += dy * k; pitch += (aim.pitch - pitch) * k;
+        if (Math.abs(dy) < .002 && Math.abs(aim.pitch - pitch) < .002) { aim = null; }
+      } else if (!drag && !still && picked < 0 && held < 0 && pinned < 0) { yaw += dt * .08; }
       eul.set(pitch, yaw, 0); rot.makeRotationFromEuler(eul); U.uRot.value.setFromMatrix4(rot);
       if (hover && !drag) { picked = nearest(hover.x, hover.y); showTip(picked, hover.x, hover.y); }
-      U.uSel.value = picked >= 0 ? picked : held;
+      // what is lit: the cluster under the pointer, else the function you clicked, else the list row under the pointer
+      U.uSel.value = picked >= 0 ? picked : pinned >= 0 ? pinned : held;
       R3.render(scene, cam);
       var W = canvas.clientWidth, H = canvas.clientHeight, placed = [];
       pills.forEach(function (el, q) {
@@ -153,7 +160,8 @@
         placed.forEach(function (r) { if (Math.abs(r.x - x) < (r.w + w) / 2 + 8 && Math.abs(r.y - y) < h + 4) { x = r.x + (x >= r.x ? 1 : -1) * ((r.w + w) / 2 + 8); } });
         x = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, x));
         placed.push({ x: x, y: y, w: w }); el.style.left = x + 'px'; el.style.top = y + 'px';
-        el.style.opacity = (picked >= 0 || held >= 0) && (picked >= 0 ? picked : held) !== q ? .25 : front ? 1 : .35;
+        var lit = U.uSel.value;
+        el.style.opacity = lit >= 0 && lit !== q ? .25 : front ? 1 : .35;
       });
       requestAnimationFrame(frame);
     }
@@ -161,6 +169,17 @@
     return {
       // light up one function by its place in the list (the "most tangled" rows call this on hover), or none with -1
       focus: function (id) { held = id; },
+      // turn the tree until one function faces you, keep it lit, and name it in the corner card (the list's rows call this on click)
+      show: function (id) {
+        var c = L.cent[id], fn = D.fns[id];
+        if (!c || !c.n || !fn) { return false; }
+        var yawTo = Math.atan2(-c.s.x, c.s.z), r = Math.hypot(c.s.x, c.s.z);
+        aim = { yaw: yawTo, pitch: Math.max(-1, Math.min(1, Math.atan2(c.s.y, r))) }; pinned = id;
+        if (opts.selection) { describe(fn, opts.selection); opts.selection.hidden = false; }
+        return true;
+      },
+      // let go of a shown function: the tree starts turning again
+      release: function () { pinned = -1; aim = null; if (opts.selection) { opts.selection.hidden = true; } },
       stop: function () { running = false; R3.dispose(); pills.forEach(function (el) { el.remove(); }); if (tip) { tip.remove(); } }
     };
   }

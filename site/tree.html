@@ -65,6 +65,9 @@
 .worst { display:grid; margin:6px 0 22px; border:1px solid var(--line); border-radius:var(--r); background:var(--card); overflow:hidden; }
 .worst div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 14px; align-items:baseline; padding:11px 16px; border-bottom:1px solid var(--line); cursor:default; transition:background .15s; }
 .worst div:hover, .worst div:focus-within { background:color-mix(in srgb, var(--acc) 10%, var(--card)); }
+.worst div[role=button] { cursor:pointer; } .worst div:focus-visible { outline:2px solid var(--acc); outline-offset:-2px; }
+.worst div.on { background:color-mix(in srgb, var(--acc) 18%, var(--card)); box-shadow:inset 3px 0 0 var(--acc); }
+.listhint { font:italic 400 16px var(--serif); color:var(--ink3); }
 .worst .name { font:400 16px var(--sans); color:var(--ink); } .worst .file { grid-column:1; font:400 13px var(--sans); color:var(--ink3); }
 .worst div:last-child { border-bottom:0; } .worst span { min-width:0; overflow-wrap:anywhere; } .worst b { grid-column:2; grid-row:1; font:italic 400 17px var(--serif); color:var(--acc); font-weight:400; white-space:nowrap; }
 </style>
@@ -111,7 +114,7 @@
       <div id="result" hidden>
         <div class="stats" id="facts"></div>
         <div class="stage" id="stage"><canvas id="scene" aria-label="Your repository's syntax tree, tangled functions in lavender. Hover a lavender cluster to see which function it is; drag to turn the tree."></canvas><span class="hint">Hover a lavender cluster to see its function · drag to turn</span><div class="selection" id="selection" role="status" aria-live="polite" hidden></div></div>
-        <div id="worstWrap"><p>The most tangled functions:</p><div class="worst" id="worst"></div></div>
+        <div id="worstWrap"><p>The most tangled functions <span class="listhint">· click one to find it in the tree</span></p><div class="worst" id="worst"></div></div>
         <div class="cta"><a class="btn" href="savings.html">See the savings</a><button class="btn ghost" type="button" id="again">Another repository</button></div>
       </div>
     </div>
@@ -181,6 +184,19 @@
       var at = fns.findIndex(function (fn) { return fn.name === w.function && fn.file === w.file; });
       row.addEventListener('mouseenter', function () { if (drawing && at >= 0) { drawing.focus(at); } });
       row.addEventListener('mouseleave', function () { if (drawing) { drawing.focus(-1); } });
+      if (at >= 0) {
+        // a click (or Enter) finds the function: the tree turns to it, keeps it lit and names it; a second click lets it go
+        row.tabIndex = 0; row.setAttribute('role', 'button'); row.setAttribute('aria-label', 'Show ' + w.function + ' in the tree');
+        var find = function () {
+          if (!drawing) { return; }
+          var again = row.classList.contains('on');
+          document.querySelectorAll('#worst .on').forEach(function (other) { other.classList.remove('on'); other.setAttribute('aria-pressed', 'false'); });
+          if (again) { drawing.release(); return; }
+          if (drawing.show(at)) { row.classList.add('on'); row.setAttribute('aria-pressed', 'true'); $('stage').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }); }
+        };
+        row.addEventListener('click', find);
+        row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); find(); } });
+      }
     });
     $('worstWrap').hidden = !(d.worst || []).length;
     $('result').hidden = false; step(3);

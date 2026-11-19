@@ -68,12 +68,13 @@ jobs:
   krypton:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: pinklamb/Krypton@main
         with:
-{rule}"
+{rule}          # on-server-error: \"pass\"   # uncomment so a Krypton server outage never blocks a pull request (your code failing is always red)
+"
     ))
 }
 
@@ -133,6 +134,7 @@ mod tests {
         assert!(worse.contains("fail-on-worse: \"true\"") && !worse.contains("target:"), "never-worse rule only");
         assert!(worse.contains("id-token: write") && worse.contains("fetch-depth: 0"), "permissions and history for the base");
         assert!(worse.contains("pull-requests: write"), "the comment permission");
+        assert!(worse.contains("# on-server-error: \"pass\""), "the outage switch, off until uncommented");
         let target = yaml(Gate::Target, 72).unwrap();
         assert!(target.contains("target: \"72\"") && !target.contains("fail-on-worse"), "target rule only");
         assert!(yaml(Gate::Off, 70).is_none(), "off writes nothing");

@@ -112,7 +112,7 @@ fn github_form(url: &str, form: &[(&str, &str)]) -> Result<Value, Failure> {
         .timeout(Duration::from_secs(30))
         .set("Accept", "application/json")
         .send_form(form)
-        .map_err(|error| Failure::Server(format!("could not reach GitHub: {error}")))?;
+        .map_err(|error| Failure::Unreachable(format!("could not reach GitHub: {error}")))?;
     crate::http::json_of(reply, "GitHub")
 }
 
@@ -134,10 +134,10 @@ fn device_flow(client_id: &str) -> Result<String, Failure> {
             Poll::Token(token) => return Ok(token),
             Poll::Wait => {}
             Poll::Slower => every = every.saturating_add(Duration::from_secs(5)),
-            Poll::Stop(message) => return Err(Failure::Server(message)),
+            Poll::Stop(message) => return Err(Failure::Refused(message)),
         }
     }
-    Err(Failure::Server("the code expired before it was approved; run `krypton login` again".to_string()))
+    Err(Failure::Refused("the code expired before it was approved; run `krypton login` again".to_string()))
 }
 
 /// The run's GitHub Actions identity token, for the audience `krypton`.
@@ -149,7 +149,7 @@ fn actions_identity() -> Result<String, Failure> {
         .timeout(Duration::from_secs(30))
         .set("Authorization", &format!("Bearer {bearer}"))
         .call()
-        .map_err(|error| Failure::Server(format!("GitHub Actions gave no identity token: {error}")))?;
+        .map_err(|error| Failure::Refused(format!("GitHub Actions gave no identity token: {error}")))?;
     let answer = crate::http::json_of(reply, "GitHub Actions")?;
     answer.get("value").and_then(Value::as_str).map(ToString::to_string).ok_or_else(|| Failure::Server("GitHub Actions' answer has no token".to_string()))
 }
@@ -187,7 +187,7 @@ pub fn login_to(server: &Server) -> Result<(), Failure> {
     let client_id = login
         .get("github_client_id")
         .and_then(Value::as_str)
-        .ok_or_else(|| Failure::Server(format!("{} names no GitHub app to log in with (KRYPTON_GITHUB_CLIENT_ID on the server)", server.url())))?;
+        .ok_or_else(|| Failure::Refused(format!("{} names no GitHub app to log in with (KRYPTON_GITHUB_CLIENT_ID on the server)", server.url())))?;
     let github_token = device_flow(client_id)?;
     let answer = server.post_anonymous("/v1/auth/github", &json!({ "github_token": github_token }))?;
     keep(server, &answer)

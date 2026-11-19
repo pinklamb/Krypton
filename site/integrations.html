@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Integrations | Krypton</title>
-<meta name="description" content="Use Krypton with coding agents, CI, Docker and the hosted demo.">
+<meta name="description" content="Use Krypton with coding agents, CI, Docker, and its local dashboard and review page.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
 <script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
@@ -18,8 +18,8 @@
  /    \ 
  \    / 
   \  /  
-   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs">Docs</a><a class="wide" href="./#story">Demo</a><a class="wide" href="docs#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review">Review and setup</a><a href="prompt-caching">Prompt caching</a><a href="order">File ordering</a><a href="integrations">Integrations</a><a href="case-study">Case study</a><a href="command-reference">Commands</a><a href="api">API</a><a href="wire-format">Wire format</a><a href="architecture">Architecture</a><a href="privacy">Privacy</a><a href="faq">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
-<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs">Overview</a></li></ul><h2>Guides</h2><ul><li><a href="review">Review and setup</a></li><li><a href="prompt-caching">Prompt caching</a></li><li><a href="order">File ordering</a></li><li><a href="integrations" aria-current="page">Integrations</a><ul class="sub"><li><a href="#agents">Coding agents</a></li><li><a href="#ci">Pre-commit and CI</a></li><li><a href="#docker">Docker</a></li><li><a href="#demo">The hosted demo</a></li></ul></li><li><a href="case-study">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference">Commands</a></li><li><a href="api">API</a></li><li><a href="wire-format">Wire format</a></li><li><a href="architecture">Architecture</a></li><li><a href="privacy">Privacy</a></li><li><a href="faq">FAQ</a></li></ul></details></nav><main id="content">
+   \/   </pre><b>Kr</b><span>ypton</span></a><nav class="main" aria-label="Main"><a href="docs">Docs</a><a class="wide" href="./#story">Demo</a><a class="wide" href="docs#start">Get started</a><details class="more"><summary>Reference</summary><div class="menu"><a href="review">Review and setup</a><a href="prompt-caching">Prompt caching</a><a href="order">File ordering</a><a href="integrations">Integrations</a><a href="case-study">Case study</a><a href="command-reference">Commands</a><a href="api">API</a><a href="architecture">Architecture</a><a href="privacy">Privacy</a><a href="faq">FAQ</a></div></details><a class="gh" href="https://github.com/pinklamb/Krypton"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></nav></div></header>
+<div class="wrap"><nav class="pages" aria-label="Documentation"><details open><summary>All pages</summary><h2>Start</h2><ul><li><a href="docs">Overview</a></li></ul><h2>Guides</h2><ul><li><a href="review">Review and setup</a></li><li><a href="prompt-caching">Prompt caching</a></li><li><a href="order">File ordering</a></li><li><a href="integrations" aria-current="page">Integrations</a><ul class="sub"><li><a href="#agents">Coding agents</a></li><li><a href="#ci">Pre-commit and CI</a></li><li><a href="#docker">Docker</a></li><li><a href="#local">On your computer</a></li></ul></li><li><a href="case-study">Case study</a></li></ul><h2>Reference</h2><ul><li><a href="command-reference">Commands</a></li><li><a href="api">API</a></li><li><a href="architecture">Architecture</a></li><li><a href="privacy">Privacy</a></li><li><a href="faq">FAQ</a></li></ul></details></nav><main id="content">
 
 
 
@@ -84,25 +84,24 @@ jobs:
   structure:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - run: docker build -t krypton path/to/client
       - run: docker run --rm -v "$PWD:/repo" krypton scan . --base origin/${{ github.base_ref }}</code></pre>
 <p>Or use the Krypton action, which sets one Krypton gate line in each pull request's checks and writes the scorecard to the run summary and to one pull request comment it edits on every push, never a second one. See <a href="review#github">Review</a>.</p>
 
 <h2 id="docker">Docker</h2>
-<pre><code>docker build -t krypton client
-docker run --rm -v "$PWD:/repo" krypton scan .</code></pre>
-<p>The image has git in it, so <code>--base</code>, <code>order</code> and <code>--log</code> work on the mounted repository.</p>
+<p>Krypton runs from a ready-made image, so there is nothing to compile:</p>
+<pre><code>docker pull ghcr.io/pinklamb/krypton:latest
+docker run --rm -v "$PWD:/repo" ghcr.io/pinklamb/krypton:latest scan .</code></pre>
+<p>Your project is mounted at <code>/repo</code>. The image has git in it, so <code>--base</code>, <code>order</code> and <code>--log</code> work on your repository's history. For everyday use, the <code>krypton</code> helper from <a href="docs#start">Get started</a> wraps this command, and <code>krypton update</code> pulls the newest image.</p>
 
-<h2 id="demo">The hosted demo</h2>
-<p>The repository includes a small web app that shows what a codebase costs to read and what a refactor could save.</p>
-<ol class="steps">
-<li>Visitors <b>sign in with GitHub</b>. GitHub does the authenticating and decides which repositories they may read; Krypton keeps no accounts.</li>
-<li>The server <b>reads the chosen repository in memory</b> with the visitor's own access, builds the syntax trees and sends them to the Krypton server.</li>
-<li>The page shows <b>files, lines, tokens per read, structure score and the hardest functions</b>, then a savings view built from the real size.</li>
-</ol>
-<p>The savings use the rates measured on one repository (see <a href="prompt-caching">Prompt caching</a>), scaled to the visitor's repository, so treat them as estimates. Deployment steps (Docker and Railway) are in <a href="https://github.com/pinklamb/Krypton/blob/main/dashboard/DEPLOY.md">dashboard/DEPLOY.md</a>.</p>
+<h2 id="local">On your computer</h2>
+<p>Two pages open in your browser. Both run on your machine, and neither is hosted anywhere.</p>
+<ul>
+<li><b>The settings dashboard.</b> <code>krypton setup --page</code> (or plain <code>krypton</code>, then the link it prints) opens a one-time page at <code>127.0.0.1:7777</code> where you click your target, max tries, ask me or auto, and the pull request gate. It stops as soon as you save. With Docker, the port has to be published (<code>-p 127.0.0.1:7777:7777</code>); the helper from <a href="docs#start">Get started</a> does that for you.</li>
+<li><b>The review page, styled by <code>themes.md</code>.</b> When the agent is stuck and you chose ask me, your coding agent builds a local page for the ticket, following <a href="https://github.com/pinklamb/Krypton/blob/main/agent/review-brief.md"><code>agent/review-brief.md</code></a> and looking the way your <a href="https://github.com/pinklamb/Krypton/blob/main/themes.md"><code>themes.md</code></a> describes it (setup writes a starter one). For each stuck function you choose <b>Approve best</b> or <b>Send back</b>. See the <a href="review-preview">preview</a> and <a href="review">Review and setup</a>.</li>
+</ul>
 
 <nav class="pager" aria-label="Previous and next"><a class="prev" href="order"><span><svg class="ar lf" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> Previous</span>File ordering</a><a class="next" href="case-study"><span>Next <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>Case study</a></nav>
 </main></div>

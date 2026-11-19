@@ -90,7 +90,7 @@ fn respond(mut stream: &TcpStream, status: &str, html: &str) {
 /// # Errors
 /// When the address cannot be listened on (for example the port is taken).
 pub fn choose(listen: &str, current: &Settings) -> Result<Settings, Failure> {
-    let listener = TcpListener::bind(listen).map_err(|error| Failure::Usage(format!("cannot open the settings page on {listen}: {error}")))?;
+    let listener = TcpListener::bind(listen).map_err(|error| Failure::Setup(format!("cannot open the settings page on {listen}: {error}")))?;
     let port = listen.rsplit(':').next().unwrap_or_default();
     let key = format!("/{}", secret());
     println!("\nOpen this link to choose your settings (it works once, on this computer):\n\n  http://localhost:{port}{key}\n");
@@ -119,7 +119,7 @@ pub fn choose(listen: &str, current: &Settings) -> Result<Settings, Failure> {
             Err(problem) => respond(&stream, "400 Bad Request", &page(current, Some(&problem))),
         }
     }
-    Err(Failure::Usage(format!("the settings page on {listen} stopped before anything was saved")))
+    Err(Failure::Setup(format!("the settings page on {listen} stopped before anything was saved")))
 }
 
 const STYLE: &str = "body{margin:0;background:#1b1613;color:#ede4da;font:300 16px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif}

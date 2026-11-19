@@ -167,9 +167,10 @@ impl Anthropic {
             Ok(reply) => reply.into_string().map_err(|error| Failure::Server(format!("cannot read Anthropic's answer: {error}")))?,
             Err(ureq::Error::Status(code, reply)) => {
                 let text = reply.into_string().unwrap_or_default();
-                return Err(Failure::Server(format!("Anthropic's token counter refused the request ({code}): {}", text.chars().take(400).collect::<String>())));
+                let message = format!("Anthropic's token counter refused the request ({code}): {}", text.chars().take(400).collect::<String>());
+                return Err(if code == 429 || code == 529 { Failure::Busy(message) } else { Failure::Refused(message) });
             }
-            Err(ureq::Error::Transport(problem)) => return Err(Failure::Server(format!("could not reach Anthropic's token counter: {problem}"))),
+            Err(ureq::Error::Transport(problem)) => return Err(Failure::Unreachable(format!("could not reach Anthropic's token counter: {problem}"))),
         };
         serde_json::from_str::<Value>(&answer)
             .ok()

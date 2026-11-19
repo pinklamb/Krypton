@@ -1,16 +1,14 @@
-//! What `krypton scan` prints for a person at a terminal: the closed crystal beside the purity score, one line of what it means, and the
+//! What `krypton scan` prints for a person at a terminal: Krypton's mark (◆) above the purity score, one line of what it means, and the
 //! most tangled functions under their real names. The full report with every hint is one flag away (`--full`), and it is what a pipe, an
 //! agent or CI gets anyway, so nothing that reads the output loses anything.
 
 use serde_json::Value;
 
-use crate::loader::{paint, BRIGHT, LAVENDER, MUTED, PRISM};
+use crate::loader::{paint, BRIGHT, LAVENDER, MARK, MUTED};
 use crate::runlog::Run;
 
 /// How many functions the list shows before "and N more".
 const LISTED: usize = 5;
-/// The width of the purity bar, in cells.
-const BAR: usize = 24;
 
 fn times(value: f64) -> String {
     if value >= 100.0 {
@@ -18,12 +16,6 @@ fn times(value: f64) -> String {
     } else {
         format!("{value:.1}×")
     }
-}
-
-/// The purity as a bar of `BAR` cells.
-fn bar(purity: i64, color: bool) -> String {
-    let filled = usize::try_from(purity.clamp(0, 100)).unwrap_or(0).saturating_mul(BAR) / 100;
-    paint(&"█".repeat(filled), LAVENDER, color) + &paint(&"░".repeat(BAR.saturating_sub(filled)), MUTED, color)
 }
 
 /// A count with thousands separators: 1,150.
@@ -43,8 +35,8 @@ fn plural(count: usize, one: &str, many: &str) -> String {
     format!("{} {}", grouped(count), if count == 1 { one } else { many })
 }
 
-/// The lines beside the crystal: the score, the bar, what it means, and what was scored.
-fn beside(run: &Run, result: &Value, usage: &Value, color: bool) -> [String; 6] {
+/// The head of the report: Krypton's mark and name, the score, what it means, and what was scored.
+fn head(run: &Run, result: &Value, usage: &Value, color: bool) -> [String; 4] {
     let over = run.functions.len();
     let flagged = result.get("flagged_file_count").and_then(Value::as_u64).unwrap_or(0);
     let files = usage.get("files").and_then(Value::as_u64).unwrap_or(0);
@@ -55,12 +47,10 @@ fn beside(run: &Run, result: &Value, usage: &Value, color: bool) -> [String; 6] 
         format!("{} over the limit, in {}.", plural(over, "function", "functions"), plural(usize::try_from(flagged).unwrap_or(0), "file", "files"))
     };
     [
-        String::new(),
+        format!("{}  {}{}", paint(MARK, LAVENDER, color), paint("Kr", BRIGHT, color), paint("ypton", LAVENDER, color)),
         format!("{}  {}", paint("Purity", MUTED, color), paint(&format!("{}/100", run.purity), BRIGHT, color)),
-        bar(run.purity, color),
         verdict,
         paint(&format!("{} scored in {ms} ms", plural(usize::try_from(files).unwrap_or(0), "file", "files")), MUTED, color),
-        String::new(),
     ]
 }
 
@@ -89,9 +79,7 @@ fn worst(run: &Run, color: bool) -> Vec<String> {
 /// The whole terminal view for one scan of `target` (the folder as it was typed, for the `--full` hint).
 #[must_use]
 pub fn compact(run: &Run, result: &Value, usage: &Value, target: &str, color: bool) -> String {
-    let right = beside(run, result, usage, color);
-    let mut lines: Vec<String> =
-        PRISM.iter().zip(right.iter()).map(|(prism, text)| format!("  {}   {text}", paint(prism, LAVENDER, color)).trim_end().to_string()).collect();
+    let mut lines: Vec<String> = head(run, result, usage, color).iter().map(|text| format!("  {text}").trim_end().to_string()).collect();
     if !run.functions.is_empty() {
         lines.push(String::new());
         lines.extend(worst(run, color));
@@ -121,17 +109,17 @@ mod tests {
         compact(&scored, &json!({ "flagged_file_count": 2 }), &json!({ "files": 145, "ms": 412 }), ".", false)
     }
 
-    // The crystal sits beside the score, the bar, the verdict and what was scored.
+    // Krypton's mark and name head the score, the verdict and what was scored, as plain text with no bar.
     #[test]
     fn test_compact() {
         let text = sample();
         let lines: Vec<&str> = text.lines().collect();
         let at = |n: usize| lines.get(n).copied().unwrap_or_default();
-        assert_eq!(at(0).trim(), "/\\", "the crystal's tip");
-        assert!(at(1).ends_with("Purity  62/100"), "the score beside the crystal");
-        assert!(at(2).contains(&"█".repeat(14)) && at(2).ends_with(&"░".repeat(10)), "a 24-cell bar, 62% filled");
-        assert!(at(3).ends_with("3 functions over the limit, in 2 files."), "the verdict");
-        assert!(at(4).ends_with("145 files scored in 412 ms"), "what was scored");
+        assert_eq!(at(0), "  ◆  Krypton", "the mark and the name");
+        assert_eq!(at(1), "  Purity  62/100", "the score");
+        assert_eq!(at(2), "  3 functions over the limit, in 2 files.", "the verdict");
+        assert_eq!(at(3), "  145 files scored in 412 ms", "what was scored");
+        assert!(!text.contains('█') && !text.contains('░'), "no bar");
     }
 
     // The worst functions follow, worst first under their real names, then where the hints are.
@@ -140,12 +128,12 @@ mod tests {
         let text = sample();
         let lines: Vec<&str> = text.lines().collect();
         let at = |n: usize| lines.get(n).copied().unwrap_or_default();
-        assert!(at(7).contains("Most tangled"), "the list heading");
+        assert!(at(5).contains("Most tangled"), "the list heading");
         assert!(
-            at(8).contains("46.2×") && at(8).contains("BodyBatteryData.get") && at(8).ends_with("garth/data/body_battery.py"),
+            at(6).contains("46.2×") && at(6).contains("BodyBatteryData.get") && at(6).ends_with("garth/data/body_battery.py"),
             "worst first, real name and file"
         );
-        assert!(at(10).contains("3.3×") && at(10).contains("Client.request"), "then the rest in order");
+        assert!(at(8).contains("3.3×") && at(8).contains("Client.request"), "then the rest in order");
         assert!(text.trim_end().ends_with("krypton scan . --full"), "where the hints are");
     }
 

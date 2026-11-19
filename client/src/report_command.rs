@@ -1,4 +1,4 @@
-//! `krypton report --repo OWNER/NAME --pr N --sha SHA --state success|failure --line FILE --scorecard FILE --details URL` hands a pull
+//! `krypton report --repo OWNER/NAME --pr N --sha SHA --state success|failure|error --line FILE --scorecard FILE --details URL` hands a pull
 //! request's report to the Krypton server, which posts it as the Krypton GitHub App: the one comment, edited in place, and the gate line, so
 //! both show Krypton's name and crystal instead of "github-actions". The Action runs it after `krypton login --github-actions`; the server
 //! lets a run report only on its own repository.
@@ -14,7 +14,7 @@ use serde_json::json;
 use crate::http::Server;
 use crate::Failure;
 
-const USAGE: &str = "usage: krypton report --repo OWNER/NAME --pr N --sha SHA --state success|failure --line FILE --scorecard FILE --details URL";
+const USAGE: &str = "usage: krypton report --repo OWNER/NAME --pr N --sha SHA --state success|failure|error --line FILE --scorecard FILE --details URL";
 
 #[derive(Default)]
 struct Options {
@@ -50,8 +50,8 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
     if options.repo.is_empty() || options.pr == 0 || options.sha.is_empty() || options.details.is_empty() || options.line.as_os_str().is_empty() {
         return Err(usage("--repo, --pr, --sha, --line, --scorecard and --details are all needed"));
     }
-    if !matches!(options.state.as_str(), "success" | "failure") {
-        return Err(usage("--state is success or failure"));
+    if !matches!(options.state.as_str(), "success" | "failure" | "error") {
+        return Err(usage("--state is success, failure or error (Krypton could not score the push)"));
     }
     Ok(options)
 }
@@ -87,7 +87,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
             println!("Posted as the Krypton app: comment {comment}, gate line set.");
             Ok(())
         }
-        Err(Failure::Server(message)) if means_fall_back(&message) => Err(Failure::NotPosted(message)),
+        Err(Failure::Server(message) | Failure::Refused(message)) if means_fall_back(&message) => Err(Failure::NotPosted(message)),
         Err(other) => Err(other),
     }
 }
@@ -100,13 +100,14 @@ mod tests {
         text.split_whitespace().map(ToString::to_string).collect()
     }
 
-    // Every field is needed, and the state is one of two words.
+    // Every field is needed, and the state is one of three words.
     #[test]
     fn test_report_options() {
         let full = "--repo a/b --pr 12 --sha bbfce90 --state success --line l.txt --scorecard s.md --details https://x";
         assert!(parse_options(&args(full)).is_ok_and(|options| options.pr == 12 && options.repo == "a/b"), "all given");
         assert!(parse_options(&args("--repo a/b --pr 12")).is_err(), "missing fields");
         assert!(parse_options(&args(&full.replace("success", "maybe"))).is_err(), "a bad state");
+        assert!(parse_options(&args(&full.replace("success", "error"))).is_ok(), "error: Krypton could not score the push");
         assert!(parse_options(&args(&full.replace("--pr 12", "--pr x"))).is_err(), "a bad number");
     }
 

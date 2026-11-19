@@ -19,27 +19,25 @@
     document.addEventListener('keydown', function (event) { if (event.key === 'Escape') menu.removeAttribute('open'); });
   }
 
-  // the `krypton` splash, frame for frame as the CLI draws it (client/src/loader.rs): the outline in lavender along twelve cells,
-  // a bright arrow head leading, then the name, then the codebase map starting. It plays on a loop while it is on screen.
-  var PRISM = ['   /\\   ', '  /  \\  ', ' /    \\ ', ' \\    / ', '  \\  /  ', '   \\/   '];
-  var PATH = [[0, 3], [1, 2], [2, 1], [3, 1], [4, 2], [5, 3], [5, 4], [4, 5], [3, 6], [2, 6], [1, 5], [0, 4]];
-  function crystal(drawn) {
-    var rows = PRISM.map(function (line) { return line.split('').map(function () { return ' '; }); });
-    PATH.slice(0, drawn).forEach(function (cell) { rows[cell[0]][cell[1]] = '<span class="l">' + PRISM[cell[0]].charAt(cell[1]) + '</span>'; });
-    if (drawn < PATH.length) { var at = PATH[drawn]; rows[at[0]][at[1]] = '<span class="h">' + (drawn < 6 ? 'v' : drawn === 6 ? '>' : '^') + '</span>'; }
-    return rows.map(function (row) { return '  ' + row.join(''); }).join('\n');
+  // the `krypton` splash, frame for frame as the CLI draws it (client/src/loader.rs): one lavender diamond pulses beside the name
+  // (◇ ◈ ◆ ◈, bright when full), settles on a bright ◆, then the codebase map starts. It plays on a loop while it is on screen.
+  var PULSE = ['◇', '◈', '◆', '◈'], TICKS = 8, TICK = 110;
+  var name = '  <span class="h">Kr</span><span class="l">ypton</span>';
+  function diamond(tick) {
+    var shape = PULSE[tick % PULSE.length];
+    return '  <span class="' + (shape === '◆' ? 'h' : 'l') + '">' + shape + '</span>';
   }
   var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   Array.prototype.forEach.call(document.querySelectorAll('pre[data-splash]'), function (pre) {
     var code = pre.querySelector('code'), prompt = '<span class="p">$</span> krypton\n', timers = [];
-    var name = '\n  <span class="h">Kr</span><span class="l">ypton</span>\n\n<span class="d">Mapping your codebase ...</span>';
-    function show(drawn, done) { code.innerHTML = prompt + crystal(drawn) + (done ? name : ''); }
+    var mapping = '\n\n<span class="d">Mapping your codebase ...</span>';
+    function show(tick, done) { code.innerHTML = prompt + (done ? '  <span class="h">◆</span>' : diamond(tick)) + name + (done ? mapping : ''); }
     function play() {
       timers.forEach(clearTimeout); timers = [];
-      if (still) { show(PATH.length, true); return; }
-      for (var step = 0; step <= PATH.length; step++) { timers.push(setTimeout(show.bind(null, step, false), 400 + step * 70)); }
-      timers.push(setTimeout(show.bind(null, PATH.length, true), 400 + (PATH.length + 2) * 70));
-      timers.push(setTimeout(play, 400 + (PATH.length + 2) * 70 + 2600));
+      if (still) { show(0, true); return; }
+      for (var tick = 0; tick < TICKS; tick++) { timers.push(setTimeout(show.bind(null, tick, false), 400 + tick * TICK)); }
+      timers.push(setTimeout(show.bind(null, 0, true), 400 + TICKS * TICK));
+      timers.push(setTimeout(play, 400 + TICKS * TICK + 2600));
     }
     code.innerHTML = prompt;
     if ('IntersectionObserver' in window) {

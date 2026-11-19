@@ -5,6 +5,9 @@
 //!
 //! With `--target N`, the files the pull request changed (a third summary, `--changed FILE`, made by `krypton scan --base`) must score N
 //! or more: the target rule of the Krypton gate. The rest of the codebase is never judged. Without `--changed`, no source file changed.
+//!
+//! With `--unscored CODE` (the exit code of the step that stopped), it writes the comment and line for a push Krypton could not score:
+//! what stopped it, that the code was not judged, and what to do. See [`unscored`].
 
 use std::cmp::Ordering;
 use std::fs;
@@ -21,10 +24,10 @@ const LAVENDER: &str = "#9a7ed6";
 /// A thin lavender gradient bar across the top of the comment. GitHub drops inline SVG, so it is a plain image on Krypton's site. GitHub
 /// makes every image a link to its copy of the image unless it is already in a link, so it sits in a `#` link: clicking it goes nowhere.
 const BAR: &str = r##"<a href="#"><img src="https://krypton.software/bar.svg" width="100%" height="4" alt=""></a>"##;
-/// Krypton's crystal in lavender, before the name in the headline; in a `#` link for the same reason as [`BAR`].
-/// `absmiddle` centres it on the words' middle instead of standing it on their baseline, where it sat high.
-const CRYSTAL: &str = r##"<a href="#"><img src="https://krypton.software/crystal.svg" width="18" height="18" align="absmiddle" alt=""></a>"##;
-const USAGE: &str = "usage: krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse] [--target N [--changed CHANGED.json]]";
+/// Krypton's mark before the name in the headline: a plain Unicode diamond, so it sits on the line with the words and draws the same in
+/// GitHub, email notifications and terminals, with no image to load.
+const CRYSTAL: &str = "◈";
+const USAGE: &str = "usage: krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse] [--target N [--changed CHANGED.json]]  |  krypton comment --unscored CODE [--on-server-error pass|fail] [--line FILE] [--state FILE]";
 
 /// The scorecard's headline: the arrow, before, after and the change, all in lavender. GitHub has no text colour in markdown, but its math
 /// does: `$\color{...}{...}$`. Each % is written `\\%`: GitHub's markdown turns it into `\%` before the maths reads it, where a bare % would
@@ -192,6 +195,50 @@ pub fn status_line(before: &Run, after: &Run) -> String {
     format!("Purity {}{tail}", headline(before.purity, after.purity))
 }
 
+/// Why a push could not be scored, from the exit code of the step that stopped, and whether it was the Krypton server's doing (only then
+/// does `on-server-error: pass` let the gate through).
+const fn unscored_reason(code: u8) -> (&'static str, bool) {
+    match code {
+        4 => ("a file could not be read or turned into a tree", false),
+        5 => ("the runner ran out of memory or disk, or could not write a file", false),
+        6 => ("the Krypton server could not be reached", true),
+        7 => ("the Krypton server is busy", true),
+        8 => ("the Krypton server refused the request", false),
+        9 => ("the Krypton server failed", true),
+        _ => ("Krypton stopped unexpectedly", false),
+    }
+}
+
+/// The comment and the gate line for a push Krypton could not score, after the client had already tried again: what stopped it, that the
+/// code was not judged, and what to do. `pass` is the workflow's `on-server-error: pass`.
+#[must_use]
+pub fn unscored(code: u8, pass: bool) -> (String, String) {
+    let (why, server) = unscored_reason(code);
+    let passing = server && pass;
+    let advice = match (server, passing) {
+        (true, true) => "The gate passes anyway, as this repository chose (`on-server-error: pass`). Re-run the job to score it.",
+        (true, false) => {
+            "This is not your code. Re-run the job to score it; to let pull requests through when this happens, set `on-server-error: \"pass\"` in the workflow."
+        }
+        _ => "Nothing about your code was judged. The job's log says what to fix; then re-run it.",
+    };
+    let scorecard = format!(
+        "{MARKER}\n{BAR}\n\n### {CRYSTAL} Krypton · not scored\n\nKrypton could not score this push: {why} (exit {code}), even after trying again.\n\n{advice}\n"
+    );
+    let line = match (server, passing) {
+        (true, true) => format!("Not scored: {why}. Passing, as set; re-run to score."),
+        (true, false) => format!("Not scored: {why} (not your code). Re-run to score."),
+        _ => format!("Not scored: {why} (exit {code}). See the job's log."),
+    };
+    (scorecard, line)
+}
+
+/// Whether the gate passes a push that could not be scored: only for the Krypton server's own trouble, and only when the workflow says so.
+#[must_use]
+pub const fn unscored_passes(code: u8, pass: bool) -> bool {
+    unscored_reason(code).1 && pass
+}
+
 fn write(path: &Path, text: &str) -> Result<(), Failure> {
     fs::write(path, text).map_err(|error| Failure::Log(format!("{}: {error}", path.display())))
 }
@@ -202,19 +249,36 @@ struct Options {
     fail_if_worse: bool,
     target: Option<i64>,
     changed: Option<PathBuf>,
+    /// The exit code of the step that stopped: write the "not scored" comment and line instead of a scorecard.
+    unscored: Option<u8>,
+    /// `--on-server-error pass`: the Krypton server's own trouble lets the gate through.
+    pass_on_server_error: bool,
+    /// With `--unscored`: where to write the gate's state, `success` (passing, as chosen) or `error`.
+    state: Option<PathBuf>,
 }
 
 fn parse_options(args: &[String]) -> Result<Options, Failure> {
-    let mut options = Options { files: Vec::new(), line: None, fail_if_worse: false, target: None, changed: None };
+    let mut options =
+        Options { files: Vec::new(), line: None, fail_if_worse: false, target: None, changed: None, unscored: None, pass_on_server_error: false, state: None };
     let mut words = args.iter();
     while let Some(word) = words.next() {
         match word.as_str() {
             "--fail-if-worse" => options.fail_if_worse = true,
+            "--unscored" => {
+                let text = words.next().ok_or_else(|| Failure::Usage(format!("--unscored needs the exit code\n{USAGE}")))?;
+                options.unscored = Some(text.parse().map_err(|_bad| Failure::Usage(format!("--unscored is an exit code from 0 to 255\n{USAGE}")))?);
+            }
+            "--on-server-error" => match words.next().map(String::as_str) {
+                Some("pass") => options.pass_on_server_error = true,
+                Some("fail") => options.pass_on_server_error = false,
+                _ => return Err(Failure::Usage(format!("--on-server-error is pass or fail\n{USAGE}"))),
+            },
             "--target" => {
                 let text = words.next().ok_or_else(|| Failure::Usage(format!("--target needs a number\n{USAGE}")))?;
                 let bad = || Failure::Usage(format!("--target is a whole number from 0 to 100\n{USAGE}"));
                 options.target = Some(crate::setup_command::parse_target(text).ok_or_else(bad)?);
             }
+            "--state" => options.state = Some(PathBuf::from(words.next().ok_or_else(|| Failure::Usage(format!("--state needs a file\n{USAGE}")))?)),
             "--changed" => options.changed = Some(PathBuf::from(words.next().ok_or_else(|| Failure::Usage(format!("--changed needs a file\n{USAGE}")))?)),
             "--line" => options.line = Some(PathBuf::from(words.next().ok_or_else(|| Failure::Usage(format!("--line needs a file\n{USAGE}")))?)),
             flag if flag.starts_with("--") => return Err(Failure::Usage(format!("unknown option {flag}\n{USAGE}"))),
@@ -226,6 +290,17 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
 
 pub fn comment(args: &[String]) -> Result<(), Failure> {
     let options = parse_options(args)?;
+    if let Some(code) = options.unscored {
+        let (scorecard, line) = unscored(code, options.pass_on_server_error);
+        print!("{scorecard}");
+        if let Some(path) = &options.line {
+            write(path, &line)?;
+        }
+        if let Some(path) = &options.state {
+            write(path, if unscored_passes(code, options.pass_on_server_error) { "success" } else { "error" })?;
+        }
+        return Ok(());
+    }
     let [before_path, after_path] = options.files.as_slice() else { return Err(Failure::Usage(format!("give the summary before and after\n{USAGE}"))) };
     let (before, after) = (runlog::read_summary(before_path)?, runlog::read_summary(after_path)?);
     let new_code = match (options.target, &options.changed) {
@@ -310,6 +385,18 @@ mod tests {
         assert_eq!(status_line(&run(71, &[]), &run(74, &[])), "Purity ▲ 71% → 74% (+3)", "up, nothing worse");
         let worse = status_line(&run(74, &[("a.py::f", 3.0)]), &run(70, &[("a.py::f", 4.5), ("b.ts::g", 2.0)]));
         assert_eq!(worse, "Purity ▼ 74% → 70% (−4) · 2 functions worse", "down, with the count");
+    }
+
+    // A push Krypton could not score says so plainly: the server's trouble is "not your code", and passes only when the workflow chose that.
+    #[test]
+    fn test_unscored() {
+        let (busy, line) = unscored(7, false);
+        assert!(busy.starts_with(&format!("{MARKER}\n{BAR}\n\n### {CRYSTAL} Krypton · not scored")), "marker, bar, headline");
+        assert!(busy.contains("the Krypton server is busy (exit 7)") && busy.contains("on-server-error"), "why, and the switch");
+        assert_eq!(line, "Not scored: the Krypton server is busy (not your code). Re-run to score.", "the gate line");
+        assert!(unscored(9, true).1.contains("Passing, as set") && unscored_passes(9, true), "passing when chosen");
+        assert!(!unscored_passes(9, false) && !unscored_passes(4, true), "never for a file problem, and not unless chosen");
+        assert!(unscored(4, true).1.len() <= 140 && unscored(6, false).1.len() <= 140, "fits GitHub's status line");
     }
 
     // The target rule judges only the changed files, says so on the gate line, and fails only below the target.

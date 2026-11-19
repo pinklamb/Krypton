@@ -1,4 +1,4 @@
-//! The terminal loader: one arrow slowly draws a lavender crystal, and the crystal closing means the run is done.
+//! The terminal loader: one lavender diamond pulses (◇ ◈ ◆ ◈) on a single line while the run works, and a bright ◆ means it is done.
 //!
 //! It is built so that it cannot get in the way of the real output:
 //!
@@ -8,7 +8,8 @@
 //! * it erases itself before the report prints and always gives the cursor back, even when the run fails;
 //! * it never slows or changes the scoring: a side thread only reads two counters and the stage name the run updates.
 //!
-//! Beside the crystal it names the stage the run is in (reading the files, building the trees with a count, scoring on the server).
+//! Beside the diamond it names the stage the run is in (reading the files, building the trees with a count, scoring on the server). Plain
+//! Unicode diamonds draw the same in every UTF-8 terminal, with no special font.
 
 use std::env;
 use std::io::{self, IsTerminal, Write};
@@ -17,32 +18,25 @@ use std::sync::{Arc, Condvar, Mutex, PoisonError};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
-pub const PRISM: [&str; 6] = ["   /\\   ", "  /  \\  ", " /    \\ ", " \\    / ", "  \\  /  ", "   \\/   "];
-/// Down the left edge, along the bottom, up the right edge, back to the top: 12 cells, one arrow step each.
-const PATH: [(usize, usize); 12] = [(0, 3), (1, 2), (2, 1), (3, 1), (4, 2), (5, 3), (5, 4), (4, 5), (3, 6), (2, 6), (1, 5), (0, 4)];
-const STEPS: usize = PATH.len();
+/// The pulse: the diamond fills and empties, one shape a tick.
+pub const PULSE: [&str; 4] = ["◇", "◈", "◆", "◈"];
+/// Krypton's mark: the full diamond, shown when a run is done and at the top of the report.
+pub const MARK: &str = "◆";
 pub type Rgb = (u8, u8, u8);
-/// The outline, and the arrow head and the finishing flash.
+/// The diamond, and Krypton's name.
 pub const LAVENDER: Rgb = (199, 181, 236);
+/// The full diamond at the height of the pulse, the stage text, and the finishing flash.
 pub const BRIGHT: Rgb = (240, 234, 255);
+/// The file count, dimmer than the stage.
+pub const MUTED: Rgb = (168, 156, 144);
 const HIDE_CURSOR: &str = "\x1b[?25l";
 const SHOW_CURSOR: &str = "\x1b[?25h";
+const CLEAR_LINE: &str = "\x1b[K";
 const SHOW_AFTER: Duration = Duration::from_millis(300);
-const TICK: Duration = Duration::from_millis(150);
+const TICK: Duration = Duration::from_millis(180);
 const FLASH: Duration = Duration::from_millis(120);
-/// The stage text, dimmer than the crystal.
-pub const MUTED: Rgb = (168, 156, 144);
-
-/// The arrow points the way it travels: down, then along the bottom, then up.
-const fn arrow_head(index: usize) -> char {
-    if index < 6 {
-        'v'
-    } else if index == 6 {
-        '>'
-    } else {
-        '^'
-    }
-}
+/// How many pulse frames `krypton setup`'s greeting shows before it settles on the full diamond.
+const SPLASH_TICKS: usize = 8;
 
 /// `text` in a 24-bit colour, or unchanged when colour is off (`NO_COLOR`).
 pub fn paint(text: &str, rgb: Rgb, color: bool) -> String {
@@ -53,90 +47,49 @@ pub fn paint(text: &str, rgb: Rgb, color: bool) -> String {
     }
 }
 
-fn outline_char(cell: (usize, usize)) -> String {
-    PRISM.get(cell.0).and_then(|line| line.chars().nth(cell.1)).map_or_else(|| " ".to_string(), String::from)
+/// The diamond at `tick` of the pulse, indented: lavender, and bright when it is full.
+fn frame(tick: usize, color: bool) -> String {
+    let index = tick.checked_rem(PULSE.len()).unwrap_or(0);
+    let shape = PULSE.get(index).copied().unwrap_or(MARK);
+    format!("  {}", paint(shape, if shape == MARK { BRIGHT } else { LAVENDER }, color))
 }
 
-fn place(rows: &mut [Vec<String>], cell: (usize, usize), text: String) {
-    if let Some(slot) = rows.get_mut(cell.0).and_then(|row| row.get_mut(cell.1)) {
-        *slot = text;
-    }
-}
-
-/// The crystal's lines with the first `drawn` outline cells in place and, if `head`, the arrow on the next cell.
-fn frame(drawn: usize, head: bool, tint: Rgb, color: bool) -> Vec<String> {
-    let mut rows: Vec<Vec<String>> = PRISM.iter().map(|line| line.chars().map(|_| " ".to_string()).collect()).collect();
-    for &cell in PATH.iter().take(drawn) {
-        place(&mut rows, cell, paint(&outline_char(cell), tint, color));
-    }
-    if let (true, Some(&cell)) = (head && drawn < STEPS, PATH.get(drawn)) {
-        place(&mut rows, cell, paint(&arrow_head(drawn).to_string(), BRIGHT, color));
-    }
-    rows.into_iter().map(|row| format!("  {}", row.concat())).collect()
-}
-
-/// The crystal's lines with the stage written beside its middle, and while files are being counted, how many are done.
-fn with_stage(mut lines: Vec<String>, stage: &str, done: usize, total: usize, color: bool) -> Vec<String> {
+/// The line with the stage written after the diamond, and while files are being counted, how many are done.
+fn with_stage(mut line: String, stage: &str, done: usize, total: usize, color: bool) -> String {
     if stage.is_empty() {
-        return lines;
+        return line;
     }
-    if let Some(row) = lines.get_mut(2) {
-        row.push_str("   ");
-        row.push_str(&paint(stage, BRIGHT, color));
+    line.push_str("  ");
+    line.push_str(&paint(stage, BRIGHT, color));
+    if total > 1 && done < total {
+        line.push_str(&paint(&format!("  {done} of {total} files"), MUTED, color));
     }
-    if let (Some(row), true) = (lines.get_mut(3), total > 1 && done < total) {
-        row.push_str("   ");
-        row.push_str(&paint(&format!("{done} of {total} files"), MUTED, color));
-    }
-    lines
+    line
 }
 
-/// How far the arrow should be for `done` of `total` files. It never reaches the last step: only finishing the run does.
-fn target_step(done: usize, total: usize) -> usize {
-    STEPS.saturating_mul(done).checked_div(total).unwrap_or(0).min(STEPS.saturating_sub(1))
+/// Krypton's name, in its two shades.
+fn name(color: bool) -> String {
+    paint("Kr", BRIGHT, color) + &paint("ypton", LAVENDER, color)
 }
 
-/// The crystal drawn once, start to finish, with the name under it: the greeting `krypton setup` opens with. Nothing is drawn where the
-/// loader would not draw (see [`wanted`]).
+/// The diamond pulsing beside the name, then settling on the full diamond: the greeting `krypton setup` opens with. Nothing is drawn where
+/// the loader would not draw (see [`wanted`]).
 pub fn splash() {
     if !wanted(&Environment::read(), false) {
         return;
     }
     let color = env::var_os("NO_COLOR").is_none();
     let mut out = io::stderr().lock();
-    let mut lines = 0;
-    for step in 0..=STEPS {
-        let rows = frame(step, step < STEPS, LAVENDER, color);
-        let rewind = if lines == 0 { String::new() } else { format!("[{lines}F") };
-        if out
-            .write_all(
-                format!(
-                    "{HIDE_CURSOR}{rewind}{}
-",
-                    rows.join(
-                        "
-"
-                    )
-                )
-                .as_bytes(),
-            )
-            .and_then(|()| out.flush())
-            .is_err()
-        {
+    for tick in 0..SPLASH_TICKS {
+        let line = format!("{HIDE_CURSOR}\r{}  {}{CLEAR_LINE}", frame(tick, color), name(color));
+        if out.write_all(line.as_bytes()).and_then(|()| out.flush()).is_err() {
             return;
         }
-        lines = rows.len();
-        thread::sleep(Duration::from_millis(70));
+        thread::sleep(Duration::from_millis(110));
     }
-    let name = format!(
-        "  {}{}
-
-",
-        paint("Kr", BRIGHT, color),
-        paint("ypton", LAVENDER, color)
-    );
+    let settled = format!("\r  {}  {}{CLEAR_LINE}\n\n{SHOW_CURSOR}", paint(MARK, BRIGHT, color), name(color));
     // a closed terminal at the very end leaves nothing to clean up
-    let _done = out.write_all(format!("{name}{SHOW_CURSOR}").as_bytes()).and_then(|()| out.flush()).is_ok();
+    let _done = out.write_all(settled.as_bytes()).and_then(|()| out.flush()).is_ok();
 }
 
 /// What the loader needs to know about where it is running.
@@ -177,7 +130,7 @@ struct Shared {
     stage: Mutex<String>,
     done: AtomicUsize,
     total: AtomicUsize,
-    lines: AtomicUsize,
+    drawn: AtomicBool,
     hidden: AtomicBool,
     stopped: Mutex<bool>,
     wake: Condvar,
@@ -212,50 +165,38 @@ impl Shared {
         written
     }
 
-    /// The escape code that moves the cursor back to the top of the drawing.
-    fn rewind(&self) -> String {
-        match self.lines.load(Ordering::SeqCst) {
-            0 => String::new(),
-            lines => format!("\x1b[{lines}F"),
-        }
+    /// Redraw the one line in place, clearing the rest of it so a shorter line leaves nothing behind.
+    fn draw(&self, line: &str) -> bool {
+        self.drawn.store(true, Ordering::SeqCst);
+        self.write(&format!("\r{line}{CLEAR_LINE}"))
     }
 
-    /// Redraw in place over the previous frame, clearing the rest of each line so a shorter line leaves nothing behind.
-    fn draw(&self, lines: &[String]) -> bool {
-        let text = lines.join("\x1b[K\n") + "\x1b[K\n";
-        let written = self.write(&format!("{}{text}", self.rewind()));
-        self.lines.store(lines.len(), Ordering::SeqCst);
-        written
-    }
-
-    /// Remove the drawing so the report prints on a clean screen.
+    /// Remove the line so the report prints on a clean screen.
     fn erase(&self) {
-        if self.lines.load(Ordering::SeqCst) == 0 {
-            return;
+        if self.drawn.swap(false, Ordering::SeqCst) {
+            self.write(&format!("\r{CLEAR_LINE}"));
         }
-        self.write(&format!("{}\x1b[J", self.rewind()));
-        self.lines.store(0, Ordering::SeqCst);
     }
 
-    /// The side thread: wait, hide the cursor, then move the arrow one step per tick toward the target.
+    /// The side thread: wait, hide the cursor, then pulse one shape a tick until the run ends.
     fn run(&self) {
         if self.wait(SHOW_AFTER) || !self.write(HIDE_CURSOR) {
             return;
         }
         self.hidden.store(true, Ordering::SeqCst);
-        let mut step: usize = 0;
+        let mut tick: usize = 0;
         while !self.wait(TICK) {
             let (done, total) = (self.done.load(Ordering::SeqCst), self.total.load(Ordering::SeqCst));
-            step = step.saturating_add(1).min(target_step(done, total));
             let stage = self.stage.lock().unwrap_or_else(PoisonError::into_inner).clone();
-            if !self.draw(&with_stage(frame(step, true, LAVENDER, self.color), &stage, done, total, self.color)) {
+            if !self.draw(&with_stage(frame(tick, self.color), &stage, done, total, self.color)) {
                 return;
             }
+            tick = tick.wrapping_add(1);
         }
     }
 }
 
-/// Draws from a side thread; the run calls [`Loader::update`], and dropping it (or [`Loader::finish`]) ends and erases the drawing.
+/// Draws from a side thread; the run calls [`Loader::update`], and dropping it (or [`Loader::finish`]) ends and erases the line.
 pub struct Loader {
     shared: Arc<Shared>,
     thread: Option<JoinHandle<()>>,
@@ -274,7 +215,7 @@ impl Loader {
             stage: Mutex::new(String::new()),
             done: AtomicUsize::new(0),
             total: AtomicUsize::new(1),
-            lines: AtomicUsize::new(0),
+            drawn: AtomicBool::new(false),
             hidden: AtomicBool::new(false),
             stopped: Mutex::new(false),
             wake: Condvar::new(),
@@ -285,7 +226,7 @@ impl Loader {
         Self { shared, thread: Some(thread::spawn(move || worker.run())), finished: false }
     }
 
-    /// Name the stage the run is in; it is drawn beside the crystal.
+    /// Name the stage the run is in; it is drawn after the diamond.
     pub fn stage(&self, text: &str) {
         text.clone_into(&mut self.shared.stage.lock().unwrap_or_else(PoisonError::into_inner));
     }
@@ -296,22 +237,22 @@ impl Loader {
         self.shared.total.store(total, Ordering::SeqCst);
     }
 
-    /// The run succeeded: show the closed crystal before it is erased.
+    /// The run succeeded: flash the full diamond before it is erased.
     pub fn finish(mut self) {
         self.finished = true;
     }
 }
 
 impl Drop for Loader {
-    /// End the side thread, flash the closed crystal when the run finished, erase it, and give the cursor back.
+    /// End the side thread, flash the full diamond when the run finished, erase the line, and give the cursor back.
     fn drop(&mut self) {
         self.shared.stop();
         if let Some(thread) = self.thread.take() {
             drop(thread.join());
         }
-        if self.shared.lines.load(Ordering::SeqCst) > 0 && self.finished {
+        if self.shared.drawn.load(Ordering::SeqCst) && self.finished {
             for tint in [BRIGHT, LAVENDER, BRIGHT] {
-                self.shared.draw(&frame(STEPS, false, tint, self.shared.color));
+                self.shared.draw(&format!("  {}", paint(MARK, tint, self.shared.color)));
                 thread::sleep(FLASH);
             }
         }
@@ -351,40 +292,20 @@ mod tests {
         Environment { is_terminal: true, term: Some("xterm".to_string()), in_ci: false, opted_out: false }
     }
 
-    // The arrow never reaches the end, however many files are done.
+    // The diamond fills and empties, round and round, and is bright only when full.
     #[test]
-    fn test_target_step() {
-        assert_eq!(target_step(0, 10), 0, "nothing done yet");
-        assert_eq!(target_step(5, 10), 6, "half done");
-        assert_eq!(target_step(10, 10), STEPS - 1, "all done still stops one short");
-        assert_eq!(target_step(3, 0), 0, "no files is not a division by zero");
+    fn test_pulse() {
+        let shapes: Vec<String> = (0..6).map(|tick| frame(tick, false)).collect();
+        assert_eq!(shapes, ["  ◇", "  ◈", "  ◆", "  ◈", "  ◇", "  ◈"], "hollow, half, full, half, again");
+        assert!(frame(0, true).contains("\x1b[38;2;199;181;236m") && frame(2, true).contains("\x1b[38;2;240;234;255m"), "lavender, bright when full");
     }
 
-    // A finished crystal is the outline of the prism and nothing else.
-    #[test]
-    fn test_closed_frame() {
-        let lines = frame(STEPS, false, LAVENDER, false);
-        let expected: Vec<String> = PRISM.iter().map(|line| format!("  {line}")).collect();
-        assert_eq!(lines, expected, "twelve cells draw the whole outline");
-    }
-
-    // The stage is written beside the crystal, with the file count only while it is counting.
+    // The stage follows the diamond on the same line, with the file count only while it is counting.
     #[test]
     fn test_stage_beside() {
-        let lines = with_stage(frame(3, true, LAVENDER, false), "Building the trees", 73, 145, false);
-        let ends = |rows: &[String], n: usize, tail: &str| rows.get(n).is_some_and(|row| row.ends_with(tail));
-        assert!(ends(&lines, 2, "   Building the trees") && ends(&lines, 3, "   73 of 145 files"), "stage and count");
-        let scoring = with_stage(frame(11, true, LAVENDER, false), "Scoring on the Krypton server", 145, 145, false);
-        assert!(ends(&scoring, 2, "Scoring on the Krypton server") && !scoring.iter().any(|row| row.contains("files")), "no count once all are done");
-        assert_eq!(with_stage(frame(0, true, LAVENDER, false), "", 0, 1, false), frame(0, true, LAVENDER, false), "no stage, no text");
-    }
-
-    // The first frame is just the arrow, pointing down, and colour is optional.
-    #[test]
-    fn test_first_frame() {
-        let plain = frame(0, true, LAVENDER, false);
-        assert_eq!(plain.first().map(String::as_str), Some("     v    "), "the arrow sits at the top of the crystal");
-        assert!(frame(1, true, LAVENDER, true).concat().contains("\x1b[38;2;199;181;236m"), "the outline is lavender");
+        assert_eq!(with_stage(frame(1, false), "Building the trees", 73, 145, false), "  ◈  Building the trees  73 of 145 files", "stage and count");
+        assert_eq!(with_stage(frame(2, false), "Scoring on the Krypton server", 145, 145, false), "  ◆  Scoring on the Krypton server", "no count when done");
+        assert_eq!(with_stage(frame(0, false), "", 0, 1, false), "  ◇", "no stage, no text");
     }
 
     // Nothing is drawn where it would get in the way.
@@ -408,7 +329,7 @@ mod tests {
         assert_eq!(capture.text(), "", "nothing was written");
     }
 
-    // A slow run draws lavender frames, then erases them and gives the cursor back.
+    // A slow run pulses on one line, then erases it and gives the cursor back.
     #[test]
     fn test_slow_run_cleans_up() {
         let capture = Capture::default();
@@ -418,9 +339,9 @@ mod tests {
         loader.finish();
         let text = capture.text();
         assert!(text.starts_with(HIDE_CURSOR), "the cursor is hidden first");
-        assert!(text.contains("\x1b[38;2;199;181;236m"), "lavender frames were drawn");
-        assert!(text.ends_with(SHOW_CURSOR), "the cursor is given back last");
-        assert!(text.contains("\x1b[J"), "the drawing was erased");
+        assert!(text.contains('◇') && text.contains('◈') && text.contains("\x1b[38;2;199;181;236m"), "lavender pulse frames were drawn");
+        assert!(!text.contains('\n'), "one line, redrawn in place");
+        assert!(text.ends_with(&format!("\r{CLEAR_LINE}{SHOW_CURSOR}")), "erased, then the cursor given back");
     }
 
     // A failed run (the loader dropped without finish) still erases and restores the cursor, and skips the finishing flash.

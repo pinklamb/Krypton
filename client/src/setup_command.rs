@@ -194,6 +194,35 @@ fn starter_themes(repo: &Path) -> Result<Option<PathBuf>, Failure> {
     Ok(Some(path))
 }
 
+/// A starting `.kryptonignore`, written only when the repository has none: test files, matched the way the scoring server recognises them,
+/// plus the `test/`, `spec/` and `__mocks__/` folders JavaScript projects use.
+const STARTER_IGNORE: &str = "# Files Krypton does not score, in .gitignore's syntax. Whatever .gitignore skips is skipped too.
+# Written by `krypton setup`. Edit it freely, and commit it so the pull request gate skips the same files.
+
+# Tests check the code; they are not the code people change, so they do not count toward purity.
+# Delete a line, or add one starting with ! (for example !tests/helpers.py), to score those files again.
+test_*.py
+*_test.py
+conftest.py
+tests/
+test/
+spec/
+__tests__/
+__mocks__/
+*.test.*
+*.spec.*
+";
+
+/// Write `.kryptonignore` next to the code if there is none, so tests are left out from the first scan on; never touch one that exists.
+fn starter_ignore(repo: &Path) -> Result<Option<PathBuf>, Failure> {
+    let path = repo.join(crate::scan_command::KRYPTON_IGNORE);
+    if path.exists() {
+        return Ok(None);
+    }
+    fs::write(&path, STARTER_IGNORE).map_err(|error| Failure::Log(format!("cannot write {}: {error}", path.display())))?;
+    Ok(Some(path))
+}
+
 /// One terminal conversation: the questions are asked here and the answers read here.
 struct Prompt<'a> {
     input: &'a mut dyn BufRead,
@@ -305,12 +334,15 @@ fn ask_all(prompt: &mut Prompt, given: &Options, baseline: Option<i64>, suggest:
     Ok(Settings { mode, target, max_runs, baseline, gate })
 }
 
-fn next_steps(settings: &Settings, themes: Option<&Path>, gate: &Written) -> String {
+fn next_steps(settings: &Settings, ignore: Option<&Path>, themes: Option<&Path>, gate: &Written) -> String {
     let handled = if settings.mode == Mode::Auto { "automatically (best run kept)" } else { "by you, on a local review page" };
     let mut lines = vec![format!(
         "Saved: target {} purity per ticket, {} tries before a function is stuck, stuck functions handled {handled}.",
         settings.target, settings.max_runs
     )];
+    if let Some(path) = ignore {
+        lines.push(format!("Wrote {} so test files are not scored. Edit it to change what is skipped, and commit it.", path.display()));
+    }
     if let Some(path) = themes {
         lines.push(format!("Wrote {} for you to style the review page.", path.display()));
     }
@@ -429,13 +461,15 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
         }
         eprintln!("Mapping your codebase ...");
     }
+    // before the map, so the baseline already leaves the tests out
+    let ignore = starter_ignore(&options.repo)?;
     let baseline = if options.no_map { None } else { Some(map_codebase(&options.repo)?) };
     let suggest = suggested_target(baseline, kept_target(&options.repo));
     let settings = if asking || options.page { choose(&options, baseline, suggest)? } else { from_flags(&options, baseline, suggest, Gate::Off) };
     save(&options.repo, &settings)?;
     let themes = if settings.mode == Mode::Manual { starter_themes(&options.repo)? } else { None };
     let gate = workflow::write(&options.repo, settings.gate, settings.target)?;
-    println!("{}", next_steps(&settings, themes.as_deref(), &gate));
+    println!("{}", next_steps(&settings, ignore.as_deref(), themes.as_deref(), &gate));
     Ok(())
 }
 
@@ -443,7 +477,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
 mod tests {
     use std::io::Cursor;
 
-    use super::{ask_all, parse_where, save, saved, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings};
+    use super::{ask_all, parse_where, save, saved, starter_ignore, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings};
 
     fn answers(typed: &str) -> Option<Settings> {
         let mut input = Cursor::new(typed.as_bytes().to_vec());
@@ -506,6 +540,34 @@ mod tests {
         std::fs::write(repo.join("themes.md"), "mine").unwrap();
         assert!(starter_themes(&repo).unwrap().is_none(), "an existing themes.md is kept");
         assert_eq!(std::fs::read_to_string(repo.join("themes.md")).unwrap(), "mine", "and left untouched");
+        std::fs::remove_dir_all(&repo).unwrap();
+    }
+
+    // The starter .kryptonignore leaves every kind of test file out of the scan, keeps the code, and an existing one is never touched.
+    #[test]
+    fn test_starter_ignore() {
+        let repo = std::env::temp_dir().join(format!("krypton-starter-ignore-{}", std::process::id()));
+        let tests = [
+            "tests/test_api.py",
+            "app/test_io.py",
+            "app/io_test.py",
+            "conftest.py",
+            "web/__tests__/a.js",
+            "web/a.test.ts",
+            "web/b.spec.js",
+            "test/c.js",
+            "spec/d.ts",
+            "web/__mocks__/e.js",
+        ];
+        for name in ["app/main.py", "web/app.ts", "app/contest.py"].iter().chain(tests.iter()) {
+            let path = repo.join(name);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, "x = 1\n").unwrap();
+        }
+        assert!(starter_ignore(&repo).unwrap().is_some(), "written when there is none");
+        let found = crate::scan_command::source_files(&repo).unwrap();
+        assert_eq!(found, ["app/contest.py", "app/main.py", "web/app.ts"], "only the code is scanned");
+        assert!(starter_ignore(&repo).unwrap().is_none(), "an existing one is kept");
         std::fs::remove_dir_all(&repo).unwrap();
     }
 }

@@ -21,8 +21,11 @@ inputs:
     description: The Krypton site address. When set, the gate line's Details opens your repository's tree there for this commit; otherwise it opens this run's summary.
     required: false
     default: ""
+  on-server-error:
+    description: 'What the gate shows when the Krypton server is down, busy or failing even after the client tried again, so the push was never scored: "fail" (red, marked "not your code") or "pass" (green, marked "not scored"), so an outage never slows a pull request down. Your code failing the gate is always red.'
+    default: "fail"
 
-# Needs a checkout with history first:  - uses: actions/checkout@v4 / with: { fetch-depth: 0 }
+# Needs a checkout with history first:  - uses: actions/checkout@v7 / with: { fetch-depth: 0 }
 # and the permissions:  contents: read, statuses: write (the Krypton gate line), pull-requests: write (the one Krypton comment),
 # id-token: write (logs in to Krypton as this repository; no secret to store).
 runs:
@@ -37,11 +40,16 @@ runs:
         echo "KRYPTON_HOME=$RUNNER_TEMP/krypton-home" >> "$GITHUB_ENV"
 
     - name: Log in to Krypton as this repository
+      id: login
       if: github.event_name == 'pull_request'
       shell: bash
       env:
         KRYPTON_SERVER: ${{ inputs.server }}
-      run: '"$KRYPTON" login --github-actions'
+      run: |
+        # a login that fails is recorded, not fatal: the next step turns it into a "not scored" gate line instead of a stalled check
+        code=0
+        "$KRYPTON" login --github-actions || code=$?
+        echo "code=$code" >> "$GITHUB_OUTPUT"
 
     - name: Score the pull request against its base
       id: score
@@ -53,29 +61,51 @@ runs:
         FAIL_ON_WORSE: ${{ inputs.fail-on-worse }}
         TARGET: ${{ inputs.target }}
         HEAD: ${{ github.event.pull_request.head.sha }}
+        LOGIN_CODE: ${{ steps.login.outputs.code }}
+        ON_SERVER_ERROR: ${{ inputs.on-server-error }}
       run: |
-        set -e
+        # Every Krypton call keeps its exit code (see the exit codes in the docs): 0 passed, 1 the code failed the gate, anything else means
+        # the push could not be scored (the client has already tried again). This step never fails, so the gate line is always set.
+        finish() {
+          printf '\n<sub>Updated for %s.</sub>\n' "${HEAD:0:7}" >> "$RUNNER_TEMP/scorecard.md"
+          cat "$RUNNER_TEMP/scorecard.md" >> "$GITHUB_STEP_SUMMARY"
+          echo "state=$1" >> "$GITHUB_OUTPUT"
+          echo "status=$2" >> "$GITHUB_OUTPUT"
+          exit 0
+        }
+        unscored() {
+          echo "::warning::Krypton could not score this push (exit $1); see the lines above for why."
+          "$KRYPTON" comment --unscored "$1" --on-server-error "$ON_SERVER_ERROR" --line "$RUNNER_TEMP/line.txt" --state "$RUNNER_TEMP/state.txt" > "$RUNNER_TEMP/scorecard.md"
+          finish "$(cat "$RUNNER_TEMP/state.txt")" "$1"
+        }
+        if [ "${LOGIN_CODE:-0}" != "0" ]; then unscored "$LOGIN_CODE"; fi
         git worktree add "$RUNNER_TEMP/krypton-base" "$BASE"
-        "$KRYPTON" scan "$RUNNER_TEMP/krypton-base" --summary "$RUNNER_TEMP/base.json" > /dev/null
-        "$KRYPTON" scan . --summary "$RUNNER_TEMP/head.json" > /dev/null
+        code=0
+        "$KRYPTON" scan "$RUNNER_TEMP/krypton-base" --summary "$RUNNER_TEMP/base.json" > /dev/null || code=$?
+        if [ "$code" != "0" ]; then unscored "$code"; fi
+        "$KRYPTON" scan . --summary "$RUNNER_TEMP/head.json" > /dev/null || code=$?
+        if [ "$code" != "0" ]; then unscored "$code"; fi
         flag=""
         if [ "$FAIL_ON_WORSE" = "true" ]; then flag="--fail-if-worse"; fi
         rule=""
         if [ -n "$TARGET" ]; then
           rule="--target $TARGET"
           # only the files this pull request changed; a pull request that changed no source file has nothing to hold to the target
-          if "$KRYPTON" scan . --base "$BASE" --summary "$RUNNER_TEMP/changed.json" > /dev/null 2> "$RUNNER_TEMP/changed.err"; then
+          "$KRYPTON" scan . --base "$BASE" --summary "$RUNNER_TEMP/changed.json" > /dev/null 2> "$RUNNER_TEMP/changed.err" || code=$?
+          cat "$RUNNER_TEMP/changed.err" >&2
+          if [ "$code" = "0" ]; then
             rule="$rule --changed $RUNNER_TEMP/changed.json"
           elif ! grep -q "nothing to score" "$RUNNER_TEMP/changed.err"; then
-            cat "$RUNNER_TEMP/changed.err" >&2
-            exit 1
+            unscored "$code"
           fi
         fi
         status=0
         "$KRYPTON" comment "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" --line "$RUNNER_TEMP/line.txt" $flag $rule > "$RUNNER_TEMP/scorecard.md" || status=$?
-        printf '\n<sub>Updated for %s.</sub>\n' "$(echo "$HEAD" | cut -c1-7)" >> "$RUNNER_TEMP/scorecard.md"
-        cat "$RUNNER_TEMP/scorecard.md" >> "$GITHUB_STEP_SUMMARY"
-        echo "status=$status" >> "$GITHUB_OUTPUT"
+        case "$status" in
+          0) finish success 0 ;;
+          1) finish failure 1 ;;
+          *) unscored "$status" ;;
+        esac
 
     - name: Post the comment and the gate line as the Krypton app
       id: report
@@ -85,17 +115,15 @@ runs:
         KRYPTON_SERVER: ${{ inputs.server }}
         HEAD: ${{ github.event.pull_request.head.sha }}
         PR: ${{ github.event.pull_request.number }}
-        GATE_STATUS: ${{ steps.score.outputs.status }}
+        STATE: ${{ steps.score.outputs.state }}
         SITE: ${{ inputs.site }}
       run: |
         # Where the Krypton app is installed on this repository, the comment and the gate line come from it, with Krypton's name and crystal.
         # Anywhere else (exit 3), or if the server cannot be reached, the next two steps post them as github-actions; the gate is the same.
-        state=failure
-        if [ "$GATE_STATUS" = "0" ]; then state=success; fi
         site="${SITE%/}"
         if [ -n "$site" ]; then details="$site/tree?repo=$GITHUB_REPOSITORY&sha=$HEAD"; else details="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; fi
         code=0
-        "$KRYPTON" report --repo "$GITHUB_REPOSITORY" --pr "$PR" --sha "$HEAD" --state "$state" --line "$RUNNER_TEMP/line.txt"           --scorecard "$RUNNER_TEMP/scorecard.md" --details "$details" || code=$?
+        "$KRYPTON" report --repo "$GITHUB_REPOSITORY" --pr "$PR" --sha "$HEAD" --state "$STATE" --line "$RUNNER_TEMP/line.txt" --scorecard "$RUNNER_TEMP/scorecard.md" --details "$details" || code=$?
         if [ "$code" = "0" ]; then
           echo "posted=true" >> "$GITHUB_OUTPUT"
         elif [ "$code" = "3" ]; then
@@ -108,9 +136,9 @@ runs:
 
     - name: Set the Krypton gate line
       if: github.event_name == 'pull_request' && steps.report.outputs.posted != 'true'
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
-        GATE_STATUS: ${{ steps.score.outputs.status }}
+        STATE: ${{ steps.score.outputs.state }}
         SITE: ${{ inputs.site }}
       with:
         script: |
@@ -126,7 +154,7 @@ runs:
             owner,
             repo,
             sha,
-            state: process.env.GATE_STATUS === '0' ? 'success' : 'failure',
+            state: process.env.STATE,
             context: 'Krypton gate',
             description: line.slice(0, 140),
             target_url: details,
@@ -134,7 +162,7 @@ runs:
 
     - name: Keep the Krypton comment on the pull request up to date (as github-actions)
       if: github.event_name == 'pull_request' && inputs.comment == 'true' && steps.report.outputs.posted != 'true'
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           // One comment per pull request: find ours by the hidden marker on its first line and edit it; create it only the first time.
@@ -157,8 +185,14 @@ runs:
           }
 
     - name: Fail when the gate fails
-      if: github.event_name == 'pull_request' && steps.score.outputs.status != '0'
+      if: github.event_name == 'pull_request' && steps.score.outputs.state != 'success'
       shell: bash
+      env:
+        STATE: ${{ steps.score.outputs.state }}
       run: |
-        echo "Krypton gate failed: $(cat "$RUNNER_TEMP/line.txt")"
+        if [ "$STATE" = "error" ]; then
+          echo "Krypton could not score this push: $(cat "$RUNNER_TEMP/line.txt")"
+        else
+          echo "Krypton gate failed: $(cat "$RUNNER_TEMP/line.txt")"
+        fi
         exit 1

@@ -3,7 +3,7 @@
 //! comments stay here, and `--names` puts the real function names back into the review locally. `--log` also adds the run to `.krypton/runs.jsonl` and
 //! saves an attempt (a patch) so the run can be put back; `--summary FILE` writes the scores with real names for `krypton comment`.
 //!
-//! At a terminal the review is short (see `report.rs`): the crystal beside the purity score, and the most tangled functions under their real
+//! At a terminal the review is short (see `report.rs`): Krypton's mark above the purity score, and the most tangled functions under their real
 //! names. `--full`, a pipe, an agent or CI get the full report with every hint, unchanged.
 
 use std::collections::BTreeSet;
@@ -107,7 +107,11 @@ pub const KRYPTON_IGNORE: &str = ".kryptonignore";
 /// and `.git/info/exclude` ignore (git's own rules, nested files and `!` included, even outside a git checkout), whatever `.kryptonignore`
 /// files add in the same syntax, and the usual build and dependency folders even when nothing ignores them. Hidden files are scanned
 /// unless something ignores them; the user's global git excludes are not read, so a scan gives the same answer on every machine.
-fn source_files(root: &Path) -> Result<Vec<String>, Failure> {
+///
+/// # Errors
+///
+/// [`Failure`] when the folder cannot be walked.
+pub fn source_files(root: &Path) -> Result<Vec<String>, Failure> {
     let walker = ignore::WalkBuilder::new(root)
         .hidden(false)
         .git_global(false)
@@ -212,7 +216,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     if options.output.json {
         println!("{}", serde_json::to_string_pretty(&result).map_err(|error| Failure::Output(error.to_string()))?);
     } else if !options.output.full && io::stdout().is_terminal() {
-        // a person at a terminal: the crystal, the score and the worst functions; the hints are one flag away
+        // a person at a terminal: the mark, the score and the worst functions; the hints are one flag away
         let run = runlog::from_answer(&result, &names, "", 0)?;
         let color = env::var_os("NO_COLOR").is_none();
         print!("{}", crate::report::compact(&run, &result, answer.get("usage").unwrap_or(&Value::Null), &options.repo.display().to_string(), color));

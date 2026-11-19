@@ -16,29 +16,25 @@ use crate::Failure;
 const LISTED: usize = 10;
 /// The hidden first line of the scorecard: the Action finds its own pull request comment by it, so it edits one comment instead of adding more.
 pub const MARKER: &str = "<!-- krypton-gate -->";
-/// The dark lavender the headline's two numbers are drawn in, readable on GitHub's light and dark themes alike.
-const LAVENDER: &str = "#7c5cc4";
-/// GitHub's purple callout: the comment sits in it, so its purple edge marks it as Krypton's.
-const CALLOUT: &str = "[!IMPORTANT]";
+/// The light lavender of the headline's scores, the middle of the bar's gradient, readable on GitHub's light and dark themes alike.
+const LAVENDER: &str = "#9a7ed6";
 /// A thin lavender gradient bar across the top of the comment. GitHub drops inline SVG, so it is a plain image on Krypton's site. GitHub
 /// makes every image a link to its copy of the image unless it is already in a link, so it sits in a `#` link: clicking it goes nowhere.
 const BAR: &str = r##"<a href="#"><img src="https://krypton.software/bar.svg" width="100%" height="4" alt=""></a>"##;
+/// Krypton's crystal in lavender, before the name in the headline; in a `#` link for the same reason as [`BAR`].
+const CRYSTAL: &str = r##"<a href="#"><img src="https://krypton.software/crystal.svg" width="20" height="20" alt=""></a>"##;
 const USAGE: &str = "usage: krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse] [--target N [--changed CHANGED.json]]";
 
-/// A purity in dark lavender, for GitHub markdown. GitHub has no text colour in markdown, but its math does: `$\color{...}{...}$`. The %
-/// stays outside the maths, where GitHub would read it as the start of a TeX comment and drop it.
-fn lavender(purity: i64) -> String {
-    format!(r"$\color{{{LAVENDER}}}{{{purity}}}$%")
-}
-
-/// The scorecard's headline: the arrow, before and after with the numbers in dark lavender, and the change.
+/// The scorecard's headline: the arrow, before, after and the change, all in lavender. GitHub has no text colour in markdown, but its math
+/// does: `$\color{...}{...}$`. Each % is written `\\%`: GitHub's markdown turns it into `\%` before the maths reads it, where a bare % would
+/// start a TeX comment and drop the rest.
 fn coloured_headline(before: i64, after: i64) -> String {
-    let (from, to) = (lavender(before), lavender(after));
-    match after.cmp(&before) {
-        Ordering::Greater => format!("▲ {from} → {to} (+{})", after.saturating_sub(before)),
-        Ordering::Less => format!("▼ {from} → {to} (−{})", before.saturating_sub(after)),
-        Ordering::Equal => format!("● {to} unchanged"),
-    }
+    let scores = match after.cmp(&before) {
+        Ordering::Greater => format!(r"\blacktriangle\ {before}\\%\ \rightarrow\ {after}\\%\ (+{})", after.saturating_sub(before)),
+        Ordering::Less => format!(r"\blacktriangledown\ {before}\\%\ \rightarrow\ {after}\\%\ (-{})", before.saturating_sub(after)),
+        Ordering::Equal => format!(r"\bullet\ {after}\\%\ \text{{unchanged}}"),
+    };
+    format!(r"$\color{{{LAVENDER}}}{{{scores}}}$")
 }
 
 fn headline(before: i64, after: i64) -> String {
@@ -151,14 +147,12 @@ impl NewCode {
     }
 }
 
-/// The scorecard: the Actions run summary of a pull request, and its one comment. All of it but the hidden marker sits in GitHub's purple
-/// callout, so the comment is clearly Krypton's.
+/// The scorecard: the Actions run summary of a pull request, and its one comment, opening with Krypton's lavender bar.
 #[must_use]
 pub fn markdown(before: &Run, after: &Run, new_code: NewCode) -> String {
     let list = worse_functions(before, after);
     let mut lines = vec![
-        CALLOUT.to_string(),
-        format!("### Krypton · {}", coloured_headline(before.purity, after.purity)),
+        format!("### {CRYSTAL} Krypton · {}", coloured_headline(before.purity, after.purity)),
         String::new(),
         "**Repo Purity · Scores**".to_string(),
         String::new(),
@@ -172,9 +166,8 @@ pub fn markdown(before: &Run, after: &Run, new_code: NewCode) -> String {
     } else {
         lines.push("No functions got worse.".to_string());
     }
-    let quoted: Vec<String> = lines.iter().map(|text| if text.is_empty() { ">".to_string() } else { format!("> {text}") }).collect();
-    // the blank line after the bar ends its HTML block, or GitHub would read the callout as more HTML
-    format!("{MARKER}\n{BAR}\n\n{}\n", quoted.join("\n"))
+    // the blank line after the bar ends its HTML block, or GitHub would read the headline as more HTML
+    format!("{MARKER}\n{BAR}\n\n{}\n", lines.join("\n"))
 }
 
 /// The gate line with the target rule's result added, when the rule is on.
@@ -269,19 +262,19 @@ mod tests {
     #[test]
     fn test_comment_better() {
         let text = markdown(&run(71, &[("a.py::f", 3.0), ("a.py::g", 2.0)]), &run(74, &[("a.py::f", 2.0)]), NewCode::Unchecked);
-        assert!(text.starts_with(&format!("<!-- krypton-gate -->\n{BAR}\n\n> [!IMPORTANT]\n> ### Krypton")), "the marker, the bar, then the purple callout");
-        assert!(text.contains(r"> ### Krypton · ▲ $\color{#7c5cc4}{71}$% → $\color{#7c5cc4}{74}$% (+3)"), "only the numbers in lavender, percents kept");
-        assert!(text.contains("> **Repo Purity · Scores**") && text.contains("> | Over the limit | 2 | 1 |"), "the scores");
-        assert!(!text.contains("This PR") && text.contains("> Nice: this change made the code simpler."), "no target column, a kind word");
+        assert!(text.starts_with(&format!("<!-- krypton-gate -->\n{BAR}\n\n### {CRYSTAL} Krypton")), "the marker, the bar, then the headline");
+        assert!(text.contains(r"Krypton · $\color{#9a7ed6}{\blacktriangle\ 71\\%\ \rightarrow\ 74\\%\ (+3)}$"), "arrow and scores in lavender");
+        assert!(text.contains("**Repo Purity · Scores**") && text.contains("| Over the limit | 2 | 1 |"), "the scores");
+        assert!(!text.contains("This PR") && text.contains("Nice: this change made the code simpler."), "no target column, a kind word");
     }
 
     // With the target rule on, the table gets the pull request's own column: its score and the target with a tick or a cross.
     #[test]
     fn test_comment_target() {
         let text = markdown(&run(59, &[]), &run(60, &[]), NewCode::Scored { purity: 100, target: 70 });
-        assert!(text.contains("> | Purity | 59% | 60% | 100% |") && text.contains("> | Target | | | 70 ✓ |"), "met");
+        assert!(text.contains("| Purity | 59% | 60% | 100% |") && text.contains("| Target | | | 70 ✓ |"), "met");
         let short = markdown(&run(59, &[]), &run(60, &[]), NewCode::Scored { purity: 64, target: 70 });
-        assert!(short.contains("> | Target | | | 70 ✗ |"), "missed");
+        assert!(short.contains("| Target | | | 70 ✗ |"), "missed");
         let none = markdown(&run(59, &[]), &run(60, &[]), NewCode::NoSourceChanged { target: 70 });
         assert!(none.contains("| no source changed |"), "nothing to hold to the target");
     }
@@ -290,17 +283,17 @@ mod tests {
     #[test]
     fn test_comment_worse() {
         let text = markdown(&run(74, &[("a.py::f", 3.0)]), &run(70, &[("a.py::f", 4.5), ("b.ts::g", 2.0)]), NewCode::Unchecked);
-        assert!(text.contains(r"▼ $\color{#7c5cc4}{74}$% → $\color{#7c5cc4}{70}$% (−4)"), "down arrow");
-        assert!(text.contains("> **2 functions got worse**"), "the count");
-        assert!(text.contains("> - `b.ts · g` under the limit → 2×"), "a new over-limit function");
-        assert!(text.contains("> - `a.py · f` 3× → 4.5×"), "a function that grew");
+        assert!(text.contains(r"$\color{#9a7ed6}{\blacktriangledown\ 74\\%\ \rightarrow\ 70\\%\ (-4)}$"), "down arrow");
+        assert!(text.contains("**2 functions got worse**"), "the count");
+        assert!(text.contains("- `b.ts · g` under the limit → 2×"), "a new over-limit function");
+        assert!(text.contains("- `a.py · f` 3× → 4.5×"), "a function that grew");
     }
 
     // No change reads as unchanged, and a function that did not grow is not listed.
     #[test]
     fn test_comment_same() {
         let text = markdown(&run(74, &[("a.py::f", 3.0)]), &run(74, &[("a.py::f", 3.0)]), NewCode::Unchecked);
-        assert!(text.contains(r"● $\color{#7c5cc4}{74}$% unchanged"), "dot headline");
+        assert!(text.contains(r"$\color{#9a7ed6}{\bullet\ 74\\%\ \text{unchanged}}$"), "dot headline");
         assert!(text.contains("No functions got worse."), "nothing worse");
     }
 

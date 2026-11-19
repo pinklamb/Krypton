@@ -60,19 +60,19 @@
 
   var VS = [
     'attribute vec3 pa; attribute vec3 ja; attribute vec3 jc; attribute float t; attribute float fid; attribute float sev; attribute vec3 perp; attribute float size; attribute vec4 wv; attribute vec3 du;',
-    'uniform float amp; uniform float k; uniform float glow; uniform float uFrom; uniform float uTo; uniform float uMix; uniform float uTime; uniform float uAlpha; uniform float uScale; uniform float uTreeA; uniform float uAmbA; uniform float uPick; uniform float uBurst; uniform vec3 uCen;',
+    'uniform float amp; uniform float k; uniform float glow; uniform float uFrom; uniform float uTo; uniform float uMix; uniform float uTime; uniform float uAlpha; uniform float uScale; uniform float uFill; uniform float uShift; uniform float uTreeA; uniform float uAmbA; uniform float uPick; uniform float uBurst; uniform vec3 uCen;',
     'uniform mat3 uRot; uniform vec2 uOff; uniform vec3 uInk; uniform vec3 uHot0; uniform vec3 uHot1; uniform vec3 uFix; uniform vec3 uAmbC;',
     'varying vec3 vc; varying float va;',
     'vec3 tree(){ float hot=fid>=0.0?1.0:0.0; vec3 A=pa+ja*amp; vec3 C=position+jc*amp; vec3 p=mix(A,C,t)+perp*sin(3.14159*t)*0.05*amp*hot*sev; if(abs(fid-uPick)<0.5){ p=uCen+(p-uCen)*(1.0+2.4*uBurst); } return uRot*(p*uScale); }',
     // an orbit: a slow spiral disc, tilted towards the viewer
     'vec3 orbitW(float wind, float shrink){ float r=0.25+pow((wv.x+7.5)/15.0,0.75)*4.1; float arm=floor(wv.z/6.2832*3.0)*2.0944;',
     '  float a=arm+r*0.85+0.35*sin(wv.y*3.0)/(0.5+r)+uTime*0.1/(0.5+r*0.4)+wind*(1.0+0.6/(0.5+r)); r*=shrink; vec3 p=vec3(r*cos(a),0.05*sin(wv.y*7.0),r*sin(a));',
-    '  float c=cos(1.15), s=sin(1.15); return vec3(p.x+1.9*mix(1.0,0.0,1.0-shrink),p.y*c-p.z*s-0.6*shrink,p.y*s+p.z*c-3.5*shrink); }',
+    '  float c=cos(1.15), s=sin(1.15); return vec3(p.x*mix(1.0,uFill,shrink)+uShift*mix(1.0,0.0,1.0-shrink),p.y*c-p.z*s-0.6*shrink,p.y*s+p.z*c-3.5*shrink); }',
     'vec3 orbit(){ return orbitW(0.0,1.0); }',
     'vec3 dust(){ return du+0.12*vec3(sin(uTime*0.21+wv.z), cos(uTime*0.17+wv.z*1.3), sin(uTime*0.13+wv.z*0.7)); }',
     'vec3 shp(float s){ return s<0.5?orbit():(s<1.5?tree():dust()); }',
     'void look(float s, vec3 p, out vec3 c, out float a, out float z){',
-    '  if(s<0.5){ c=uAmbC; a=uAmbA*smoothstep(-11.5,-4.0,p.z)*smoothstep(3.6,1.0,p.z)*0.5; z=1.25; }',
+    '  if(s<0.5){ float tip=1.0-smoothstep(0.62,1.0,(wv.x+7.5)/15.0); c=uAmbC; a=min(1.0,uAmbA*smoothstep(-11.5,-4.0,p.z)*smoothstep(3.6,1.0,p.z)*0.5*uFill*tip); z=1.25*sqrt(uFill); }',
     '  else if(s<1.5){ float hot=fid>=0.0?1.0:0.0; float gl=hot*glow*amp; float fixd=hot*glow*(1.0-amp);',
     '    c=mix(mix(uInk,mix(uHot0,uHot1,sev),gl),uFix,fixd);',
     '    a=mix(mix(t<1.0?0.16:0.34,t<1.0?0.55:0.85,gl),t<1.0?0.3:0.5,fixd)*uTreeA;',
@@ -85,7 +85,7 @@
   ].join('\n');
   var FS = 'varying vec3 vc; varying float va; void main(){ float d=length(gl_PointCoord-.5)*2.; if(d>1.) discard; gl_FragColor=vec4(vc, va*smoothstep(1.,.45,d)); }';
   function v3c(a) { return new THREE.Vector3(a[0], a[1], a[2]); }
-  var U = { amp: { value: 1 }, k: { value: 300 }, glow: { value: 0 }, uFrom: { value: 0 }, uTo: { value: 0 }, uMix: { value: 0 }, uTime: { value: 0 }, uAlpha: { value: 1 }, uScale: { value: 1 }, uTreeA: { value: 1 }, uAmbA: { value: .5 }, uPick: { value: -9 }, uBurst: { value: 0 }, uCen: { value: new V() },
+  var U = { amp: { value: 1 }, k: { value: 300 }, glow: { value: 0 }, uFrom: { value: 0 }, uTo: { value: 0 }, uMix: { value: 0 }, uTime: { value: 0 }, uAlpha: { value: 1 }, uScale: { value: 1 }, uFill: { value: 1 }, uShift: { value: 1.9 }, uTreeA: { value: 1 }, uAmbA: { value: .5 }, uPick: { value: -9 }, uBurst: { value: 0 }, uCen: { value: new V() },
     uRot: { value: new THREE.Matrix3() }, uOff: { value: new THREE.Vector2() }, uInk: { value: new V() }, uHot0: { value: new V() }, uHot1: { value: new V() }, uFix: { value: new V() }, uAmbC: { value: new V() } };
   var mat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false, depthTest: false });
   var pts = new THREE.Points(g, mat); pts.frustumCulled = false;
@@ -114,6 +114,13 @@
       key(docTop(start) - vh * .1, 0, { a: .9 })
     ];
     var w = cv.clientWidth, h = cv.clientHeight; R3.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); U.k.value = h / (2 * Math.tan(cam.fov * Math.PI / 360)) * .0055;
+    // the orbit spins across the whole background whatever the window's shape. Its centre stays 1.9 to the right, so the arms begin off
+    // to the side, never mid-page, and its height stays as designed; only its width stretches, just enough for the outer ring (4.35 from
+    // the centre, 10.7 from the camera) to reach past the left edge. Stretched points sit further apart, so the shader makes them a
+    // little larger and brighter to match (see uFill), and each arm fades out over its last stretch (tip) instead of
+    // stopping short. It eases back to its own width as it turns into the tree.
+    var halfWide = Math.tan(cam.fov * Math.PI / 360) * 10.7 * cam.aspect;
+    U.uFill.value = Math.max(1, (halfWide * 1.05 + 1.9) / 4.35);
   }
   var S = { from: 0, to: 0, mix: 0, glow: 0, amp: 1, a: 1, x: 0, oy: 0, s: 1 };
   function state(y) {

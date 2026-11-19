@@ -56,6 +56,7 @@
 <tr><td><code>--level relaxed|standard|strict</code></td><td>How strict the flag limit is. Default <code>standard</code>.</td></tr>
 <tr><td><code>--base REF</code></td><td>Score only files and lines changed since a git ref (new files count in full).</td></tr>
 <tr><td><code>--names</code></td><td>Put your real function names back into the review. They never left your machine.</td></tr>
+<tr><td><code>--full</code></td><td>Print the full review with every flagged file and hint. At a terminal the review is short: the crystal beside the purity score and the five most tangled functions under their real names. A pipe, an agent or CI always gets the full review.</td></tr>
 <tr><td><code>--json</code></td><td>Print the server's result as JSON instead of the review.</td></tr>
 <tr><td><code>--no-loader</code></td><td>Do not draw the lavender crystal while the scan runs. It only appears on a real terminal (never in a pipe, in CI or with <code>--json</code> output) and is also switched off by <code>KRYPTON_NO_LOADER</code>; <code>NO_COLOR</code> draws it without colour.</td></tr>
 <tr><td><code>--save FILE</code></td><td>Also write the server's whole answer to a file.</td></tr>

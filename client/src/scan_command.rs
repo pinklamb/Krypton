@@ -1,10 +1,15 @@
-//! `krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]`: build the tree of every source file under
+//! `krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--full] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]`: build the tree of every source file under
 //! REPO on this machine, send only the tree to the Krypton server and print its review. The server never receives source text; names, strings and
 //! comments stay here, and `--names` puts the real function names back into the review locally. `--log` also adds the run to `.krypton/runs.jsonl` and
 //! saves an attempt (a patch) so the run can be put back; `--summary FILE` writes the scores with real names for `krypton comment`.
+//!
+//! At a terminal the review is short (see `report.rs`): the crystal beside the purity score, and the most tangled functions under their real
+//! names. `--full`, a pipe, an agent or CI get the full report with every hint, unchanged.
 
 use std::collections::BTreeSet;
+use std::env;
 use std::fs;
+use std::io::{self, IsTerminal};
 use std::path::{Path, PathBuf};
 
 use krypton_client::{Builder, ClientConfig, Names};
@@ -18,7 +23,7 @@ use crate::runlog;
 use crate::Failure;
 
 const USAGE: &str =
-    "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]";
+    "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--full] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]";
 const EXTENSIONS: [&str; 9] = ["py", "js", "jsx", "mjs", "cjs", "ts", "mts", "cts", "tsx"];
 const SKIP_DIRS: [&str; 12] =
     [".git", "node_modules", "dist", "build", "venv", ".venv", "__pycache__", "target", ".next", "coverage", "vendor", "site-packages"];
@@ -28,6 +33,8 @@ const LEVELS: [&str; 3] = ["relaxed", "standard", "strict"];
 struct Output {
     names: bool,
     json: bool,
+    /// The full report with every hint even at a terminal (a pipe, an agent or CI always gets it).
+    full: bool,
 }
 
 struct Options {
@@ -52,7 +59,7 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
         repo: PathBuf::new(),
         level: "standard".to_string(),
         server: None,
-        output: Output { names: false, json: false },
+        output: Output { names: false, json: false, full: false },
         no_loader: false,
         base: None,
         save: None,
@@ -67,6 +74,7 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
         match word.as_str() {
             "--names" => options.output.names = true,
             "--json" => options.output.json = true,
+            "--full" => options.output.full = true,
             "--no-loader" => options.no_loader = true,
             "--log" => options.log = true,
             "--ticket" => options.ticket = value("--ticket")?,
@@ -141,6 +149,9 @@ fn build_body(options: &Options, files: &[String], loader: Option<&Loader>) -> R
         return Err(Failure::Usage("no source files changed since that ref: nothing to score".to_string()));
     }
     note(loader, &format!("building the tree of {} files ...", selected.len()));
+    if let Some(active) = loader {
+        active.stage("Building the trees");
+    }
     let count = selected.len();
     let builder = Builder::new(ClientConfig::from_overrides(Value::Null)?, crate::name_key::for_this_run()?)?;
     let known: BTreeSet<String> = selected.iter().map(|name| (*name).clone()).collect();
@@ -179,8 +190,14 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
         return Err(Failure::Usage(format!("no source files found under {}", options.repo.display())));
     }
     let loader = loader::start_if_wanted(options.no_loader);
+    if let Some(active) = &loader {
+        active.stage(&format!("Reading {} files", files.len()));
+    }
     let (body, names) = build_body(&options, &files, loader.as_ref())?;
     note(loader.as_ref(), &format!("sending {} KB of tree (no source text) ...", body.len() / 1000));
+    if let Some(active) = &loader {
+        active.stage("Scoring on the Krypton server");
+    }
     let answer = Server::from_flag(options.server.as_deref()).post("/v1/score", &body)?;
     if let Some(active) = loader {
         active.finish();
@@ -194,6 +211,11 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     let conclusion = result.get("check_conclusion").and_then(Value::as_str).unwrap_or("unknown");
     if options.output.json {
         println!("{}", serde_json::to_string_pretty(&result).map_err(|error| Failure::Output(error.to_string()))?);
+    } else if !options.output.full && io::stdout().is_terminal() {
+        // a person at a terminal: the crystal, the score and the worst functions; the hints are one flag away
+        let run = runlog::from_answer(&result, &names, "", 0)?;
+        let color = env::var_os("NO_COLOR").is_none();
+        print!("{}", crate::report::compact(&run, &result, answer.get("usage").unwrap_or(&Value::Null), &options.repo.display().to_string(), color));
     } else {
         print_review(&result, answer.get("usage").unwrap_or(&Value::Null), options.output.names.then_some(&names))?;
     }

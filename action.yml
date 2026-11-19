@@ -1,5 +1,5 @@
 name: Krypton
-description: Score how tangled a pull request's code is against its base, as one Krypton gate line in its checks and a scorecard in the run summary. No comments.
+description: Score how tangled a pull request's code is against its base, as one Krypton gate line in its checks, a scorecard in the run summary, and one pull request comment kept up to date.
 author: Krypton
 
 inputs:
@@ -14,13 +14,17 @@ inputs:
     description: Fail the check when the files the pull request changed score below this purity (0-100). The rest of the codebase is never judged. Empty turns the rule off.
     required: false
     default: ""
+  comment:
+    description: 'Keep one Krypton comment on the pull request with the scorecard, edited on every push instead of adding another ("true" or "false"). Needs the pull-requests: write permission.'
+    default: "true"
   site:
     description: The Krypton site address. When set, the gate line's Details opens your repository's tree there for this commit; otherwise it opens this run's summary.
     required: false
     default: ""
 
 # Needs a checkout with history first:  - uses: actions/checkout@v4 / with: { fetch-depth: 0 }
-# and the permissions:  contents: read, statuses: write (the Krypton gate line), id-token: write (logs in to Krypton as this repository; no secret to store).
+# and the permissions:  contents: read, statuses: write (the Krypton gate line), pull-requests: write (the one Krypton comment),
+# id-token: write (logs in to Krypton as this repository; no secret to store).
 runs:
   using: composite
   steps:
@@ -97,9 +101,34 @@ runs:
             target_url: details,
           });
 
-    - name: Fail when the score went down
+    - name: Keep the Krypton comment on the pull request up to date
+      if: github.event_name == 'pull_request' && inputs.comment == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          // One comment per pull request: find ours by the hidden marker on its first line and edit it; create it only the first time.
+          const fs = require('fs');
+          const marker = '<!-- krypton-gate -->';
+          const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/scorecard.md`, 'utf8')
+            + `\n<sub>Updated for ${context.payload.pull_request.head.sha.slice(0, 7)}.</sub>\n`;
+          const { owner, repo } = context.repo;
+          const issue_number = context.payload.pull_request.number;
+          try {
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number, per_page: 100 });
+            const ours = comments.find((c) => c.body && c.body.startsWith(marker));
+            if (ours) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: ours.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+          } catch (error) {
+            // The gate line and the run summary are already set; a comment the token may not write (no pull-requests: write, or a fork) never fails the check.
+            core.warning(`Krypton could not write its pull request comment (${error.status || ''} ${error.message}). Add "pull-requests: write" to the workflow's permissions to get it.`);
+          }
+
+    - name: Fail when the gate fails
       if: github.event_name == 'pull_request' && steps.score.outputs.status != '0'
       shell: bash
       run: |
-        echo "Krypton: the purity score went down."
+        echo "Krypton gate failed: $(cat "$RUNNER_TEMP/line.txt")"
         exit 1

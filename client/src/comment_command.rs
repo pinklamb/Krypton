@@ -1,6 +1,7 @@
-//! `krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse]` writes the pull request scorecard (markdown, for the Actions run
-//! summary) comparing two summaries made by `krypton scan --summary`, and with `--line` the one line of the Krypton gate in the pull request's
-//! checks. Nothing is posted in the conversation. Only names and numbers are used; no source text is involved.
+//! `krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse]` writes the pull request scorecard (markdown) comparing two
+//! summaries made by `krypton scan --summary`, and with `--line` the one line of the Krypton gate in the pull request's checks. The Action
+//! puts the scorecard in the run summary and in one comment on the pull request, which it edits on every push instead of adding another;
+//! the hidden [`MARKER`] on its first line is how it finds that comment. Only names and numbers are used; no source text is involved.
 //!
 //! With `--target N`, the files the pull request changed (a third summary, `--changed FILE`, made by `krypton scan --base`) must score N
 //! or more: the target rule of the Krypton gate. The rest of the codebase is never judged. Without `--changed`, no source file changed.
@@ -13,7 +14,28 @@ use crate::runlog::{self, Run};
 use crate::Failure;
 
 const LISTED: usize = 10;
+/// The hidden first line of the scorecard: the Action finds its own pull request comment by it, so it edits one comment instead of adding more.
+pub const MARKER: &str = "<!-- krypton-gate -->";
+/// The lavender the before and after numbers are drawn in. A shade between Krypton's light and dark lavender, readable on GitHub's light and
+/// dark themes alike.
+const LAVENDER: &str = "#9a7ed6";
 const USAGE: &str = "usage: krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse] [--target N [--changed CHANGED.json]]";
+
+/// A purity in lavender, for GitHub markdown. GitHub has no text colour in markdown, but its math does: `$\color{...}{...}$`. Where math is
+/// not drawn, the number still reads (`56\%`).
+fn lavender(purity: i64) -> String {
+    format!(r"$\color{{{LAVENDER}}}{{\textbf{{{purity}\%}}}}$")
+}
+
+/// The scorecard's headline: the arrow, before and after in lavender, and the change.
+fn coloured_headline(before: i64, after: i64) -> String {
+    let (from, to) = (lavender(before), lavender(after));
+    match after.cmp(&before) {
+        Ordering::Greater => format!("▲ {from} → {to} (+{})", after.saturating_sub(before)),
+        Ordering::Less => format!("▼ {from} → {to} (−{})", before.saturating_sub(after)),
+        Ordering::Equal => format!("● {to} unchanged"),
+    }
+}
 
 fn headline(before: i64, after: i64) -> String {
     match after.cmp(&before) {
@@ -115,8 +137,8 @@ impl NewCode {
 pub fn markdown(before: &Run, after: &Run) -> String {
     let list = worse_functions(before, after);
     let mut text = format!(
-        "### Krypton · {}\n\n| | Before | After |\n|---|---|---|\n| Purity | {}% | {}% |\n| Over the limit | {} | {} |\n\n",
-        headline(before.purity, after.purity),
+        "{MARKER}\n### Krypton · {}\n\n| | Before | After |\n|---|---|---|\n| Purity | {}% | {}% |\n| Over the limit | {} | {} |\n\n",
+        coloured_headline(before.purity, after.purity),
         before.purity,
         after.purity,
         before.functions.len(),
@@ -222,8 +244,8 @@ mod tests {
     #[test]
     fn test_comment_better() {
         let text = markdown(&run(71, &[("a.py::f", 3.0), ("a.py::g", 2.0)]), &run(74, &[("a.py::f", 2.0)]));
-        assert!(text.starts_with("### Krypton"), "the headline comes first");
-        assert!(text.contains("### Krypton · ▲ 71% → 74% (+3)"), "arrow headline");
+        assert!(text.starts_with("<!-- krypton-gate -->\n### Krypton"), "the marker, then the headline");
+        assert!(text.contains(r"### Krypton · ▲ $\color{#9a7ed6}{\textbf{71\%}}$ → $\color{#9a7ed6}{\textbf{74\%}}$ (+3)"), "arrow headline in lavender");
         assert!(text.contains("| Over the limit | 2 | 1 |"), "over-the-limit counts");
         assert!(text.contains("Nice: this change made the code simpler."), "a kind word");
     }
@@ -232,7 +254,7 @@ mod tests {
     #[test]
     fn test_comment_worse() {
         let text = markdown(&run(74, &[("a.py::f", 3.0)]), &run(70, &[("a.py::f", 4.5), ("b.ts::g", 2.0)]));
-        assert!(text.contains("### Krypton · ▼ 74% → 70% (−4)"), "down arrow");
+        assert!(text.contains(r"▼ $\color{#9a7ed6}{\textbf{74\%}}$ → $\color{#9a7ed6}{\textbf{70\%}}$ (−4)"), "down arrow");
         assert!(text.contains("**2 functions got worse**"), "the count");
         assert!(text.contains("- `b.ts · g` under the limit → 2×"), "a new over-limit function");
         assert!(text.contains("- `a.py · f` 3× → 4.5×"), "a function that grew");
@@ -242,7 +264,7 @@ mod tests {
     #[test]
     fn test_comment_same() {
         let text = markdown(&run(74, &[("a.py::f", 3.0)]), &run(74, &[("a.py::f", 3.0)]));
-        assert!(text.contains("● 74% unchanged"), "dot headline");
+        assert!(text.contains(r"● $\color{#9a7ed6}{\textbf{74\%}}$ unchanged"), "dot headline");
         assert!(text.contains("No functions got worse."), "nothing worse");
     }
 

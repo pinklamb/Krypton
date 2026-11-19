@@ -50,13 +50,14 @@ pub fn yaml(gate: Gate, target: i64) -> Option<String> {
         Gate::Target => format!("          target: \"{target}\"   # a pull request fails if the files it changes score below this\n"),
     };
     Some(format!(
-        "# The Krypton gate: one line in each pull request's checks, the scorecard in the run summary, no comments.
+        "# The Krypton gate: one line in each pull request's checks, and the scorecard in one pull request comment that is edited on every push.
 # Written by `krypton setup`; edit it freely, setup never overwrites it. Commit it to turn the gate on.
 name: Krypton
 on: pull_request
 permissions:
   contents: read    # read the code
   statuses: write   # set the Krypton gate line
+  pull-requests: write   # keep the one Krypton comment on the pull request up to date
   id-token: write   # log in to Krypton as this repository, so there is no secret to store
 jobs:
   krypton:
@@ -109,6 +110,7 @@ mod tests {
         let worse = yaml(Gate::Worse, 70).unwrap();
         assert!(worse.contains("fail-on-worse: \"true\"") && !worse.contains("target:"), "never-worse rule only");
         assert!(worse.contains("id-token: write") && worse.contains("fetch-depth: 0"), "permissions and history for the base");
+        assert!(worse.contains("pull-requests: write"), "the comment permission");
         let target = yaml(Gate::Target, 72).unwrap();
         assert!(target.contains("target: \"72\"") && !target.contains("fail-on-worse"), "target rule only");
         assert!(yaml(Gate::Off, 70).is_none(), "off writes nothing");

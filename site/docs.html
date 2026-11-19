@@ -45,10 +45,19 @@ In PowerShell (add it to your <code>$PROFILE</code> to keep it):
 <pre><code><span class="p">$</span> git add .github/workflows/krypton.yml
 <span class="p">$</span> git commit -m "Add the Krypton gate"
 <span class="p">$</span> git push</code></pre></li>
-<li><b>Scan</b>Every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file is read, skipping whatever <code>.gitignore</code> and <code>.kryptonignore</code> exclude, and <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like. The review ends with a purity score from 0 to 100; higher is lighter.
+<li><b>Scan</b>Every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file is read, skipping whatever <code>.gitignore</code> and <code>.kryptonignore</code> exclude, and <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like. At a terminal you see the trees being built, then the purity score from 0 to 100 (higher is lighter) and the most tangled functions; <code>krypton scan . --full</code> adds every hint, and that full review is what an agent or CI reads anyway. Example values:
 <pre><code><span class="p">$</span> krypton scan .
-### Krypton Structural Review -- Purity Score: 100/100
-0 of 1 changed files flagged.</code></pre></li>
+     /\
+    /  \     Purity  38/100
+   /    \    █████████░░░░░░░░░░░░░░░
+   \    /    1,150 functions over the limit, in 65 files.
+    \  /     196 files scored in 158 ms
+     \/
+
+  Most tangled
+     107×  summarize     tools/ak_summary.py
+    92.8×  branch_row    tools/ladder_summary.py
+    56.3×  issue17       tools/stress_issues_e.py</code></pre></li>
 </ol>
 
 <div class="cards">

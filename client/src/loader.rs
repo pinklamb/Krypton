@@ -6,7 +6,9 @@
 //! * it draws nothing unless standard error is a real terminal (not in CI, pipes, `TERM=dumb`, on Windows consoles, or with `--no-loader`);
 //! * it draws nothing for the first 0.3 s, so a quick run never flickers;
 //! * it erases itself before the report prints and always gives the cursor back, even when the run fails;
-//! * it never slows or changes the scoring: a side thread only reads two counters the run updates.
+//! * it never slows or changes the scoring: a side thread only reads two counters and the stage name the run updates.
+//!
+//! Beside the crystal it names the stage the run is in (reading the files, building the trees with a count, scoring on the server).
 
 use std::env;
 use std::io::{self, IsTerminal, Write};
@@ -15,19 +17,21 @@ use std::sync::{Arc, Condvar, Mutex, PoisonError};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
-const PRISM: [&str; 6] = ["   /\\   ", "  /  \\  ", " /    \\ ", " \\    / ", "  \\  /  ", "   \\/   "];
+pub const PRISM: [&str; 6] = ["   /\\   ", "  /  \\  ", " /    \\ ", " \\    / ", "  \\  /  ", "   \\/   "];
 /// Down the left edge, along the bottom, up the right edge, back to the top: 12 cells, one arrow step each.
 const PATH: [(usize, usize); 12] = [(0, 3), (1, 2), (2, 1), (3, 1), (4, 2), (5, 3), (5, 4), (4, 5), (3, 6), (2, 6), (1, 5), (0, 4)];
 const STEPS: usize = PATH.len();
-type Rgb = (u8, u8, u8);
+pub type Rgb = (u8, u8, u8);
 /// The outline, and the arrow head and the finishing flash.
-const LAVENDER: Rgb = (199, 181, 236);
-const BRIGHT: Rgb = (240, 234, 255);
+pub const LAVENDER: Rgb = (199, 181, 236);
+pub const BRIGHT: Rgb = (240, 234, 255);
 const HIDE_CURSOR: &str = "\x1b[?25l";
 const SHOW_CURSOR: &str = "\x1b[?25h";
 const SHOW_AFTER: Duration = Duration::from_millis(300);
 const TICK: Duration = Duration::from_millis(150);
 const FLASH: Duration = Duration::from_millis(120);
+/// The stage text, dimmer than the crystal.
+pub const MUTED: Rgb = (168, 156, 144);
 
 /// The arrow points the way it travels: down, then along the bottom, then up.
 const fn arrow_head(index: usize) -> char {
@@ -41,7 +45,7 @@ const fn arrow_head(index: usize) -> char {
 }
 
 /// `text` in a 24-bit colour, or unchanged when colour is off (`NO_COLOR`).
-fn paint(text: &str, rgb: Rgb, color: bool) -> String {
+pub fn paint(text: &str, rgb: Rgb, color: bool) -> String {
     if color {
         format!("\x1b[38;2;{};{};{}m{text}\x1b[0m", rgb.0, rgb.1, rgb.2)
     } else {
@@ -69,6 +73,22 @@ fn frame(drawn: usize, head: bool, tint: Rgb, color: bool) -> Vec<String> {
         place(&mut rows, cell, paint(&arrow_head(drawn).to_string(), BRIGHT, color));
     }
     rows.into_iter().map(|row| format!("  {}", row.concat())).collect()
+}
+
+/// The crystal's lines with the stage written beside its middle, and while files are being counted, how many are done.
+fn with_stage(mut lines: Vec<String>, stage: &str, done: usize, total: usize, color: bool) -> Vec<String> {
+    if stage.is_empty() {
+        return lines;
+    }
+    if let Some(row) = lines.get_mut(2) {
+        row.push_str("   ");
+        row.push_str(&paint(stage, BRIGHT, color));
+    }
+    if let (Some(row), true) = (lines.get_mut(3), total > 1 && done < total) {
+        row.push_str("   ");
+        row.push_str(&paint(&format!("{done} of {total} files"), MUTED, color));
+    }
+    lines
 }
 
 /// How far the arrow should be for `done` of `total` files. It never reaches the last step: only finishing the run does.
@@ -154,6 +174,7 @@ pub fn start_if_wanted(switched_off: bool) -> Option<Loader> {
 }
 
 struct Shared {
+    stage: Mutex<String>,
     done: AtomicUsize,
     total: AtomicUsize,
     lines: AtomicUsize,
@@ -199,9 +220,9 @@ impl Shared {
         }
     }
 
-    /// Redraw in place over the previous frame.
+    /// Redraw in place over the previous frame, clearing the rest of each line so a shorter line leaves nothing behind.
     fn draw(&self, lines: &[String]) -> bool {
-        let text = lines.join("\n") + "\n";
+        let text = lines.join("\x1b[K\n") + "\x1b[K\n";
         let written = self.write(&format!("{}{text}", self.rewind()));
         self.lines.store(lines.len(), Ordering::SeqCst);
         written
@@ -224,9 +245,10 @@ impl Shared {
         self.hidden.store(true, Ordering::SeqCst);
         let mut step: usize = 0;
         while !self.wait(TICK) {
-            let target = target_step(self.done.load(Ordering::SeqCst), self.total.load(Ordering::SeqCst));
-            step = step.saturating_add(1).min(target);
-            if !self.draw(&frame(step, true, LAVENDER, self.color)) {
+            let (done, total) = (self.done.load(Ordering::SeqCst), self.total.load(Ordering::SeqCst));
+            step = step.saturating_add(1).min(target_step(done, total));
+            let stage = self.stage.lock().unwrap_or_else(PoisonError::into_inner).clone();
+            if !self.draw(&with_stage(frame(step, true, LAVENDER, self.color), &stage, done, total, self.color)) {
                 return;
             }
         }
@@ -249,6 +271,7 @@ impl Loader {
 
     fn with_output(color: bool, out: Box<dyn Write + Send>) -> Self {
         let shared = Arc::new(Shared {
+            stage: Mutex::new(String::new()),
             done: AtomicUsize::new(0),
             total: AtomicUsize::new(1),
             lines: AtomicUsize::new(0),
@@ -260,6 +283,11 @@ impl Loader {
         });
         let worker = Arc::clone(&shared);
         Self { shared, thread: Some(thread::spawn(move || worker.run())), finished: false }
+    }
+
+    /// Name the stage the run is in; it is drawn beside the crystal.
+    pub fn stage(&self, text: &str) {
+        text.clone_into(&mut self.shared.stage.lock().unwrap_or_else(PoisonError::into_inner));
     }
 
     /// Record how many files are done; the side thread reads these two numbers.
@@ -338,6 +366,17 @@ mod tests {
         let lines = frame(STEPS, false, LAVENDER, false);
         let expected: Vec<String> = PRISM.iter().map(|line| format!("  {line}")).collect();
         assert_eq!(lines, expected, "twelve cells draw the whole outline");
+    }
+
+    // The stage is written beside the crystal, with the file count only while it is counting.
+    #[test]
+    fn test_stage_beside() {
+        let lines = with_stage(frame(3, true, LAVENDER, false), "Building the trees", 73, 145, false);
+        let ends = |rows: &[String], n: usize, tail: &str| rows.get(n).is_some_and(|row| row.ends_with(tail));
+        assert!(ends(&lines, 2, "   Building the trees") && ends(&lines, 3, "   73 of 145 files"), "stage and count");
+        let scoring = with_stage(frame(11, true, LAVENDER, false), "Scoring on the Krypton server", 145, 145, false);
+        assert!(ends(&scoring, 2, "Scoring on the Krypton server") && !scoring.iter().any(|row| row.contains("files")), "no count once all are done");
+        assert_eq!(with_stage(frame(0, true, LAVENDER, false), "", 0, 1, false), frame(0, true, LAVENDER, false), "no stage, no text");
     }
 
     // The first frame is just the arrow, pointing down, and colour is optional.

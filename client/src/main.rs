@@ -24,6 +24,7 @@ mod loader;
 mod login_command;
 mod name_key;
 mod order_command;
+mod report;
 mod restore_command;
 mod review_command;
 mod runlog;

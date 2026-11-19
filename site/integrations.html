@@ -88,7 +88,7 @@ jobs:
         with: { fetch-depth: 0 }
       - run: docker build -t krypton path/to/client
       - run: docker run --rm -v "$PWD:/repo" krypton scan . --base origin/${{ github.base_ref }}</code></pre>
-<p>Or use the Krypton action, which sets one Krypton gate line in each pull request's checks and writes the scorecard to the run summary; it posts no comments. See <a href="review.html#github">Review</a>.</p>
+<p>Or use the Krypton action, which sets one Krypton gate line in each pull request's checks and writes the scorecard to the run summary and to one pull request comment it edits on every push, never a second one. See <a href="review.html#github">Review</a>.</p>
 
 <h2 id="docker">Docker</h2>
 <pre><code>docker build -t krypton client

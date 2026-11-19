@@ -129,13 +129,14 @@ krypton comment base.json head.json [--line FILE] [--fail-if-worse] [--target N 
 <p>Krypton does not build the page and does not read <code>themes.md</code>. The agent you already use builds it, following <a href="https://github.com/pinklamb/Krypton/blob/main/agent/review-brief.md"><code>agent/review-brief.md</code></a>: the same outline every time (the ticket, purity now and if you approve, one card per stuck function with its scores and two buttons, and a footer), styled the way <code>themes.md</code> describes in your own words. See the <a href="review-preview.html">preview</a>.</p>
 
 <h2 id="github">On GitHub</h2>
-<p><code>krypton setup</code> writes this workflow for you. The action in this repository's root scores a pull request against its base and puts <b>one line</b> in its checks. Nothing is posted in the conversation, so there is no comment to scroll past and no notification on every push.</p>
+<p><code>krypton setup</code> writes this workflow for you. The action in this repository's root scores a pull request against its base and puts <b>one line</b> in its checks. It also keeps <b>one comment</b> on the pull request with the scorecard, the purity before and after in lavender, and edits that same comment on every push instead of adding another, so the conversation never fills up. Turn the comment off with <code>with: { comment: "false" }</code>.</p>
 <pre><code>name: Krypton
 on:
   pull_request:
 permissions:
   contents: read
   statuses: write
+  pull-requests: write
   id-token: write
 jobs:
   structure:
@@ -145,7 +146,7 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: pinklamb/Krypton@main</code></pre>
 <p>The line is green unless you turn on a rule. <b>Never worse</b>: add <code>with: { fail-on-worse: "true" }</code> to the action step, and a pull request fails if the score went down. <b>Target</b>: add <code>with: { target: "70" }</code>, and a pull request fails if the files it changed score below 70; the line then reads, for example, <code>Purity ▲ 56% → 57% (+1) · changed code 64% (target 70)</code>.</p>
-<p>The action logs in to Krypton as your repository with the run's own GitHub identity (<code>id-token: write</code>), so there is no secret to store. <code>statuses: write</code> lets it set the line.</p>
+<p>The action logs in to Krypton as your repository with the run's own GitHub identity (<code>id-token: write</code>), so there is no secret to store. <code>statuses: write</code> lets it set the line, and <code>pull-requests: write</code> lets it keep its one comment up to date; without it the comment is skipped with a warning and the gate still works.</p>
 <p>The scorecard in the run summary looks like this:</p>
 <pre><code>### Krypton · ▲ 71% → 74% (+3)
 

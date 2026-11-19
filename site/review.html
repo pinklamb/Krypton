@@ -147,17 +147,22 @@ jobs:
       - uses: pinklamb/Krypton@main</code></pre>
 <p>The line is green unless you turn on a rule. <b>Never worse</b>: add <code>with: { fail-on-worse: "true" }</code> to the action step, and a pull request fails if the score went down. <b>Target</b>: add <code>with: { target: "70" }</code>, and a pull request fails if the files it changed score below 70; the line then reads, for example, <code>Purity ▲ 56% → 57% (+1) · changed code 64% (target 70)</code>.</p>
 <p>The action logs in to Krypton as your repository with the run's own GitHub identity (<code>id-token: write</code>), so there is no secret to store. <code>statuses: write</code> lets it set the line, and <code>pull-requests: write</code> lets it keep its one comment up to date; without it the comment is skipped with a warning and the gate still works.</p>
-<p>The scorecard in the run summary looks like this:</p>
-<pre><code>### Krypton · ▲ 71% → 74% (+3)
-
-| | Before | After |
-|---|---|---|
-| Purity | 71% | 74% |
-| Over the limit | 14 | 12 |
-
-**2 functions got worse**
-- `billing.py · apply_discount` 40× → 44×
-- `auth.ts · refresh_session` under the limit → 2×</code></pre>
+<p>The scorecard, in the run summary and the pull request comment, looks like this. It sits in GitHub's purple callout so it is clearly Krypton's, and the two numbers in the headline are drawn in lavender. The <b>This PR</b> column, the pull request's own score against the target, appears when the target rule is on:</p>
+<pre><code>&gt; [!IMPORTANT]
+&gt; ### Krypton · ▲ 71% → 74% (+3)
+&gt;
+&gt; **Repo Purity · Scores**
+&gt;
+&gt; | | Before | After | This PR |
+&gt; |---|---|---|---|
+&gt; | Purity | 71% | 74% | 72% |
+&gt; | Target | | | 70 ✓ |
+&gt; | Over the limit | 14 | 12 | |
+&gt;
+&gt; **2 functions got worse**
+&gt;
+&gt; - `billing.py · apply_discount` 40× → 44×
+&gt; - `auth.ts · refresh_session` under the limit → 2×</code></pre>
 
 <h2 id="limits">Limits</h2>
 <ul>

@@ -7,22 +7,45 @@ Agents are strong and fast, and every strong thing needs a check. Krypton is tha
 You need Docker ([Docker Desktop](https://docs.docker.com/get-docker/) on macOS and Windows, Docker Engine on Linux) and git; nothing else.
 
 ```bash
-git clone https://github.com/pinklamb/Krypton.git   # anywhere; it does not go inside your project
-docker build -t krypton Krypton/client               # once: the client as a local Docker image
+docker pull ghcr.io/pinklamb/krypton:latest   # the client, ready-made: nothing to build
+```
 
-# the krypton command (macOS, Linux, Git Bash; add it to ~/.bashrc or ~/.zshrc to keep it)
-krypton() { local here="$PWD"; command -v cygpath >/dev/null && here="$(cygpath -w "$PWD")"; MSYS_NO_PATHCONV=1 docker run --rm $([ -t 0 ] && echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] && echo -p 127.0.0.1:7777:7777) -v krypton-home:/krypton-home -v "$here:/repo" krypton "$@"; }
+The krypton command (macOS, Linux, Git Bash; add it to ~/.bashrc or ~/.zshrc to keep it):
 
+```bash
+krypton() {
+  local image="${KRYPTON_IMAGE:-ghcr.io/pinklamb/krypton:latest}" here="$PWD" status
+  if [ "$1" = update ]; then docker pull "$image"; return; fi
+  command -v cygpath >/dev/null && here="$(cygpath -w "$PWD")"
+  MSYS_NO_PATHCONV=1 docker run --rm $([ -t 0 ] && echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] && echo -p 127.0.0.1:7777:7777)     -v krypton-home:/krypton-home -v "$here:/repo" "$image" "$@"
+  status=$?
+  if [ "$status" -eq 75 ]; then docker pull "$image" && echo "Krypton is up to date."; return; fi
+  return "$status"
+}
+```
+
+In PowerShell (add it to your `$PROFILE` to keep it):
+
+```powershell
+function krypton {
+  $image = if ($env:KRYPTON_IMAGE) { $env:KRYPTON_IMAGE } else { 'ghcr.io/pinklamb/krypton:latest' }
+  if ($args.Count -gt 0 -and $args[0] -eq 'update') { docker pull $image; return }
+  $tty = @(); if (-not [Console]::IsInputRedirected) { $tty = @('-it') }
+  $port = @(); if ($args.Count -eq 0 -or $args[0] -eq 'setup') { $port = @('-p', '127.0.0.1:7777:7777') }
+  docker run --rm @tty @port -v krypton-home:/krypton-home -v "${PWD}:/repo" $image @args
+  if ($LASTEXITCODE -eq 75) { docker pull $image; if ($LASTEXITCODE -eq 0) { 'Krypton is up to date.' } }
+}
+```
+
+Then, in your project:
+
+```bash
 cd your-project
 krypton                                   # once per project: logs you in with GitHub, asks for your settings here or on a local dashboard, and can write the pull request gate
 git add .github/workflows/krypton.yml && git commit -m "Add the Krypton gate" && git push   # turns the gate on
 ```
 
-In PowerShell, the krypton command is (add it to your `$PROFILE` to keep it):
-
-```powershell
-function krypton { $tty = @(); if (-not [Console]::IsInputRedirected) { $tty = @('-it') }; $port = @(); if ($args.Count -eq 0 -or $args[0] -eq 'setup') { $port = @('-p', '127.0.0.1:7777:7777') }; docker run --rm @tty @port -v krypton-home:/krypton-home -v "${PWD}:/repo" krypton @args }
-```
+Updates: after a scan or setup at a terminal, at most once a day, Krypton says when a new version is out and asks *Update now?*; yes pulls it, and `krypton update` does the same any time. To build it yourself instead: `git clone https://github.com/pinklamb/Krypton.git && docker build -t krypton Krypton/client`, then `export KRYPTON_IMAGE=krypton`.
 
 Everyday commands:
 

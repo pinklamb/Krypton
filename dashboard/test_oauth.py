@@ -103,7 +103,7 @@ class SignInTests(unittest.TestCase):
     # Full flow connects and never leaks the token.
     def test_sign_in_flow(self):
         reply, _ = self.finish_login()
-        self.assertEqual((reply.status, reply.getheader("Location")), (302, "/tree.html?github=connected"))
+        self.assertEqual((reply.status, reply.getheader("Location")), (302, "/tree?github=connected"))
         _, body = self.me.call("GET", "/api/session")
         data = json.loads(body)
         self.assertTrue(data["connected"])
@@ -128,16 +128,16 @@ class SignInTests(unittest.TestCase):
         _, query = self.start_login()
         FakeGitHub.challenges["c"] = "a-different-challenge"
         reply, _ = self.me.call("GET", f"/auth/github/callback?code=c&state={query['state'][0]}")
-        self.assertEqual(reply.getheader("Location"), "/tree.html?github=error")
+        self.assertEqual(reply.getheader("Location"), "/tree?github=error")
         self.assertFalse(json.loads(self.me.call("GET", "/api/session")[1])["connected"])
 
     # Denied and failed exchange redirect with a reason.
     def test_denied_exchange(self):
         reply, _ = self.me.call("GET", "/auth/github/callback?error=access_denied")
-        self.assertEqual(reply.getheader("Location"), "/tree.html?github=denied")
+        self.assertEqual(reply.getheader("Location"), "/tree?github=denied")
         FakeGitHub.fail_exchange = True
         reply, _ = self.finish_login("code-2")
-        self.assertEqual(reply.getheader("Location"), "/tree.html?github=error")
+        self.assertEqual(reply.getheader("Location"), "/tree?github=error")
 
     # The sign in cookie ends with the browser session.
     def test_session_cookie(self):
@@ -199,11 +199,22 @@ class SignInTests(unittest.TestCase):
         reply, body = self.me.call("GET", "/")
         self.assertEqual(reply.status, 200)
         self.assertIn("connect-src 'self';", reply.getheader("Content-Security-Policy"))
-        self.assertEqual(self.me.call("GET", "/docs.html")[0].status, 200)
+        docs, page = self.me.call("GET", "/docs")
+        self.assertEqual((docs.status, docs.getheader("Content-Type")), (200, "text/html; charset=utf-8"), "a clean address serves the page")
+        self.assertIn("How Krypton works", page)
         css, _ = self.me.call("GET", "/assets/site.css")
         self.assertTrue(css.getheader("Content-Type").startswith("text/css"))
         for missing in ("/nope", "/../dashboard/auth.py", "/%2e%2e/dashboard/auth.py", "/.git/config"):
             self.assertEqual(self.me.call("GET", missing)[0].status, 404, missing)
+
+    # Old .html links move to the clean address, keeping the query; an unknown page gets the site's own 404 page.
+    def test_clean_addresses(self):
+        for old, clean in (("/docs.html", "/docs"), ("/index.html", "/"), ("/tree.html?repo=a/b&sha=1", "/tree?repo=a/b&sha=1")):
+            reply, _ = self.me.call("GET", old)
+            self.assertEqual((reply.status, reply.getheader("Location")), (301, clean), old)
+        reply, page = self.me.call("GET", "/no-such-page")
+        self.assertEqual(reply.status, 404)
+        self.assertIn("<html", page.lower(), "the site's 404 page, not bare text")
 
 
     # Signing out revokes the token with GitHub.

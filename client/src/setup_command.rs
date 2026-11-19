@@ -318,7 +318,12 @@ fn next_steps(settings: &Settings, themes: Option<&Path>, gate: &Written) -> Str
         Written::Wrote(path) => {
             lines.push(format!("Wrote {} (the pull request gate: {}). Commit it to turn the gate on.", path.display(), settings.gate.name()));
         }
-        Written::Kept(path) => lines.push(format!("{} already exists and was left as it is.", path.display())),
+        Written::Updated(path) => {
+            lines.push(format!("Updated {} to the new gate ({}). Commit it so pull requests use the new rule.", path.display(), settings.gate.name()));
+        }
+        Written::Unchanged(path) => lines.push(format!("{} already has this gate.", path.display())),
+        Written::Kept(path) => lines.push(format!("{} has your own edits (setup's line is gone), so it was left as it is.", path.display())),
+        Written::StillOn(path) => lines.push(format!("{} from an earlier setup still gates pull requests; delete it to turn the gate off.", path.display())),
         Written::Off => {}
     }
     lines.push("Next: krypton scan . --log --ticket \"what you are fixing\"   (before and after each change)".to_string());

@@ -19,12 +19,13 @@ pub const MARKER: &str = "<!-- krypton-gate -->";
 /// The lavender the before and after numbers are drawn in. A shade between Krypton's light and dark lavender, readable on GitHub's light and
 /// dark themes alike.
 const LAVENDER: &str = "#9a7ed6";
-const USAGE: &str = "usage: krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse] [--target N [--changed CHANGED.json]]";
+const USAGE: &str = "usage: krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse] [--target N [--changed CHANGED.json]] [--card SHA]";
 
 /// A purity in lavender, for GitHub markdown. GitHub has no text colour in markdown, but its math does: `$\color{...}{...}$`. Where math is
-/// not drawn, the number still reads (`56\%`).
+/// not drawn, the number still reads (`56%`).
 fn lavender(purity: i64) -> String {
-    format!(r"$\color{{{LAVENDER}}}{{\textbf{{{purity}\%}}}}$")
+    // the % stays outside the maths: GitHub reads a % inside it as the start of a TeX comment and drops it
+    format!(r"$\color{{{LAVENDER}}}{{\textbf{{{purity}}}}}$%")
 }
 
 /// The scorecard's headline: the arrow, before and after in lavender, and the change.
@@ -154,6 +155,32 @@ pub fn markdown(before: &Run, after: &Run) -> String {
     text
 }
 
+/// The card image: Krypton's lavender card, drawn by the server from these numbers alone (purities, counts, the gate, the commit).
+#[must_use]
+pub fn card_image(server: &crate::http::Server, before: &Run, after: &Run, passed: bool, sha: &str) -> String {
+    let worse = worse_functions(before, after).len();
+    let gate = if passed { "pass" } else { "fail" };
+    let change = after.purity.saturating_sub(before.purity);
+    let sign = match change.signum() {
+        1 => "+",
+        -1 => "\u{2212}",
+        _ => "\u{b1}",
+    };
+    let (from, to) = (before.purity.clamp(0, 100), after.purity.clamp(0, 100));
+    let (over_from, over_to) = (before.functions.len(), after.functions.len());
+    format!(
+        "<img src=\"{}/v1/card.svg?b={from}&amp;a={to}&amp;o={over_from},{over_to}&amp;w={worse}&amp;g={gate}&amp;s={sha}\" alt=\"Krypton {from}% \u{2192} {to}% ({sign}{})\" width=\"720\">",
+        server.url(),
+        change.unsigned_abs()
+    )
+}
+
+/// The scorecard with the card right under the hidden marker, so the comment opens with it.
+#[must_use]
+pub fn with_card(scorecard: &str, image: &str) -> String {
+    scorecard.strip_prefix(MARKER).map_or_else(|| format!("{image}\n\n{scorecard}"), |rest| format!("{MARKER}\n{image}\n{rest}"))
+}
+
 /// The gate line with the target rule's result added, when the rule is on.
 #[must_use]
 pub fn gate_line(before: &Run, after: &Run, new_code: NewCode) -> String {
@@ -182,10 +209,12 @@ struct Options {
     fail_if_worse: bool,
     target: Option<i64>,
     changed: Option<PathBuf>,
+    /// The commit, for the lavender card at the top of the comment (drawn by the Krypton server from the numbers alone).
+    card_sha: Option<String>,
 }
 
 fn parse_options(args: &[String]) -> Result<Options, Failure> {
-    let mut options = Options { files: Vec::new(), line: None, fail_if_worse: false, target: None, changed: None };
+    let mut options = Options { files: Vec::new(), line: None, fail_if_worse: false, target: None, changed: None, card_sha: None };
     let mut words = args.iter();
     while let Some(word) = words.next() {
         match word.as_str() {
@@ -194,6 +223,10 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
                 let text = words.next().ok_or_else(|| Failure::Usage(format!("--target needs a number\n{USAGE}")))?;
                 let bad = || Failure::Usage(format!("--target is a whole number from 0 to 100\n{USAGE}"));
                 options.target = Some(crate::setup_command::parse_target(text).ok_or_else(bad)?);
+            }
+            "--card" => {
+                let sha = words.next().ok_or_else(|| Failure::Usage(format!("--card needs the commit id\n{USAGE}")))?;
+                options.card_sha = Some(sha.chars().take(7).collect());
             }
             "--changed" => options.changed = Some(PathBuf::from(words.next().ok_or_else(|| Failure::Usage(format!("--changed needs a file\n{USAGE}")))?)),
             "--line" => options.line = Some(PathBuf::from(words.next().ok_or_else(|| Failure::Usage(format!("--line needs a file\n{USAGE}")))?)),
@@ -214,11 +247,17 @@ pub fn comment(args: &[String]) -> Result<(), Failure> {
         (Some(target), None) => NewCode::NoSourceChanged { target },
         (Some(target), Some(path)) => NewCode::Scored { purity: runlog::read_summary(path)?.purity, target },
     };
-    print!("{}{}", markdown(&before, &after), new_code.sentence());
+    let failed = (options.fail_if_worse && after.purity < before.purity) || new_code.fails();
+    let scorecard = markdown(&before, &after) + &new_code.sentence();
+    let scorecard = match &options.card_sha {
+        Some(sha) => with_card(&scorecard, &card_image(&crate::http::Server::from_flag(None), &before, &after, !failed, sha)),
+        None => scorecard,
+    };
+    print!("{scorecard}");
     if let Some(path) = &options.line {
         write(path, &gate_line(&before, &after, new_code))?;
     }
-    if (options.fail_if_worse && after.purity < before.purity) || new_code.fails() {
+    if failed {
         return Err(Failure::Flagged);
     }
     Ok(())
@@ -245,7 +284,10 @@ mod tests {
     fn test_comment_better() {
         let text = markdown(&run(71, &[("a.py::f", 3.0), ("a.py::g", 2.0)]), &run(74, &[("a.py::f", 2.0)]));
         assert!(text.starts_with("<!-- krypton-gate -->\n### Krypton"), "the marker, then the headline");
-        assert!(text.contains(r"### Krypton · ▲ $\color{#9a7ed6}{\textbf{71\%}}$ → $\color{#9a7ed6}{\textbf{74\%}}$ (+3)"), "arrow headline in lavender");
+        assert!(
+            text.contains(r"### Krypton · ▲ $\color{#9a7ed6}{\textbf{71}}$% → $\color{#9a7ed6}{\textbf{74}}$% (+3)"),
+            "arrow headline in lavender, percents kept"
+        );
         assert!(text.contains("| Over the limit | 2 | 1 |"), "over-the-limit counts");
         assert!(text.contains("Nice: this change made the code simpler."), "a kind word");
     }
@@ -254,7 +296,7 @@ mod tests {
     #[test]
     fn test_comment_worse() {
         let text = markdown(&run(74, &[("a.py::f", 3.0)]), &run(70, &[("a.py::f", 4.5), ("b.ts::g", 2.0)]));
-        assert!(text.contains(r"▼ $\color{#9a7ed6}{\textbf{74\%}}$ → $\color{#9a7ed6}{\textbf{70\%}}$ (−4)"), "down arrow");
+        assert!(text.contains(r"▼ $\color{#9a7ed6}{\textbf{74}}$% → $\color{#9a7ed6}{\textbf{70}}$% (−4)"), "down arrow");
         assert!(text.contains("**2 functions got worse**"), "the count");
         assert!(text.contains("- `b.ts · g` under the limit → 2×"), "a new over-limit function");
         assert!(text.contains("- `a.py · f` 3× → 4.5×"), "a function that grew");
@@ -264,7 +306,7 @@ mod tests {
     #[test]
     fn test_comment_same() {
         let text = markdown(&run(74, &[("a.py::f", 3.0)]), &run(74, &[("a.py::f", 3.0)]));
-        assert!(text.contains(r"● $\color{#9a7ed6}{\textbf{74\%}}$ unchanged"), "dot headline");
+        assert!(text.contains(r"● $\color{#9a7ed6}{\textbf{74}}$% unchanged"), "dot headline");
         assert!(text.contains("No functions got worse."), "nothing worse");
     }
 
@@ -274,6 +316,17 @@ mod tests {
         assert_eq!(status_line(&run(71, &[]), &run(74, &[])), "Purity ▲ 71% → 74% (+3)", "up, nothing worse");
         let worse = status_line(&run(74, &[("a.py::f", 3.0)]), &run(70, &[("a.py::f", 4.5), ("b.ts::g", 2.0)]));
         assert_eq!(worse, "Purity ▼ 74% → 70% (−4) · 2 functions worse", "down, with the count");
+    }
+
+    // The card opens the comment, right under the marker, with the numbers and the gate in its link and the percents in its alt text.
+    #[test]
+    fn test_card() {
+        let server = crate::http::Server::from_flag(Some("https://k.example"));
+        let image = card_image(&server, &run(59, &[("a.py::f", 2.0)]), &run(58, &[("a.py::f", 3.0), ("b.py::g", 5.2)]), true, "bbfce90");
+        assert!(image.starts_with("<img src=\"https://k.example/v1/card.svg?b=59&amp;a=58&amp;o=1,2&amp;w=2&amp;g=pass&amp;s=bbfce90\""), "{image}");
+        assert!(image.contains("alt=\"Krypton 59% \u{2192} 58% (\u{2212}1)\""), "the percents in words");
+        let text = with_card(&markdown(&run(59, &[]), &run(58, &[])), &image);
+        assert!(text.starts_with(&format!("{MARKER}\n<img ")), "marker first, then the card");
     }
 
     // The target rule judges only the changed files, says so on the gate line, and fails only below the target.

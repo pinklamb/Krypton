@@ -52,6 +52,7 @@ runs:
         BASE: ${{ github.event.pull_request.base.sha }}
         FAIL_ON_WORSE: ${{ inputs.fail-on-worse }}
         TARGET: ${{ inputs.target }}
+        HEAD: ${{ github.event.pull_request.head.sha }}
       run: |
         set -e
         git worktree add "$RUNNER_TEMP/krypton-base" "$BASE"
@@ -71,12 +72,42 @@ runs:
           fi
         fi
         status=0
-        "$KRYPTON" comment "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" --line "$RUNNER_TEMP/line.txt" $flag $rule > "$RUNNER_TEMP/scorecard.md" || status=$?
+        "$KRYPTON" comment "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" --line "$RUNNER_TEMP/line.txt" --card "$HEAD" $flag $rule > "$RUNNER_TEMP/scorecard.md" || status=$?
+        printf '\n<sub>Updated for %s.</sub>\n' "$(echo "$HEAD" | cut -c1-7)" >> "$RUNNER_TEMP/scorecard.md"
         cat "$RUNNER_TEMP/scorecard.md" >> "$GITHUB_STEP_SUMMARY"
         echo "status=$status" >> "$GITHUB_OUTPUT"
 
+    - name: Post the comment and the gate line as the Krypton app
+      id: report
+      if: github.event_name == 'pull_request' && inputs.comment == 'true'
+      shell: bash
+      env:
+        KRYPTON_SERVER: ${{ inputs.server }}
+        HEAD: ${{ github.event.pull_request.head.sha }}
+        PR: ${{ github.event.pull_request.number }}
+        GATE_STATUS: ${{ steps.score.outputs.status }}
+        SITE: ${{ inputs.site }}
+      run: |
+        # Where the Krypton app is installed on this repository, the comment and the gate line come from it, with Krypton's name and crystal.
+        # Anywhere else (exit 3), or if the server cannot be reached, the next two steps post them as github-actions; the gate is the same.
+        state=failure
+        if [ "$GATE_STATUS" = "0" ]; then state=success; fi
+        site="${SITE%/}"
+        if [ -n "$site" ]; then details="$site/tree?repo=$GITHUB_REPOSITORY&sha=$HEAD"; else details="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; fi
+        code=0
+        "$KRYPTON" report --repo "$GITHUB_REPOSITORY" --pr "$PR" --sha "$HEAD" --state "$state" --line "$RUNNER_TEMP/line.txt"           --scorecard "$RUNNER_TEMP/scorecard.md" --details "$details" || code=$?
+        if [ "$code" = "0" ]; then
+          echo "posted=true" >> "$GITHUB_OUTPUT"
+        elif [ "$code" = "3" ]; then
+          echo "The Krypton app is not installed on this repository; posting as github-actions instead."
+          echo "posted=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "::warning::Krypton could not post as its app (exit $code); posting as github-actions instead."
+          echo "posted=false" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Set the Krypton gate line
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && steps.report.outputs.posted != 'true'
       uses: actions/github-script@v7
       env:
         GATE_STATUS: ${{ steps.score.outputs.status }}
@@ -89,7 +120,7 @@ runs:
           const sha = context.payload.pull_request.head.sha;
           const site = (process.env.SITE || '').replace(/\/+$/, '');
           const details = site
-            ? `${site}/tree.html?repo=${encodeURIComponent(`${owner}/${repo}`)}&sha=${sha}`
+            ? `${site}/tree?repo=${encodeURIComponent(`${owner}/${repo}`)}&sha=${sha}`
             : `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
           await github.rest.repos.createCommitStatus({
             owner,
@@ -101,16 +132,15 @@ runs:
             target_url: details,
           });
 
-    - name: Keep the Krypton comment on the pull request up to date
-      if: github.event_name == 'pull_request' && inputs.comment == 'true'
+    - name: Keep the Krypton comment on the pull request up to date (as github-actions)
+      if: github.event_name == 'pull_request' && inputs.comment == 'true' && steps.report.outputs.posted != 'true'
       uses: actions/github-script@v7
       with:
         script: |
           // One comment per pull request: find ours by the hidden marker on its first line and edit it; create it only the first time.
           const fs = require('fs');
           const marker = '<!-- krypton-gate -->';
-          const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/scorecard.md`, 'utf8')
-            + `\n<sub>Updated for ${context.payload.pull_request.head.sha.slice(0, 7)}.</sub>\n`;
+          const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/scorecard.md`, 'utf8');
           const { owner, repo } = context.repo;
           const issue_number = context.payload.pull_request.number;
           try {

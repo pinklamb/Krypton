@@ -80,15 +80,37 @@ class Handler(BaseHTTPRequestHandler):
         return auth.parse_cookies(self.headers.get("Cookie"))
 
     # ---------------------------------------------------------------- the site's files
-    def _file(self, path: str) -> None:
-        """A file of the site folder; nothing outside it, no hidden files."""
-        relative = path.lstrip("/") or "index.html"
-        if relative.endswith("/"):
-            relative += "index.html"
+    def _inside(self, relative: str) -> Path | None:
+        """The site file at `relative`, or None: nothing outside the site folder, no hidden files."""
         target = (self.site / relative).resolve()
         hidden = any(part.startswith(".") for part in Path(relative).parts)
-        if hidden or self.site not in target.parents or not target.is_file():
-            return self._text(404, "not found")
+        return None if hidden or self.site not in target.parents or not target.is_file() else target
+
+    def _moved(self, location: str) -> None:
+        """A permanent move to the clean address, keeping the query string."""
+        query = urlsplit(self.path).query
+        self.send_response(301)
+        self.send_header("Location", location + (f"?{query}" if query else ""))
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def _file(self, path: str) -> None:
+        """A file of the site folder, under clean addresses: `/` is index.html, `/docs` is docs.html, and an old `/docs.html` link moves to
+        `/docs` (so the address bar never shows .html and old links keep working). Anything else is the site's own 404 page."""
+        relative = path.lstrip("/")
+        if relative.endswith(".html") and self._inside(relative):
+            clean = relative[: -len("index.html")] if relative.endswith("index.html") else relative[: -len(".html")]
+            return self._moved("/" + clean)
+        if relative == "" or relative.endswith("/"):
+            relative += "index.html"
+        elif not Path(relative).suffix and self._inside(relative + ".html"):
+            relative += ".html"
+        target = self._inside(relative)
+        if target is None:
+            missing = self._inside("404.html")
+            if missing is None:
+                return self._text(404, "not found")
+            return self._send(404, missing.read_bytes(), "text/html; charset=utf-8", with_body=self.command != "HEAD")
         kind = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
         if kind.startswith("text/") or kind in ("application/javascript", "application/json"):
             kind += "; charset=utf-8"
@@ -105,7 +127,7 @@ class Handler(BaseHTTPRequestHandler):
         params = parse_qs(urlsplit(self.path).query)
         done = [auth.clear_cookie(self.cfg, auth.FLOW_COOKIE)]
         if "error" in params:
-            return self._redirect("/tree.html?github=denied", done)
+            return self._redirect("/tree?github=denied", done)
         verifier = auth.verifier_for(self.cfg, self._cookies(), (params.get("state") or [None])[0])
         if not verifier or "code" not in params:
             return self._text(400, "Sign-in could not be verified. Start again from the Connect GitHub button.", done)
@@ -114,8 +136,8 @@ class Handler(BaseHTTPRequestHandler):
             user = auth.public_user(auth.github_get(self.cfg, "/user", token))
         except auth.OAuthError as error:
             print(f"sign-in failed: {error}", flush=True)
-            return self._redirect("/tree.html?github=error", done)
-        self._redirect("/tree.html?github=connected", [self.sessions.create(user, token), *done])
+            return self._redirect("/tree?github=error", done)
+        self._redirect("/tree?github=connected", [self.sessions.create(user, token), *done])
 
     def _session(self) -> None:
         session = self.sessions.get(self._cookies())

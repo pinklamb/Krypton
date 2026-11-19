@@ -6,20 +6,35 @@ Agents are strong and fast, and every strong thing needs a check. Krypton is tha
 
 You need Docker ([Docker Desktop](https://docs.docker.com/get-docker/) on macOS and Windows, Docker Engine on Linux) and git; nothing else.
 
+Clone Krypton once, anywhere outside your project, and build its image (the first build takes a few minutes):
+
 ```bash
-docker pull ghcr.io/pinklamb/krypton:latest   # the client, ready-made: nothing to build
+git clone https://github.com/pinklamb/Krypton.git ~/Krypton
+docker build -t krypton ~/Krypton/client
 ```
+
+In PowerShell, use `$HOME\Krypton` in place of `~/Krypton`. If you clone it elsewhere, set `KRYPTON_SRC` to that folder.
 
 The krypton command (macOS, Linux, Git Bash; add it to ~/.bashrc or ~/.zshrc to keep it):
 
 ```bash
 krypton() {
-  local image="${KRYPTON_IMAGE:-ghcr.io/pinklamb/krypton:latest}" here="$PWD" status
-  if [ "$1" = update ]; then docker pull "$image"; return; fi
+  local image="${KRYPTON_IMAGE:-krypton}" src="${KRYPTON_SRC:-$HOME/Krypton}" here="$PWD" status
+  command -v docker >/dev/null || { echo "krypton: Docker is not installed. Install Docker Desktop (https://docs.docker.com/get-docker/), then run this again." >&2; return 11; }
+  if [ "$1" = update ]; then
+    git -C "$src" pull --ff-only || { echo "krypton: could not update the code in $src. Check your internet connection (and KRYPTON_SRC, if the clone is elsewhere), then run krypton update again." >&2; return 12; }
+    docker build -t "$image" "$src/client" || { echo "krypton: could not build the image from $src/client. Check that Docker is running and has disk space, then run krypton update again." >&2; return 12; }
+    echo "Krypton is up to date."; return
+  fi
   command -v cygpath >/dev/null && here="$(cygpath -w "$PWD")"
-  MSYS_NO_PATHCONV=1 docker run --rm $([ -t 0 ] && echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] && echo -p 127.0.0.1:7777:7777)     -v krypton-home:/krypton-home -v "$here:/repo" "$image" "$@"
+  MSYS_NO_PATHCONV=1 docker run --rm --pull never $([ -t 0 ] && echo -it) $([ $# -eq 0 ] || [ "$1" = setup ] && echo -p 127.0.0.1:7777:7777) \
+    -v krypton-home:/krypton-home -v "$here:/repo" "$image" "$@"
   status=$?
-  if [ "$status" -eq 75 ]; then docker pull "$image" && echo "Krypton is up to date."; return; fi
+  if [ "$status" -eq 125 ]; then
+    docker info >/dev/null 2>&1 || { echo "krypton: Docker is not running. Start Docker Desktop, then run this again." >&2; return 11; }
+    echo "krypton: the $image image is not built yet. Run: docker build -t $image $src/client" >&2; return 12
+  fi
+  if [ "$status" -eq 75 ]; then krypton update; return; fi
   return "$status"
 }
 ```
@@ -28,12 +43,27 @@ In PowerShell (add it to your `$PROFILE` to keep it):
 
 ```powershell
 function krypton {
-  $image = if ($env:KRYPTON_IMAGE) { $env:KRYPTON_IMAGE } else { 'ghcr.io/pinklamb/krypton:latest' }
-  if ($args.Count -gt 0 -and $args[0] -eq 'update') { docker pull $image; return }
+  $image = if ($env:KRYPTON_IMAGE) { $env:KRYPTON_IMAGE } else { 'krypton' }
+  $src = if ($env:KRYPTON_SRC) { $env:KRYPTON_SRC } else { Join-Path $HOME 'Krypton' }
+  if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    [Console]::Error.WriteLine('krypton: Docker is not installed. Install Docker Desktop (https://docs.docker.com/get-docker/), then run this again.'); $global:LASTEXITCODE = 11; return
+  }
+  if ($args.Count -gt 0 -and $args[0] -eq 'update') {
+    git -C $src pull --ff-only
+    if ($LASTEXITCODE -ne 0) { [Console]::Error.WriteLine("krypton: could not update the code in $src. Check your internet connection (and KRYPTON_SRC, if the clone is elsewhere), then run krypton update again."); $global:LASTEXITCODE = 12; return }
+    docker build -t $image (Join-Path $src 'client')
+    if ($LASTEXITCODE -ne 0) { [Console]::Error.WriteLine("krypton: could not build the image from $src\client. Check that Docker is running and has disk space, then run krypton update again."); $global:LASTEXITCODE = 12; return }
+    'Krypton is up to date.'; return
+  }
   $tty = @(); if (-not [Console]::IsInputRedirected) { $tty = @('-it') }
   $port = @(); if ($args.Count -eq 0 -or $args[0] -eq 'setup') { $port = @('-p', '127.0.0.1:7777:7777') }
-  docker run --rm @tty @port -v krypton-home:/krypton-home -v "${PWD}:/repo" $image @args
-  if ($LASTEXITCODE -eq 75) { docker pull $image; if ($LASTEXITCODE -eq 0) { 'Krypton is up to date.' } }
+  docker run --rm --pull never @tty @port -v krypton-home:/krypton-home -v "${PWD}:/repo" $image @args
+  if ($LASTEXITCODE -eq 125) {
+    docker info *> $null
+    if ($LASTEXITCODE -ne 0) { [Console]::Error.WriteLine('krypton: Docker is not running. Start Docker Desktop, then run this again.'); $global:LASTEXITCODE = 11; return }
+    [Console]::Error.WriteLine("krypton: the $image image is not built yet. Run: docker build -t $image $src\client"); $global:LASTEXITCODE = 12; return
+  }
+  if ($LASTEXITCODE -eq 75) { krypton update }
 }
 ```
 
@@ -45,7 +75,7 @@ krypton                                   # once per project: logs you in with G
 git add .github/workflows/krypton.yml && git commit -m "Add the Krypton gate" && git push   # turns the gate on
 ```
 
-Updates: after a scan or setup at a terminal, at most once a day, Krypton says when a new version is out and asks *Update now?*; yes pulls it, and `krypton update` does the same any time. To build it yourself instead: `git clone https://github.com/pinklamb/Krypton.git && docker build -t krypton Krypton/client`, then `export KRYPTON_IMAGE=krypton`.
+Updates: after a scan or setup at a terminal, at most once a day, Krypton says when a new version is out and asks *Update now?*; yes runs `git pull` in your clone and rebuilds the image, and `krypton update` does the same any time.
 
 Everyday commands:
 

@@ -1,6 +1,7 @@
 //! The update check. At most once a day, and only for a person at a terminal, Krypton asks GitHub which release is the latest; if it is newer
 //! than this one, it asks "Update now?". A yes ends the run with [`UPDATE_EXIT`], and the `krypton` shell command answers that by pulling the
-//! new image on your computer (a container cannot replace its own image). `krypton update` does the same at any time.
+//! new code into your clone and rebuilding the image on your computer (a container cannot replace its own image). `krypton update` does the
+//! same at any time.
 //!
 //! It is built never to get in the way: one anonymous GET of the latest release (nothing about you or your code), a two-second limit, and
 //! no word at all when the network or GitHub is not there, since a missing update notice must never fail a scan. Never in CI, a pipe, or
@@ -14,7 +15,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde_json::{json, Value};
 
-/// The exit code that tells the `krypton` shell command to pull the new image.
+/// The exit code that tells the `krypton` shell command to update the clone and rebuild the image.
 pub const UPDATE_EXIT: u8 = 75;
 /// Where to ask; `KRYPTON_UPDATE_URL` points it elsewhere (a mirror, or a test).
 const LATEST: &str = "https://api.github.com/repos/pinklamb/Krypton/releases/latest";

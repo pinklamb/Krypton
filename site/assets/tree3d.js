@@ -12,13 +12,8 @@
 
   // ---------- drawing ----------
   function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-  var DARK = { cocoa: 1, ink: 1 };
-  var COLORS = {
-    sand: { bg: 0xefe6da, ink: [.40, .34, .28], hot0: [.74, .63, .84], hot1: [.38, .22, .55] },
-    cocoa: { bg: 0x1b1613, ink: [.62, .56, .50], hot0: [.42, .36, .66], hot1: [.84, .76, 1] },
-    linen: { bg: 0xeceee6, ink: [.32, .35, .30], hot0: [.64, .76, .60], hot1: [.22, .42, .20] },
-    ink: { bg: 0x050507, ink: [.62, .62, .70], hot0: [.42, .36, .92], hot1: [.84, .80, 1] }
-  };
+  // the cocoa palette: points on the dark background add up, so they glow
+  var C = { bg: 0x1b1613, ink: [.62, .56, .50], hot0: [.42, .36, .66], hot1: [.84, .76, 1] };
 
   function layout(D) {
     var V = THREE.Vector3, F = D.files, FN = D.fns, R = rng(5), i, j;
@@ -57,14 +52,9 @@
     return { P3: P3, HOT: HOT, SZ: SZ, AL: AL, HIT: HIT, cent: cent };
   }
 
-  function scheme() {
-    var name = document.documentElement.getAttribute('data-scheme') || 'sand';
-    return COLORS[name] ? name : 'sand';
-  }
-
   function draw(canvas, D, opts) {
     opts = opts || {};
-    var L = layout(D), g = new THREE.BufferGeometry(), name = scheme(), C = COLORS[name];
+    var L = layout(D), g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(L.P3, 3));
     g.setAttribute('sev', new THREE.Float32BufferAttribute(L.HOT, 1));
     g.setAttribute('size', new THREE.Float32BufferAttribute(L.SZ, 1));
@@ -72,7 +62,7 @@
     g.setAttribute('fn', new THREE.Float32BufferAttribute(L.HIT, 1));
     var U = { k: { value: 300 }, uSel: { value: -1 }, uRot: { value: new THREE.Matrix3() }, uInk: { value: new THREE.Vector3().fromArray(C.ink) }, uHot0: { value: new THREE.Vector3().fromArray(C.hot0) }, uHot1: { value: new THREE.Vector3().fromArray(C.hot1) } };
     var mat = new THREE.ShaderMaterial({
-      uniforms: U, transparent: true, depthWrite: false, depthTest: false, blending: DARK[name] ? THREE.AdditiveBlending : THREE.NormalBlending,
+      uniforms: U, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
       // the function under the pointer grows and turns the deepest lavender; the other tangled functions step back while one is picked
       vertexShader: 'attribute float sev; attribute float size; attribute float alpha; attribute float fn; uniform float k; uniform float uSel; uniform mat3 uRot; uniform vec3 uInk; uniform vec3 uHot0; uniform vec3 uHot1; varying vec3 vc; varying float va;' +
         'void main(){ bool picked = uSel >= 0.0 && abs(fn - uSel) < 0.5; bool other = uSel >= 0.0 && fn >= 0.0 && !picked;' +

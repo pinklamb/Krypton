@@ -6,7 +6,6 @@
 <title>Your tree | Krypton</title>
 <meta name="description" content="See your own repository's tree: read and built in your browser, only the tree is scored.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
-<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/site.js" defer></script>
@@ -42,9 +41,8 @@
 .pick select:focus { outline:2px solid var(--acc); outline-offset:2px; }
 .pick select:disabled { opacity:.7; cursor:wait; }
 .pick .hint { font-size:14px; color:var(--ink3); margin:2px 0 0; }
-/* the chevron in the lighter lavender on the dark palettes */
-:root[data-scheme="cocoa"] .pick select, :root[data-scheme="ink"] .pick select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23c7b5ec' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-:root[data-scheme="linen"] .pick select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%234f6f4b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+/* the chevron in the lighter lavender */
+.pick select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23c7b5ec' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 .btn.small { padding:9px 18px; font-size:14px; } .linkbtn { background:none; border:0; color:var(--acc); font:inherit; cursor:pointer; padding:0; text-decoration:underline; }
 .ticks { list-style:none; padding:0; display:flex; flex-wrap:wrap; gap:6px 18px; margin:12px 0 0; font:italic 400 16px var(--serif); color:var(--ink3); }
 .ticks li::before { content:"\2713  "; color:var(--acc); }

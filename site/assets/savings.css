@@ -4,13 +4,10 @@
      2  the lower bill, the saving per developer, each model's bill, and the assumptions
      3  how much of each prompt is reused, and the arcs from today's bill to Krypton's with the sliders under them,
         drawn in the arcs' own thin lines and dots
-   Colours follow the Style menu (data-scheme on <html>). */
+   Cocoa colours. */
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..600&display=swap");
 
-:root, :root[data-scheme="sand"] { --sv-a:#2c2140; --sv-b:#5d4580; --sv-c:#a48bc9; --sv-money:#ded0fb; }
-:root[data-scheme="linen"] { --sv-a:#1e2a1d; --sv-b:#3f5a3b; --sv-c:#8fae89; --sv-money:#d8edd3; }
-:root[data-scheme="cocoa"] { --sv-a:#0f0b14; --sv-b:#2b2042; --sv-c:#4e3d74; --sv-money:#ded0fb; }
-:root[data-scheme="ink"] { --sv-a:#06060c; --sv-b:#1d1a3c; --sv-c:#3d3780; --sv-money:#d8d4ff; }
+:root { --sv-a:#0f0b14; --sv-b:#2b2042; --sv-c:#4e3d74; --sv-money:#ded0fb; }
 :root { --sv-ink:#f7f1ea; --sv-ink2:rgba(247,241,234,.8); --sv-ink3:rgba(247,241,234,.66); --sv-glass:rgba(255,255,255,.13); --sv-edge:rgba(255,255,255,.26); --sv-num:"Instrument Sans", system-ui, sans-serif; }
 
 /* the page itself is the colour field */

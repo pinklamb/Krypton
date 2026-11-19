@@ -1,9 +1,6 @@
 /* The landing page (index.html). */
 /* Krypton: thin words over one field of points. Krypton landing page with a fixed cocoa palette. */
-:root, :root[data-scheme="sand"] { --bg:#efe6da; --ink:#2b241e; --ink2:rgba(43,36,30,.74); --ink3:rgba(43,36,30,.5); --line:rgba(43,36,30,.16); --glass:rgba(239,230,218,.72); --acc:#6b4f8a; --acc-ink:#f7f1ea; --glow:rgba(107,79,138,.22); --bar:rgba(239,230,218,.9); --ok:#4f7d5c; --card:#f8f3ec; color-scheme:light; }
-:root[data-scheme="cocoa"] { --bg:#1b1613; --ink:#ede4da; --ink2:rgba(237,228,218,.72); --ink3:rgba(237,228,218,.46); --line:rgba(237,228,218,.14); --glass:rgba(27,22,19,.7); --acc:#c7b5ec; --acc-ink:#1b1613; --glow:rgba(199,181,236,.32); --bar:rgba(27,22,19,.88); --ok:#8fcfa6; --card:#251e1a; color-scheme:dark; }
-:root[data-scheme="linen"] { --bg:#eceee6; --ink:#22261f; --ink2:rgba(34,38,31,.74); --ink3:rgba(34,38,31,.5); --line:rgba(34,38,31,.15); --glass:rgba(236,238,230,.72); --acc:#4f6f4b; --acc-ink:#f2f4ec; --glow:rgba(79,111,75,.22); --bar:rgba(236,238,230,.9); --ok:#4f7d5c; --card:#f6f7f2; color-scheme:light; }
-:root[data-scheme="ink"] { --bg:#050507; --ink:#f4f3f8; --ink2:rgba(236,234,248,.7); --ink3:rgba(236,234,248,.44); --line:rgba(236,234,248,.13); --glass:rgba(16,14,28,.6); --acc:#b9b2ff; --acc-ink:#0c0a18; --glow:rgba(185,178,255,.35); --bar:rgba(5,5,7,.86); --ok:#7fd6a4; --card:#111117; color-scheme:dark; }
+:root { --bg:#1b1613; --ink:#ede4da; --ink2:rgba(237,228,218,.72); --ink3:rgba(237,228,218,.46); --line:rgba(237,228,218,.14); --glass:rgba(27,22,19,.7); --acc:#c7b5ec; --acc-ink:#1b1613; --glow:rgba(199,181,236,.32); --bar:rgba(27,22,19,.88); --ok:#8fcfa6; --card:#251e1a; color-scheme:dark; }
 :root { --sans:"Jost",system-ui,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace; --serif:"Instrument Serif",Georgia,"Times New Roman",serif; --g:clamp(16px,5vw,80px); }
 * { box-sizing:border-box; margin:0; padding:0; }
 html { background:var(--bg); scrollbar-width:thin; }
@@ -141,10 +138,7 @@ code.ic { font:400 .88em var(--mono); color:var(--ink); background:var(--card); 
 @media (max-width:900px) { .stagespec { display:none; } }
 @media (prefers-reduced-motion: reduce) { .reveal, .checks .r, .bills .st i { transition:none; } .cue::after { animation:none; } }
 /* heavier type, easier to read: every thin weight goes up one step, and secondary text gets darker */
-:root, :root[data-scheme="sand"] { --ink2:rgba(43,36,30,.84); --ink3:rgba(43,36,30,.6); }
-:root[data-scheme="linen"] { --ink2:rgba(34,38,31,.84); --ink3:rgba(34,38,31,.6); }
-:root[data-scheme="cocoa"] { --ink2:rgba(237,228,218,.82); --ink3:rgba(237,228,218,.58); }
-:root[data-scheme="ink"] { --ink2:rgba(236,234,248,.8); --ink3:rgba(236,234,248,.56); }
+:root { --ink2:rgba(237,228,218,.82); --ink3:rgba(237,228,218,.58); }
 body { font-weight:350; } .hero h1, .caps p, .row h3, .mark b, .bars .big, .nums b { font-weight:250; }
 .hero .lede, .caps small, .opts button { font-weight:350; }
 /* scrollbars: thin, no grey track */

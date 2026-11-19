@@ -1,10 +1,6 @@
-/* Small helpers for the docs: use the palette picked on the landing page, step the wordmark away on scroll,
-   close the Reference menu on an outside click or Escape, and mark the section being read in the page list. */
+/* Small helpers for the docs: step the wordmark away on scroll, close the Reference menu on an outside click or Escape, and mark the
+   section being read in the page list. Every page is cocoa, set on its <html> tag. */
 (function () {
-  var scheme = null;
-  try { scheme = localStorage.getItem('kr-scheme'); } catch (error) { scheme = null; }
-  if (scheme === 'sand' || scheme === 'cocoa' || scheme === 'linen' || scheme === 'ink') document.documentElement.setAttribute('data-scheme', scheme);
-
   var top = document.querySelector('header.top');
   function fade() { if (top) top.classList.toggle('scrolled', window.scrollY > 60); }
   window.addEventListener('scroll', fade, { passive: true });

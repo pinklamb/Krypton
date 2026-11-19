@@ -6,7 +6,6 @@
 <title>Integrations | Krypton</title>
 <meta name="description" content="Use Krypton with coding agents, CI, Docker, and its local dashboard and review page.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
-<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/site.js" defer></script>
@@ -91,10 +90,11 @@ jobs:
 <p>Or use the Krypton action, which sets one Krypton gate line in each pull request's checks and writes the scorecard to the run summary and to one pull request comment it edits on every push, never a second one. See <a href="review#github">Review</a>.</p>
 
 <h2 id="docker">Docker</h2>
-<p>Krypton runs from a ready-made image, so there is nothing to compile:</p>
-<pre><code>docker pull ghcr.io/pinklamb/krypton:latest
-docker run --rm -v "$PWD:/repo" ghcr.io/pinklamb/krypton:latest scan .</code></pre>
-<p>Your project is mounted at <code>/repo</code>. The image has git in it, so <code>--base</code>, <code>order</code> and <code>--log</code> work on your repository's history. For everyday use, the <code>krypton</code> helper from <a href="docs#start">Get started</a> wraps this command, and <code>krypton update</code> pulls the newest image.</p>
+<p>Krypton runs from an image you build once from your clone of the repository:</p>
+<pre><code>git clone https://github.com/pinklamb/Krypton.git ~/Krypton
+docker build -t krypton ~/Krypton/client
+docker run --rm -v "$PWD:/repo" krypton scan .</code></pre>
+<p>Your project is mounted at <code>/repo</code>. The image has git in it, so <code>--base</code>, <code>order</code> and <code>--log</code> work on your repository's history. For everyday use, the <code>krypton</code> helper from <a href="docs#start">Get started</a> wraps this command, and <code>krypton update</code> pulls the newest code into your clone and rebuilds the image.</p>
 
 <h2 id="local">On your computer</h2>
 <p>Two pages open in your browser. Both run on your machine, and neither is hosted anywhere.</p>

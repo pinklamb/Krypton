@@ -13,19 +13,8 @@
   function lerp(a, b, t) { return a + (b - a) * t; }
   function docTop(el) { return el.getBoundingClientRect().top + window.scrollY; }
 
-  // ---------- palettes and backgrounds ----------
-  var SCHEMES = {
-    sand: { bg: 0xefe6da, add: false, ink: [.40, .34, .28], hot0: [.74, .63, .84], hot1: [.38, .22, .55], fix: [.17, .14, .12], amb: [.58, .49, .40], tree: 1.25, ambA: .42 },
-    cocoa: { bg: 0x1b1613, add: true, ink: [.62, .56, .50], hot0: [.42, .36, .66], hot1: [.84, .76, 1], fix: [.88, .87, 1], amb: [.66, .58, .50], tree: 1, ambA: .5 },
-    linen: { bg: 0xeceee6, add: false, ink: [.32, .35, .30], hot0: [.64, .76, .60], hot1: [.22, .42, .20], fix: [.13, .15, .12], amb: [.55, .60, .52], tree: 1.25, ambA: .42 },
-    ink: { bg: 0x050507, add: true, ink: [.62, .62, .70], hot0: [.42, .36, .92], hot1: [.84, .80, 1], fix: [.88, .87, 1], amb: [.74, .71, 1], tree: 1, ambA: .5 }
-  };
-  var AMBS = ['lattice', 'rings', 'threads', 'orbit', 'wave'];
-  function stored(k, ok, dflt) { try { var v = localStorage.getItem('kr-' + k); if (ok(v)) { return v; } } catch (e) { /* storage blocked: use the default */ } return dflt; }
-  function remember(k, v) { try { localStorage.setItem('kr-' + k, v); } catch (e) { /* storage blocked: the choice lasts this visit */ } }
-  var hs = /^#(sand|cocoa|linen|ink)?-?(lattice|rings|threads|orbit|wave)?$/.exec(location.hash) || [];
-  var scheme = 'cocoa';
-  var amb = hs[0] ? hs[0].slice(1) : 'orbit';
+  // ---------- the cocoa palette (the background is the orbit, in the shader below) ----------
+  var COCOA = { bg: 0x1b1613, add: true, ink: [.62, .56, .50], hot0: [.42, .36, .66], hot1: [.84, .76, 1], fix: [.88, .87, 1], amb: [.66, .58, .50], tree: 1, ambA: .5 };
 
   // ---------- the tree, laid out as before ----------
   var R = rng(5), R2 = rng(11), i, j, maxT = FN.reduce(function (a, f) { return Math.max(a, f.times); }, 1);
@@ -71,43 +60,32 @@
 
   var VS = [
     'attribute vec3 pa; attribute vec3 ja; attribute vec3 jc; attribute float t; attribute float fid; attribute float sev; attribute vec3 perp; attribute float size; attribute vec4 wv; attribute vec3 du;',
-    'uniform float amp; uniform float k; uniform float glow; uniform float uFrom; uniform float uTo; uniform float uMix; uniform float uTime; uniform float uAlpha; uniform float uScale; uniform float uAmb; uniform float uTreeA; uniform float uAmbA; uniform float uPick; uniform float uBurst; uniform vec3 uCen;',
+    'uniform float amp; uniform float k; uniform float glow; uniform float uFrom; uniform float uTo; uniform float uMix; uniform float uTime; uniform float uAlpha; uniform float uScale; uniform float uTreeA; uniform float uAmbA; uniform float uPick; uniform float uBurst; uniform vec3 uCen;',
     'uniform mat3 uRot; uniform vec2 uOff; uniform vec3 uInk; uniform vec3 uHot0; uniform vec3 uHot1; uniform vec3 uFix; uniform vec3 uAmbC;',
     'varying vec3 vc; varying float va;',
     'vec3 tree(){ float hot=fid>=0.0?1.0:0.0; vec3 A=pa+ja*amp; vec3 C=position+jc*amp; vec3 p=mix(A,C,t)+perp*sin(3.14159*t)*0.05*amp*hot*sev; if(abs(fid-uPick)<0.5){ p=uCen+(p-uCen)*(1.0+2.4*uBurst); } return uRot*(p*uScale); }',
-    'vec3 wave(){ float x=wv.x, z=wv.y; float y=-1.0+0.2*sin(x*0.55+uTime*0.45+z*0.2)*cos(z*0.45-uTime*0.3)+0.06*sin(x*1.9+z*1.2+uTime*0.8); return vec3(x,y,z); }',
-    // a drafting lattice: points run along grid lines on the floor, a slow ripple passing through
-    'vec3 lattice(){ float gs=0.7; float x=wv.x, z=wv.y; if(wv.z<3.1416){ x=floor(x/gs+0.5)*gs; } else { z=floor(z/gs+0.5)*gs; }',
-    '  float d=length(vec2(x,z+3.5)); return vec3(x,-1.05+0.09*sin(d*1.5-uTime*1.0)*exp(-d*0.06),z); }',
-    // contour rings: nested ellipses on the floor, each turning its own way and breathing a little
-    'vec3 rings(){ float i=floor((wv.x+7.5)/15.0*24.0); float r=0.75+i*0.27+0.04*sin(wv.z*2.0+uTime*0.7+i);',
-    '  float a=(wv.y+11.0)/14.5*6.2832+uTime*0.05*(mod(i,2.0)*2.0-1.0)/(1.0+i*0.05); return vec3(r*cos(a)*1.25,-1.05+0.03*sin(a*3.0+uTime+i),r*sin(a)-3.2); }',
-    // drifting threads: horizontal strands that flow sideways like a loom
-    'vec3 threads(){ float lane=floor((wv.y+11.0)/14.5*30.0); float x=mod(wv.x+7.5+uTime*(0.18+0.08*mod(lane,3.0)),15.0)-7.5;',
-    '  return vec3(x,-1.45+lane*0.1+0.28*sin(x*0.42+lane*0.55+uTime*0.35),-3.0-mod(lane,4.0)*0.4); }',
     // an orbit: a slow spiral disc, tilted towards the viewer
     'vec3 orbitW(float wind, float shrink){ float r=0.25+pow((wv.x+7.5)/15.0,0.75)*4.1; float arm=floor(wv.z/6.2832*3.0)*2.0944;',
     '  float a=arm+r*0.85+0.35*sin(wv.y*3.0)/(0.5+r)+uTime*0.1/(0.5+r*0.4)+wind*(1.0+0.6/(0.5+r)); r*=shrink; vec3 p=vec3(r*cos(a),0.05*sin(wv.y*7.0),r*sin(a));',
     '  float c=cos(1.15), s=sin(1.15); return vec3(p.x+1.9*mix(1.0,0.0,1.0-shrink),p.y*c-p.z*s-0.6*shrink,p.y*s+p.z*c-3.5*shrink); }',
     'vec3 orbit(){ return orbitW(0.0,1.0); }',
-    'vec3 ambient(){ if(uAmb<0.5) return lattice(); if(uAmb<1.5) return rings(); if(uAmb<2.5) return threads(); if(uAmb<3.5) return orbit(); return wave(); }',
     'vec3 dust(){ return du+0.12*vec3(sin(uTime*0.21+wv.z), cos(uTime*0.17+wv.z*1.3), sin(uTime*0.13+wv.z*0.7)); }',
-    'vec3 shp(float s){ return s<0.5?ambient():(s<1.5?tree():dust()); }',
+    'vec3 shp(float s){ return s<0.5?orbit():(s<1.5?tree():dust()); }',
     'void look(float s, vec3 p, out vec3 c, out float a, out float z){',
-    '  if(s<0.5){ c=uAmbC; a=uAmbA*smoothstep(-11.5,-4.0,p.z)*smoothstep(3.6,1.0,p.z)*(uAmb>2.5&&uAmb<3.5?0.5:1.0); z=1.25; }',
+    '  if(s<0.5){ c=uAmbC; a=uAmbA*smoothstep(-11.5,-4.0,p.z)*smoothstep(3.6,1.0,p.z)*0.5; z=1.25; }',
     '  else if(s<1.5){ float hot=fid>=0.0?1.0:0.0; float gl=hot*glow*amp; float fixd=hot*glow*(1.0-amp);',
     '    c=mix(mix(uInk,mix(uHot0,uHot1,sev),gl),uFix,fixd);',
     '    a=mix(mix(t<1.0?0.16:0.34,t<1.0?0.55:0.85,gl),t<1.0?0.3:0.5,fixd)*uTreeA;',
     '    z=mix(t<1.0?0.9:1.6,size,gl); a*=uScale; if(abs(fid-uPick)<0.5){ z*=1.0+0.6*uBurst; a=min(1.0,a*(1.0+0.8*uBurst)); } }',
     '  else { c=uAmbC; a=uAmbA*0.6; z=1.0; } }',
     'void main(){ float boost=1.0; float m=smoothstep(wv.w*0.45,wv.w*0.45+0.55,uMix);',
-    '  vec3 p0=shp(uFrom); vec3 p1=shp(uTo); vec3 p=mix(p0,p1,m); if(uAmb>2.5&&uAmb<3.5&&uFrom+uTo>0.5&&uFrom+uTo<1.5){ float mm=smoothstep(wv.w*0.25,wv.w*0.25+0.75,uMix); float q=uFrom<0.5?mm:1.0-mm; float qg=uFrom<0.5?uMix:1.0-uMix; float w=smoothstep(0.0,0.55,qg); float b=smoothstep(0.5,1.0,q); vec3 ow=orbitW(w*2.6,1.0-0.55*w); boost=1.0+2.6*w*(1.0-b); p=mix(ow,tree(),b); p0=uFrom<0.5?ow:p0; p1=uTo<0.5?ow:p1; m=uFrom<0.5?b:1.0-b; } vec3 c0; float a0; float z0; vec3 c1; float a1; float z1; look(uFrom,p0,c0,a0,z0); look(uTo,p1,c1,a1,z1);',
+    '  vec3 p0=shp(uFrom); vec3 p1=shp(uTo); vec3 p=mix(p0,p1,m); if(uFrom+uTo>0.5&&uFrom+uTo<1.5){ float mm=smoothstep(wv.w*0.25,wv.w*0.25+0.75,uMix); float q=uFrom<0.5?mm:1.0-mm; float qg=uFrom<0.5?uMix:1.0-uMix; float w=smoothstep(0.0,0.55,qg); float b=smoothstep(0.5,1.0,q); vec3 ow=orbitW(w*2.6,1.0-0.55*w); boost=1.0+2.6*w*(1.0-b); p=mix(ow,tree(),b); p0=uFrom<0.5?ow:p0; p1=uTo<0.5?ow:p1; m=uFrom<0.5?b:1.0-b; } vec3 c0; float a0; float z0; vec3 c1; float a1; float z1; look(uFrom,p0,c0,a0,z0); look(uTo,p1,c1,a1,z1);',
     '  vc=mix(c0,c1,m); va=min(1.0,mix(a0,a1,m)*uAlpha*boost); float sz=mix(z0,z1,m);',
     '  vec4 mv=modelViewMatrix*vec4(p,1.0); gl_PointSize=sz*k/-mv.z; gl_Position=projectionMatrix*mv; gl_Position.xy+=uOff*gl_Position.w; }'
   ].join('\n');
   var FS = 'varying vec3 vc; varying float va; void main(){ float d=length(gl_PointCoord-.5)*2.; if(d>1.) discard; gl_FragColor=vec4(vc, va*smoothstep(1.,.45,d)); }';
   function v3c(a) { return new THREE.Vector3(a[0], a[1], a[2]); }
-  var U = { amp: { value: 1 }, k: { value: 300 }, glow: { value: 0 }, uFrom: { value: 0 }, uTo: { value: 0 }, uMix: { value: 0 }, uTime: { value: 0 }, uAlpha: { value: 1 }, uScale: { value: 1 }, uAmb: { value: 0 }, uTreeA: { value: 1 }, uAmbA: { value: .5 }, uPick: { value: -9 }, uBurst: { value: 0 }, uCen: { value: new V() },
+  var U = { amp: { value: 1 }, k: { value: 300 }, glow: { value: 0 }, uFrom: { value: 0 }, uTo: { value: 0 }, uMix: { value: 0 }, uTime: { value: 0 }, uAlpha: { value: 1 }, uScale: { value: 1 }, uTreeA: { value: 1 }, uAmbA: { value: .5 }, uPick: { value: -9 }, uBurst: { value: 0 }, uCen: { value: new V() },
     uRot: { value: new THREE.Matrix3() }, uOff: { value: new THREE.Vector2() }, uInk: { value: new V() }, uHot0: { value: new V() }, uHot1: { value: new V() }, uFix: { value: new V() }, uAmbC: { value: new V() } };
   var mat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false, depthTest: false });
   var pts = new THREE.Points(g, mat); pts.frustumCulled = false;
@@ -116,16 +94,8 @@
   R3.setPixelRatio(Math.min(devicePixelRatio, 2));
   var scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 1, .1, 60); scene.add(pts);
 
-  function applyScheme(name) {
-    var S = SCHEMES[name]; scheme = name; docEl.setAttribute('data-scheme', name); remember('scheme', name);
-    R3.setClearColor(S.bg, 1); mat.blending = S.add ? THREE.AdditiveBlending : THREE.NormalBlending; mat.needsUpdate = true;
-    U.uInk.value.copy(v3c(S.ink)); U.uHot0.value.copy(v3c(S.hot0)); U.uHot1.value.copy(v3c(S.hot1)); U.uFix.value.copy(v3c(S.fix)); U.uAmbC.value.copy(v3c(S.amb)); U.uTreeA.value = S.tree; U.uAmbA.value = S.ambA;
-    mark('scheme', name);
-  }
-  function applyAmb(name) { amb = name; U.uAmb.value = AMBS.indexOf(name); remember('amb', name); mark('amb', name); }
-  function mark(group, v) { [].forEach.call(document.querySelectorAll('button[data-' + group + ']'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-' + group) === v)); }); }
-  [].forEach.call(document.querySelectorAll('button[data-amb]'), function (b) { b.addEventListener('click', function () { applyAmb(b.getAttribute('data-amb')); }); });
-  applyScheme(scheme); applyAmb(amb);
+  R3.setClearColor(COCOA.bg, 1); mat.blending = COCOA.add ? THREE.AdditiveBlending : THREE.NormalBlending; mat.needsUpdate = true;
+  U.uInk.value.copy(v3c(COCOA.ink)); U.uHot0.value.copy(v3c(COCOA.hot0)); U.uHot1.value.copy(v3c(COCOA.hot1)); U.uFix.value.copy(v3c(COCOA.fix)); U.uAmbC.value.copy(v3c(COCOA.amb)); U.uTreeA.value = COCOA.tree; U.uAmbA.value = COCOA.ambA;
 
   // ---------- the story: captions that come and go with the track's progress ----------
   var FADE = .06, caps = [].slice.call(document.querySelectorAll('[data-show]')).map(function (el) { var ab = el.getAttribute('data-show').split(' ').map(Number); return { el: el, a: ab[0], b: ab[1], key: -1 }; });

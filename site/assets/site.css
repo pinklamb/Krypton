@@ -1,5 +1,5 @@
-/* Krypton docs: the landing page's look (sand and lavender, thin Jost, IBM Plex Mono, Instrument Serif italics) for reading.
-   The palette follows the Style menu on the landing page (localStorage "kr-scheme"); site.js sets data-scheme on <html>.
+/* Krypton docs: the landing page's look (cocoa and lavender, thin Jost, IBM Plex Mono, Instrument Serif italics) for reading.
+   One palette: cocoa.
    Different jobs get different frames, so a page never reads as one wall of text:
      solid cards with a soft shadow   at-a-glance facts, link cards, terminals
      a lavender rule on the left      notes
@@ -8,10 +8,7 @@
      a double rule                    the one warning or limit a page must not hide
      a numbered rail                  steps, in order */
 
-:root, :root[data-scheme="sand"] { --bg:#efe6da; --ink:#2b241e; --ink2:rgba(43,36,30,.76); --ink3:rgba(43,36,30,.52); --line:rgba(43,36,30,.15); --acc:#6b4f8a; --acc-ink:#f7f1ea; --glow:rgba(107,79,138,.2); --card:#f8f3ec; --well:#e7ddd0; --ok:#4f7d5c; --bad:#9b3d3d; --bar:rgba(239,230,218,.92); color-scheme:light; }
-:root[data-scheme="cocoa"] { --bg:#1b1613; --ink:#ede4da; --ink2:rgba(237,228,218,.74); --ink3:rgba(237,228,218,.5); --line:rgba(237,228,218,.14); --acc:#c7b5ec; --acc-ink:#1b1613; --glow:rgba(199,181,236,.26); --card:#251e1a; --well:#14100e; --ok:#8fcfa6; --bad:#e59a9a; --bar:rgba(27,22,19,.9); color-scheme:dark; }
-:root[data-scheme="linen"] { --bg:#eceee6; --ink:#22261f; --ink2:rgba(34,38,31,.76); --ink3:rgba(34,38,31,.52); --line:rgba(34,38,31,.15); --acc:#4f6f4b; --acc-ink:#f2f4ec; --glow:rgba(79,111,75,.2); --card:#f6f7f2; --well:#dfe3d7; --ok:#4f7d5c; --bad:#9b3d3d; --bar:rgba(236,238,230,.92); color-scheme:light; }
-:root[data-scheme="ink"] { --bg:#050507; --ink:#f4f3f8; --ink2:rgba(236,234,248,.72); --ink3:rgba(236,234,248,.48); --line:rgba(236,234,248,.13); --acc:#b9b2ff; --acc-ink:#0c0a18; --glow:rgba(185,178,255,.3); --card:#111117; --well:#0b0b10; --ok:#7fd6a4; --bad:#f0a0a0; --bar:rgba(5,5,7,.9); color-scheme:dark; }
+:root { --bg:#1b1613; --ink:#ede4da; --ink2:rgba(237,228,218,.74); --ink3:rgba(237,228,218,.5); --line:rgba(237,228,218,.14); --acc:#c7b5ec; --acc-ink:#1b1613; --glow:rgba(199,181,236,.26); --card:#251e1a; --well:#14100e; --ok:#8fcfa6; --bad:#e59a9a; --bar:rgba(27,22,19,.9); color-scheme:dark; }
 :root { --sans:"Jost", system-ui, "Segoe UI", sans-serif; --mono:"IBM Plex Mono", ui-monospace, Consolas, monospace; --serif:"Instrument Serif", Georgia, "Times New Roman", serif; --r:16px; --shadow:0 10px 36px rgba(0,0,0,.07); }
 
 *, *::before, *::after { box-sizing:border-box; margin:0; }
@@ -181,10 +178,7 @@ pre.xtal::before { display:none; }
   .flow { flex-direction:column; } .flow > div { flex:none; } .flow > i { transform:rotate(90deg); justify-self:center; align-self:center; }
 }
 /* type a half step heavier than the first thin cut, and secondary text gets darker */
-:root, :root[data-scheme="sand"] { --ink2:rgba(43,36,30,.84); --ink3:rgba(43,36,30,.6); }
-:root[data-scheme="linen"] { --ink2:rgba(34,38,31,.84); --ink3:rgba(34,38,31,.6); }
-:root[data-scheme="cocoa"] { --ink2:rgba(237,228,218,.82); --ink3:rgba(237,228,218,.58); }
-:root[data-scheme="ink"] { --ink2:rgba(236,234,248,.8); --ink3:rgba(236,234,248,.56); }
+:root { --ink2:rgba(237,228,218,.82); --ink3:rgba(237,228,218,.58); }
 body { font-weight:350; } h1, h2, .mark b, .glance .num, .stats b, .big { font-weight:250; }
 .lede, .glance b, .card h3, .tile h3, .flow > div b { font-weight:380; } b, strong { font-weight:480; }
 /* scrollbars: thin with no grey track, and the page list shows one only while you point at it */

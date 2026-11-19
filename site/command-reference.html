@@ -6,7 +6,6 @@
 <title>Command reference | Krypton</title>
 <meta name="description" content="Every Krypton client command: scan, order and wire, with their options, token counting and exit codes.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
-<script>try{var s=localStorage.getItem("kr-scheme");if(/^(sand|cocoa|linen|ink)$/.test(s))document.documentElement.setAttribute("data-scheme",s);}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/site.js" defer></script>
@@ -106,8 +105,8 @@ krypton wire --stdin-json &lt; files.json</code></pre>
 <tr><td><code>9</code></td><td>Scoring failed on the Krypton server, or its answer could not be read.</td><td>Not your code; try again later, and report it if it keeps happening.</td></tr>
 <tr><td><code>10</code></td><td>Setup could not finish: the local settings page could not start (often port 7777 is taken).</td><td>Close what uses the port, set <code>KRYPTON_LISTEN</code>, or answer in the terminal.</td></tr>
 <tr><td><code>11</code></td><td>Docker is not installed or not running (from the <code>krypton</code> helper).</td><td>Install or start Docker Desktop.</td></tr>
-<tr><td><code>12</code></td><td>The Krypton image could not be downloaded (from the <code>krypton</code> helper).</td><td>Check your connection, then <code>krypton update</code>.</td></tr>
-<tr><td><code>75</code></td><td>A newer version is ready; the helper downloads it.</td><td>Nothing.</td></tr>
+<tr><td><code>12</code></td><td>The Krypton image is not built yet, or could not be updated or rebuilt (from the <code>krypton</code> helper).</td><td>Run <code>krypton update</code>; it pulls the code into your clone and rebuilds the image.</td></tr>
+<tr><td><code>75</code></td><td>A newer version is ready; the helper updates your clone and rebuilds.</td><td>Nothing.</td></tr>
 </table></div>
 <p>A busy or unreachable server is tried again up to four times, waiting as long as it asks, before Krypton stops with <code>6</code> or <code>7</code>. Every failure prints its reason, then a <code>Hint:</code> line with the fix.</p>
 

@@ -22,6 +22,7 @@ from repo_fetch import ScanError, valid_repo
 
 HERE = Path(__file__).parent
 mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("image/svg+xml", ".svg")  # bar.svg, the lavender bar at the top of Krypton's pull request comment
 HEADERS = {
     "Cache-Control": "public, max-age=300",
     "X-Content-Type-Options": "nosniff",

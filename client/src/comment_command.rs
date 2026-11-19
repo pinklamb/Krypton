@@ -20,6 +20,9 @@ pub const MARKER: &str = "<!-- krypton-gate -->";
 const LAVENDER: &str = "#7c5cc4";
 /// GitHub's purple callout: the comment sits in it, so its purple edge marks it as Krypton's.
 const CALLOUT: &str = "[!IMPORTANT]";
+/// A thin lavender gradient bar across the top of the comment. GitHub drops inline SVG, so it is a plain image on Krypton's site. GitHub
+/// makes every image a link to its copy of the image unless it is already in a link, so it sits in a `#` link: clicking it goes nowhere.
+const BAR: &str = r##"<a href="#"><img src="https://krypton.software/bar.svg" width="100%" height="4" alt=""></a>"##;
 const USAGE: &str = "usage: krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse] [--target N [--changed CHANGED.json]]";
 
 /// A purity in dark lavender, for GitHub markdown. GitHub has no text colour in markdown, but its math does: `$\color{...}{...}$`. The %
@@ -170,7 +173,8 @@ pub fn markdown(before: &Run, after: &Run, new_code: NewCode) -> String {
         lines.push("No functions got worse.".to_string());
     }
     let quoted: Vec<String> = lines.iter().map(|text| if text.is_empty() { ">".to_string() } else { format!("> {text}") }).collect();
-    format!("{MARKER}\n{}\n", quoted.join("\n"))
+    // the blank line after the bar ends its HTML block, or GitHub would read the callout as more HTML
+    format!("{MARKER}\n{BAR}\n\n{}\n", quoted.join("\n"))
 }
 
 /// The gate line with the target rule's result added, when the rule is on.
@@ -265,7 +269,7 @@ mod tests {
     #[test]
     fn test_comment_better() {
         let text = markdown(&run(71, &[("a.py::f", 3.0), ("a.py::g", 2.0)]), &run(74, &[("a.py::f", 2.0)]), NewCode::Unchecked);
-        assert!(text.starts_with("<!-- krypton-gate -->\n> [!IMPORTANT]\n> ### Krypton"), "the marker, then the purple callout");
+        assert!(text.starts_with(&format!("<!-- krypton-gate -->\n{BAR}\n\n> [!IMPORTANT]\n> ### Krypton")), "the marker, the bar, then the purple callout");
         assert!(text.contains(r"> ### Krypton · ▲ $\color{#7c5cc4}{71}$% → $\color{#7c5cc4}{74}$% (+3)"), "only the numbers in lavender, percents kept");
         assert!(text.contains("> **Repo Purity · Scores**") && text.contains("> | Over the limit | 2 | 1 |"), "the scores");
         assert!(!text.contains("This PR") && text.contains("> Nice: this change made the code simpler."), "no target column, a kind word");

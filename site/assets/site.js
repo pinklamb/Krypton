@@ -43,6 +43,36 @@
     } else { play(); }
   });
 
+  // A Copy button on every code block. For commands it copies only the lines after a "$" prompt, without the prompt or the example
+  // output, so what you copy pastes straight into a terminal; for anything else (a script, YAML, JSON) it copies the whole block.
+  var COPY_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/>' +
+    '<path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/></svg>';
+  function copyText(pre) {
+    var whole = (pre.querySelector('code') || pre).textContent;
+    var commands = whole.split('\n').filter(function (line) { return /^\s*\$ /.test(line); });
+    var text = commands.length ? commands.map(function (line) { return line.replace(/^\s*\$ /, ''); }).join('\n') : whole;
+    return text.replace(/\s+$/, '');
+  }
+  function selectIn(el) {
+    var range = document.createRange(); range.selectNodeContents(el);
+    var picked = window.getSelection(); picked.removeAllRanges(); picked.addRange(range);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('pre'), function (pre) {
+    if (pre.classList.contains('xtal') || pre.hasAttribute('data-splash')) return;
+    var text = copyText(pre), button = document.createElement('button');
+    button.type = 'button'; button.className = 'copy'; button.setAttribute('aria-label', 'Copy to clipboard');
+    button.innerHTML = COPY_ICON + '<span>Copy</span>';
+    var label = button.querySelector('span'), reset = null;
+    function say(word) { label.textContent = word; clearTimeout(reset); reset = setTimeout(function () { label.textContent = 'Copy'; }, 1600); }
+    button.addEventListener('click', function () {
+      var unable = function () { selectIn(pre.querySelector('code') || pre); say('Press Ctrl+C'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { say('Copied'); }, unable);
+      } else { unable(); }
+    });
+    pre.appendChild(button);
+  });
+
   var links = Array.prototype.slice.call(document.querySelectorAll('.pages .sub a[href^="#"]'));
   if (!links.length) return;
   var sections = links.map(function (link) { return document.getElementById(link.getAttribute('href').slice(1)); });

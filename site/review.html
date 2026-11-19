@@ -75,15 +75,15 @@
 
 
 <h2 id="setup">Set it up once</h2>
-<p>The first time you run the Krypton image in a repository, it maps the whole codebase and shows its score today, then asks four things: the <b>target</b> score each ticket's code must reach (it suggests one a step above today's score), how many <b>tries</b> the agent gets on a function before it counts as stuck, whether a stuck function should <b>ask you</b> or be <b>approved automatically</b>, and whether to set up the <b>pull request gate</b> on GitHub. Answer in the terminal, or pick the browser and it prints a one-time link to a local settings dashboard where you click them instead.</p>
-<p>Krypton suggests the target from today's score: a step above it, so a codebase that scores 56 gets 70. Only new tickets are held to it, so the code they touch gets cleaner one ticket at a time while old code never blocks anyone. Run setup again as the score climbs and the suggestion climbs with it; it never drops below a target you saved.</p>
+<p>The first time you run the Krypton image in a repository, it maps the whole codebase and shows its score today, then asks four things: the <b>target</b> score each ticket's code must reach, how many <b>tries</b> the agent gets on a function before it counts as stuck, whether a stuck function should <b>ask you</b> or be <b>approved automatically</b>, and whether to set up the <b>pull request gate</b> on GitHub. Answer in the terminal, or pick the browser and it prints a one-time link to a local settings dashboard where you click them instead.</p>
+<p>Krypton suggests a target from today's score: a codebase that scores 56 gets 70. Only new tickets are held to it, so the code they touch gets cleaner one ticket at a time while old code never blocks anyone. Run setup again as the score climbs and the suggestion climbs with it; it never drops below a target you saved.</p>
 <p>For the gate, setup writes <code>.github/workflows/krypton.yml</code> with the rule you pick: <b>never worse</b> (a pull request fails only if it lowers the purity score) or <b>target</b> (the files a pull request changes must reach your target; the rest of the codebase is never judged). Commit the file to turn the gate on. Run setup again to change the gate or the target and it rewrites that file, so the old rule never lingers; commit it again. If you edit the workflow by hand, delete its <code># Written by `krypton setup`</code> line and setup will leave it alone.</p>
 <pre><code>docker run -it --rm -p 127.0.0.1:7777:7777 -v "$PWD:/repo" krypton   # terminal or local dashboard
 krypton setup --page                                                  # straight to the dashboard link
 krypton setup --mode manual|auto --target 70 --runs 3 --gate target  # no questions</code></pre>
-<ul><li><b>Ask me</b> (manual): your agent builds a review page on your computer for the ticket it is working on, styled by your <code>themes.md</code> (setup writes a starter one if you have none). You keep the best try or send it back before anything goes to GitHub.</li>
-<li><b>Auto</b>: <code>krypton review</code> puts back the best run itself and the agent carries on.</li></ul>
-<p>You can change these later in the terminal (<code>krypton setup</code>) or on the review page your agent builds, which has a small Settings panel styled by your <code>themes.md</code>. The answer is kept in <code>.krypton/settings.json</code>, which git never sees. <code>krypton review --auto</code> or <code>--manual</code> overrides it for one run.</p>
+<ul><li><b>Ask me</b>: your agent builds a review page on your computer, styled by your <code>themes.md</code> (setup writes a starter one). You keep the best try or send it back before anything reaches GitHub.</li>
+<li><b>Auto</b>: Krypton keeps the best run and the agent carries on.</li></ul>
+<p>Change it later with <code>krypton setup</code> or in the review page&rsquo;s Settings panel. It&rsquo;s saved in <code>.krypton/settings.json</code>, which git never sees, and <code>krypton review --auto</code> or <code>--manual</code> overrides it for one run.</p>
 
 <h2 id="flow">The review step</h2>
 <ol class="steps">

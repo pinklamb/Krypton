@@ -8,7 +8,7 @@ use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hasher};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::setup_command::{parse_runs, parse_target, Mode, Settings};
 use crate::workflow::Gate;
@@ -93,33 +93,57 @@ pub fn choose(listen: &str, current: &Settings) -> Result<Settings, Failure> {
     let listener = TcpListener::bind(listen).map_err(|error| Failure::Setup(format!("cannot open the settings page on {listen}: {error}")))?;
     let port = listen.rsplit(':').next().unwrap_or_default();
     let key = format!("/{}", secret());
-    println!("\nOpen this link to choose your settings (it works once, on this computer):\n\n  http://localhost:{port}{key}\n");
-    for stream in listener.incoming() {
-        let Ok(stream) = stream else { continue };
-        let request = match read_request(&stream) {
-            Ok(request) => request,
-            Err(error) => {
-                respond(&stream, "400 Bad Request", &page(current, Some(&error)));
-                continue;
+    println!(
+        "\nOpen this link to choose your settings (it works once, on this computer):\n\n  http://localhost:{port}{key}\n\nPress Ctrl+C or Esc to cancel.\n"
+    );
+    // Not blocking: the loop takes turns between the browser (a request waiting?) and the keyboard (Ctrl+C or Esc in the next 100 ms?),
+    // so neither one freezes the other. The keyboard is watched (raw mode) until this function returns; nothing is printed meanwhile.
+    listener.set_nonblocking(true).map_err(|error| Failure::Setup(format!("cannot open the settings page on {listen}: {error}")))?;
+    let watch = crate::cancel::Watch::start();
+    loop {
+        match listener.accept() {
+            Ok((stream, _from)) => {
+                if let Some(settings) = answer(&stream, &key, current) {
+                    return Ok(settings);
+                }
             }
-        };
-        if request.path != key {
-            respond(&stream, "404 Not Found", "<p>Not here. Use the link krypton setup printed in your terminal.</p>");
-            continue;
-        }
-        if request.method != "POST" {
-            respond(&stream, "200 OK", &page(current, None));
-            continue;
-        }
-        match parse_form(&request.body, current.baseline) {
-            Ok(settings) => {
-                respond(&stream, "200 OK", SAVED);
-                return Ok(settings);
-            }
-            Err(problem) => respond(&stream, "400 Bad Request", &page(current, Some(&problem))),
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => watch.wait(Duration::from_millis(100))?,
+            Err(error) => return Err(Failure::Setup(format!("the settings page on {listen} stopped before anything was saved: {error}"))),
         }
     }
-    Err(Failure::Setup(format!("the settings page on {listen} stopped before anything was saved")))
+}
+
+/// Answer one browser request: the page, a refusal, or (when the form was sent and is valid) the saved settings.
+fn answer(stream: &TcpStream, key: &str, current: &Settings) -> Option<Settings> {
+    // the listener does not block, but each request is read and answered in one go
+    if stream.set_nonblocking(false).is_err() {
+        return None;
+    }
+    let request = match read_request(stream) {
+        Ok(request) => request,
+        Err(error) => {
+            respond(stream, "400 Bad Request", &page(current, Some(&error)));
+            return None;
+        }
+    };
+    if request.path != key {
+        respond(stream, "404 Not Found", "<p>Not here. Use the link krypton setup printed in your terminal.</p>");
+        return None;
+    }
+    if request.method != "POST" {
+        respond(stream, "200 OK", &page(current, None));
+        return None;
+    }
+    match parse_form(&request.body, current.baseline) {
+        Ok(settings) => {
+            respond(stream, "200 OK", SAVED);
+            Some(settings)
+        }
+        Err(problem) => {
+            respond(stream, "400 Bad Request", &page(current, Some(&problem)));
+            None
+        }
+    }
 }
 
 const STYLE: &str = "body{margin:0;background:#1b1613;color:#ede4da;font:300 16px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif}

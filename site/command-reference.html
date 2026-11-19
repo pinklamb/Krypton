@@ -107,6 +107,7 @@ krypton wire --stdin-json &lt; files.json</code></pre>
 <tr><td><code>11</code></td><td>Docker is not installed or not running (from the <code>krypton</code> helper).</td><td>Install or start Docker Desktop.</td></tr>
 <tr><td><code>12</code></td><td>The Krypton image is not built yet, or could not be updated or rebuilt (from the <code>krypton</code> helper).</td><td>Run <code>krypton update</code>; it pulls the code into your clone and rebuilds the image.</td></tr>
 <tr><td><code>75</code></td><td>A newer version is ready; the helper updates your clone and rebuilds.</td><td>Nothing.</td></tr>
+<tr><td><code>130</code></td><td>Cancelled with Ctrl+C or Esc (while waiting for the GitHub login or on the settings page).</td><td>Nothing; run it again when ready.</td></tr>
 </table></div>
 <p>A busy or unreachable server is tried again up to four times, waiting as long as it asks, before Krypton stops with <code>6</code> or <code>7</code>. Every failure prints its reason, then a <code>Hint:</code> line with the fix.</p>
 
@@ -127,7 +128,7 @@ krypton scan . --base origin/main
 krypton scan src --level relaxed
 
 <span class="c"># exactly what would be sent</span>
-krypton wire src/app.py &gt; request.json
+krypton wire folder/filename.py &gt; request.json
 
 <span class="c"># should I reorder this prompt? count in GPT-4o tokens</span>
 krypton order . --subdir src --ext .py,.ts --model gpt-4o --post</code></pre>

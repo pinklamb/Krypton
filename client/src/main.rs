@@ -19,6 +19,7 @@ use std::process::ExitCode;
 use krypton_client::{WalkError, WireError};
 
 mod attempts;
+mod cancel;
 mod comment_command;
 mod diff;
 mod http;
@@ -67,6 +68,8 @@ enum Failure {
     Server(String),
     /// Setup could not finish: the local settings page could not start or stopped early (exit 10).
     Setup(String),
+    /// The person pressed Ctrl+C or Esc during a wait (exit 130).
+    Cancelled,
     /// The server answered and the review says the code is flagged (exit 1): the answer is already printed.
     Flagged,
     /// `krypton report` was not posted because the Krypton app is not set up or not installed (exit 3): the Action posts it itself.
@@ -131,6 +134,7 @@ fn exit(failure: Failure) -> Exit {
         Failure::Refused(message) => ends(exit_code::REFUSED, Some(message), Some(HINT_REFUSED)),
         Failure::Server(message) => ends(exit_code::SERVER, Some(message), Some(HINT_SERVER)),
         Failure::Setup(message) => ends(exit_code::SETUP, Some(message), Some(HINT_SETUP)),
+        Failure::Cancelled => ends(cancel::CANCELLED, Some("Cancelled.".to_string()), None),
     }
 }
 
@@ -216,8 +220,9 @@ mod tests {
             code(Failure::Refused(said())),
             code(Failure::Server(said())),
             code(Failure::Setup(said())),
+            code(Failure::Cancelled),
         ];
-        assert_eq!(codes, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "one code per cause");
+        assert_eq!(codes, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 130], "one code per cause");
     }
 
     // Every failure but a flagged review and bad usage comes with a hint on how to fix it.

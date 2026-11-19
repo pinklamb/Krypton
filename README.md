@@ -83,7 +83,7 @@ Everyday commands:
 krypton scan src --names                  # the review for a folder
 krypton scan . --base origin/main         # only what this branch changed (exit code 1 when it fails)
 krypton order . --subdir src --model gpt-4o --post    # should this prompt's files be reordered?
-krypton wire src/app.py                   # print exactly what would be sent
+krypton wire folder/filename.py           # print exactly what would be sent for that file
 ```
 
 The server is a separate program that holds the scoring.

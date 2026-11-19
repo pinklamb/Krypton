@@ -204,3 +204,8 @@ nav.main > a.gh:hover, nav.main > a.gh:focus-visible { background:none; transfor
 nav.main > a.gh:focus { outline:none; } nav.main > a.gh:focus-visible { outline:2px solid var(--ink3); outline-offset:3px; }
 nav.main > a.gh svg { display:block; width:16px; height:16px; }
 @media (prefers-reduced-motion:reduce) { nav.main > a.gh:hover { transform:none; } }
+
+/* the Copy button on code blocks (site.js): a small pill in the block's top bar, opposite the three dots */
+pre .copy { position:absolute; top:9px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:4px 11px; border:1px solid var(--line); border-radius:999px; background:var(--bg); color:var(--ink3); font:400 11px var(--mono); letter-spacing:.04em; cursor:pointer; user-select:none; transition:color .2s, border-color .2s; }
+pre .copy:hover, pre .copy:focus-visible { color:var(--ink); border-color:var(--ink3); outline:none; }
+pre .copy svg { width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:1.4; stroke-linejoin:round; stroke-linecap:round; }

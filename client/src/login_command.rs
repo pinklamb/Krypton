@@ -11,7 +11,6 @@ use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
-use std::thread;
 use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
@@ -126,10 +125,12 @@ fn device_flow(client_id: &str) -> Result<String, Failure> {
     let (device_code, user_code, url) = (text_of(&start, "device_code")?, text_of(&start, "user_code")?, text_of(&start, "verification_uri")?);
     let mut every = Duration::from_secs(start.get("interval").and_then(Value::as_u64).unwrap_or(5));
     let expires = Duration::from_secs(start.get("expires_in").and_then(Value::as_u64).unwrap_or(900));
-    eprintln!("\nOpen {url} and enter the code:\n\n    {user_code}\n\nWaiting for you to approve it on GitHub ...");
+    eprintln!("\nOpen {url} and enter the code:\n\n    {user_code}\n\nWaiting for you to approve it on GitHub ... (press Ctrl+C or Esc to cancel)");
+    // the keyboard is watched (raw mode) from here until this function returns, whichever way it returns; nothing is printed meanwhile
+    let watch = crate::cancel::Watch::start();
     let started = Instant::now();
     while started.elapsed() < expires {
-        thread::sleep(every);
+        watch.wait(every)?;
         match read_poll(&github_form(ACCESS_TOKEN, &[("client_id", client_id), ("device_code", device_code), ("grant_type", DEVICE_GRANT)])?) {
             Poll::Token(token) => return Ok(token),
             Poll::Wait => {}

@@ -7,6 +7,8 @@
 #
 # The program is the image's entry point, so everything after `krypton` is a normal command (scan, review, restore, order, ...).
 # git is in the image because --base, order and --log read your repository's history.
+# Krypton is the container's first process, which ignores Ctrl+C as a signal, so during a wait it reads Ctrl+C and Esc as keys itself
+# (src/cancel.rs); that needs `docker run -it`, as the krypton helper does.
 FROM rust:1-bookworm AS build
 WORKDIR /src
 COPY Cargo.toml Cargo.lock ./

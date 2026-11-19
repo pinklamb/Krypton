@@ -72,7 +72,7 @@ runs:
           fi
         fi
         status=0
-        "$KRYPTON" comment "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" --line "$RUNNER_TEMP/line.txt" --card "$HEAD" $flag $rule > "$RUNNER_TEMP/scorecard.md" || status=$?
+        "$KRYPTON" comment "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" --line "$RUNNER_TEMP/line.txt" $flag $rule > "$RUNNER_TEMP/scorecard.md" || status=$?
         printf '\n<sub>Updated for %s.</sub>\n' "$(echo "$HEAD" | cut -c1-7)" >> "$RUNNER_TEMP/scorecard.md"
         cat "$RUNNER_TEMP/scorecard.md" >> "$GITHUB_STEP_SUMMARY"
         echo "status=$status" >> "$GITHUB_OUTPUT"

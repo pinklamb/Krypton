@@ -86,9 +86,14 @@ impl Server {
         serde_json::from_str(&text).map_err(|error| Failure::Server(format!("the answer was not JSON: {error}")))
     }
 
-    /// Ask for the server's capabilities: it answers at once, and says clearly when this address is rate limited.
+    /// Ask for the server's capabilities: it answers at once, and says clearly when this login (or address) is rate limited. The login is
+    /// sent when there is one, so the server counts it against the login, like the scoring that follows, not against a shared address.
     fn preflight(&self) -> Result<(), Failure> {
-        ureq::get(&format!("{}/v1/capabilities", self.url)).timeout(Duration::from_secs(30)).call().map(drop).map_err(|error| self.failure(error))
+        let mut request = ureq::get(&format!("{}/v1/capabilities", self.url)).timeout(Duration::from_secs(30));
+        if let Some(token) = crate::login_command::token_for(&self.url)? {
+            request = request.set("Authorization", &format!("Bearer {token}"));
+        }
+        request.call().map(drop).map_err(|error| self.failure(error))
     }
 
     /// What a failed call means to the person running the command.

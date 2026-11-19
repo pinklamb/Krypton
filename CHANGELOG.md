@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Pull requests show Krypton's own card and bot. The comment opens with a lavender card (crystal, the purity before and after with the percents, the change, two bars, the counts and the gate), drawn by the scoring server's `GET /v1/card.svg` from the numbers alone. Where the Krypton GitHub App is installed, `krypton report` has the server post the comment and the gate line as the app, so both show Krypton's name and crystal; elsewhere the Action posts them as github-actions as before (`krypton report` exits 3). The lavender numbers in the comment keep their percent signs now.
+- Rate limits count a logged-in request against its login (a person, or a GitHub Actions run's repository) instead of its address, so a pull request run's several requests, or other repositories on the same GitHub runner address, no longer use up each other's budget; `krypton` sends its login with the capabilities check too.
+- Pull requests show Krypton's own bot. Where the Krypton GitHub App is installed, `krypton report` has the server post the comment and the gate line as the app, so both show Krypton's name and crystal; elsewhere the Action posts them as github-actions as before (`krypton report` exits 3). The comment's headline and verdict are all in lavender now, percent signs included.
 - Running `krypton setup` again with another gate or target rewrites the workflow it wrote (`.github/workflows/krypton.yml`), so the old rule never lingers; it says when nothing changed, leaves a workflow whose `Written by krypton setup` line was removed alone, and says when choosing no gate leaves an earlier workflow still gating.
 - The site serves clean addresses: `/docs`, `/tree`, `/savings` and so on, with old `.html` links moved there permanently (queries kept), and the site's own 404 page for anything else.
 

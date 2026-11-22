@@ -3,37 +3,76 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Krypton scores how easy your code is for the next agent to edit, blocks messy merges, and cuts your AI coding bill.">
+<meta name="description" content="Krypton scores the structure of AI-written code inside your agent's local loop, so the agent untangles brittle functions before a pull request is ever opened. Your source never leaves your machine.">
 <title>Krypton</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@300;400&family=Instrument+Serif:ital@0;1&display=swap">
-<link rel="stylesheet" href="assets/landing.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="assets/landing.css?v=4">
+<link rel="stylesheet" href="assets/landing-themes.css?v=4">
+<script>/* the theme before anything is drawn, so the page never flashes the other one: ?theme=light|dark in the address, else the saved
+   choice, else dark */
+var asked = /[?&]theme=(light|dark)/.exec(location.search);
+try { document.documentElement.setAttribute('data-theme', asked ? asked[1] : localStorage.getItem('kr-theme') === 'light' ? 'light' : 'dark'); }
+catch (e) { document.documentElement.setAttribute('data-theme', asked ? asked[1] : 'dark'); }</script>
 
 <canvas id="scene" aria-hidden="true"></canvas>
 
 <header class="bar">
   <a class="mark" href="./" aria-label="Krypton, home"><pre class="xtal" id="xtal" aria-hidden="true"></pre><b>Kr</b><span>ypton</span></a>
-  <nav class="nav" aria-label="Main"><a href="docs">Docs</a><a class="wide" href="#story">Demo</a><a class="wide" href="#start">Get started</a>
+  <nav class="nav" aria-label="Main"><a href="docs">Docs</a><a class="wide" href="#loop">How it works</a><a class="wide" href="#story">Demo</a><a class="wide" href="#start">Get started</a>
 </nav>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between light and dark">
+    <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><circle cx="12" cy="12" r="4.25"/><path d="M19 12h2.25m-4.3 4.95l1.59 1.59M12 19v2.25m-4.95-4.3l-1.59 1.59M5 12H2.75m4.3-4.95L5.46 5.46M12 5V2.75m4.95 4.3l1.59-1.59"/></g></svg>
+    <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"/></svg>
+  </button>
 </header>
 
 <main>
   <section class="hero" aria-label="Krypton">
     <div>
       <h1>Keep the reins on your code.</h1>
-      <p class="lede">AI writes more of your code every day, and the companies selling it grade their own work. Krypton puts the grading back in your hands. Running locally on your machine, it scores how easy every change is for the next agent to edit, blocks messy merges, and cuts your AI coding bill by up to 35% through higher code quality and smarter prompt caching.</p>
-      <div class="acts"><a class="cta" href="#story">See the demo <svg class="ar dn" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a><a class="ghost" href="tree"><svg class="ghi" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>See your own tree</a></div>
+      <p class="lede">Untangle AI code before the PR is ever opened. Krypton&rsquo;s deterministic Rust engine scores your code&rsquo;s structure right inside your agent&rsquo;s local loop, spots brittle functions, and has the agent refactor them before anyone reviews them. Your source never leaves your machine.</p>
+      <div class="acts"><a class="cta" href="tree"><svg class="ghi" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Visualize your repo</a><a class="ghost" href="#loop">See how the loop works</a></div>
     </div>
-    <a class="cue" href="#story">Scroll</a>
+  </section>
+
+  <section class="loop" id="loop" aria-labelledby="loop-h">
+    <h2 id="loop-h" class="reveal">Don&rsquo;t wait for a CI gate to tell you an agent broke your architecture.</h2>
+    <p class="reveal">Linters and GitHub Actions run after the work is done, and leave you reviewing messy diffs. Krypton closes the loop on your machine: your agent writes a change, Krypton scores it across the full syntax tree, and the agent refactors the hotspots before it opens a clean pull request.</p>
+    <ol class="steps reveal" aria-label="The loop">
+      <li><span class="sn">1</span><b>Agent edits</b><span>writes the change on your machine</span></li>
+      <li class="sa" aria-hidden="true"><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></li>
+      <li><span class="sn">2</span><b>Krypton scores</b><span>every function, across the full syntax tree</span></li>
+      <li class="sa" aria-hidden="true"><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></li>
+      <li><span class="sn">3</span><b>Agent refactors</b><span>the hotspots, until the code meets your target</span></li>
+      <li class="sa" aria-hidden="true"><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></li>
+      <li class="end"><span class="sn">4</span><b>Clean pull request</b><span>the GitHub Action stays as an optional safety net</span></li>
+    </ol>
+  </section>
+
+  <section class="priv log" id="log" aria-labelledby="log-h">
+    <div><h2 id="log-h" class="reveal">Know which functions kept your agent looping.</h2>
+      <p class="reveal">Every scored run is written to <code class="ic">.krypton/runs.jsonl</code>: the ticket, the score, and each function still over the limit, with how many times over it is. <code class="ic">krypton review</code> reads it and names the functions that were still stuck after your retry limit, and which run came closest.</p></div>
+    <pre class="fig reveal"><span class="c"># .krypton/runs.jsonl</span>
+{"run":0,"ticket":"fix discount rounding","purity":71,"functions":{"checkout.py::apply_discount":46.0}}
+{"run":1,"ticket":"fix discount rounding","purity":71,"functions":{"checkout.py::apply_discount":45.0}}
+{"run":2,"ticket":"fix discount rounding","purity":71,"functions":{"checkout.py::apply_discount":43.0}}
+{"run":3,"ticket":"fix discount rounding","purity":71,"functions":{"checkout.py::apply_discount":44.0}}
+
+<span class="c">$</span> krypton review
+Ticket: fix discount rounding
+<span class="hl">Stuck after 3 runs: 1</span>
+  checkout.py &middot; apply_discount: 46&times; &rarr; 45&times; &rarr; 43&times; &rarr; 44&times; (best: run 2)
+<span class="c"># example values, trimmed; each log line also records the time</span></pre>
   </section>
 
   <section class="track" id="story" aria-label="How Krypton sees a repository">
     <div class="stick" id="stage">
       <div class="caps">
-        <p data-show="0.12 0.25"><span class="st">A real codebase</span>AI writes code faster than anyone can read it.<small>This is garth, an open-source project we used to test how AI agents tangle code. Each of its 41 files is drawn as a tree of points, one per piece of code structure: 17,767 in all.</small></p>
-        <p data-show="0.27 0.47"><span class="st">What it scores</span>Krypton scores how easy your code is for the next agent to edit and understand.<small>It only looks at how the code is built. Your source stays on your machine; only its structure is sent, with every name swapped for a keyed hash. The key is made fresh for every scan and stays with you.</small></p>
+        <p data-show="0.12 0.25"><span class="st">A real codebase</span>See where your next agent will get stuck.<small>We scanned garth, an open-source project: 41 files, drawn as trees of points, one per piece of code structure. 17,767 in all.</small></p>
+        <p data-show="0.27 0.47"><span class="st">What it scores</span>Krypton scores how easy your code is for the next agent to edit and understand.<small>It reads the shape of every function across the full syntax tree: how deep it nests, how many paths it takes, how much it holds at once.</small></p>
         <p data-show="0.5 0.71"><span class="st">Hard to change</span>It lights up where the next agent will struggle.<small>Eleven functions are too tangled to change safely. The darker and bigger the cluster, the worse it is. The worst is 46.2 times over the limit.</small></p>
-        <p data-show="0.74 1.08"><span class="st">The fix</span>Your agent untangles them until the code passes.<small>On garth the score rose from 62 to 81 with all 163 tests still passing, so the next change starts from cleaner code. The animation is an illustration.</small><a class="cta sm savings" href="savings">See the savings <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a></p>
+        <p data-show="0.74 1.08"><span class="st">The fix</span>Your agent untangles them until the code passes.<small>With Krypton in the loop, the agent refactored garth&rsquo;s hotspots locally and raised its score from 62 to 81, all 163 tests still passing, before a reviewer touched it. The animation is an illustration.</small><a class="cta sm savings" href="savings">See the savings <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a></p>
       </div>
       <ul class="spec stagespec" id="gspec" aria-label="Measured on garth">
       <li><span>Tested on</span><b>garth</b></li>
@@ -44,10 +83,19 @@
     </div>
   </section>
 
-  <section class="rows" id="rows" aria-label="What you get">
-    <h2>What you get</h2>
+  <section class="priv" id="privacy" aria-labelledby="priv-h">
+    <div><h2 id="priv-h" class="reveal">Your source code never leaves your machine.</h2>
+      <p class="reveal">Krypton parses your code on your computer and swaps every function, variable and file name for a keyed hash. Only the structure is sent to be scored. The key is made fresh for every scan and stays with you.</p></div>
+    <pre class="fig reveal"><span class="c">$</span> krypton wire folder/filename.py
+<span class="c"># prints exactly what would be sent for that file</span>
+<span class="c">$</span> krypton scan . --base origin/main
+<span class="c"># scores only what this branch changed</span></pre>
+  </section>
+
+  <section class="rows" id="rows" aria-label="How Krypton fits your workflow">
+    <h2>Built for local agent loops first. Ready for GitHub teams second.</h2>
     <article class="row">
-      <div><h3 class="reveal">Set your rules in a local dashboard</h3><p class="reveal">Run <code class="ic">krypton setup</code> on your machine. It maps your codebase and shows its score today. Then set your target score, cap how many times the agent can retry, and choose whether it carries on by itself or pauses for your review before opening a pull request. Answer each question in the terminal, or open the link it gives you and click your settings on a local dashboard.</p><p class="reveal">Krypton suggests a target from where you are: if your codebase scores 56, it suggests 70, and you can pick your own. Only new tickets are held to it, so the code they touch gets cleaner while old code never blocks a merge. Run setup again as the score climbs and the suggestion climbs with it.</p><div class="gate reveal" role="group" aria-label="Try the settings"><div class="gq"><span>Target score</span><div class="seg" data-k="target"><button type="button" data-v="60">60</button><button type="button" data-v="70" aria-pressed="true">70</button><button type="button" data-v="80">80</button><button type="button" data-v="90">90</button></div></div><div class="gq"><span>Max tries</span><div class="seg" data-k="tries"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3" aria-pressed="true">3</button><button type="button" data-v="5">5</button></div></div><div class="gq"><span>When stuck</span><div class="seg" data-k="mode"><button type="button" data-v="manual" aria-pressed="true">Ask me</button><button type="button" data-v="auto">Auto</button></div></div></div></div>
+      <div><h3 class="reveal">Your agent cleans up after itself</h3><p class="reveal">Run <code class="ic">krypton setup</code> to set a target score and a cap on retries. Your agent scans after each change, untangles deep nesting and branching hotspots by itself, and only asks for your sign-off when a function hits your retry limit. Answer the questions in the terminal, or click your settings on a local dashboard.</p><p class="reveal">Krypton suggests a target from where you are: if your codebase scores 56, it suggests 70, and you can pick your own. Only new tickets are held to it, so the code they touch gets cleaner while old code never blocks a merge. Run setup again as the score climbs and the suggestion climbs with it.</p><div class="gate reveal" role="group" aria-label="Try the settings"><div class="gq"><span>Target score</span><div class="seg" data-k="target"><button type="button" data-v="60">60</button><button type="button" data-v="70" aria-pressed="true">70</button><button type="button" data-v="80">80</button><button type="button" data-v="90">90</button></div></div><div class="gq"><span>Max tries</span><div class="seg" data-k="tries"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3" aria-pressed="true">3</button><button type="button" data-v="5">5</button></div></div><div class="gq"><span>When stuck</span><div class="seg" data-k="mode"><button type="button" data-v="manual" aria-pressed="true">Ask me</button><button type="button" data-v="auto">Auto</button></div></div></div></div>
       <div class="fig rev reveal" role="group" aria-label="Example review screen">
         <div class="rh"><span>Example review &middot; fix discount rounding</span><span class="pills"><i id="pT">Target 70</i><i id="pM">Max tries 3</i></span><span id="rvh">Purity <span id="rv0">71</span> <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> <b id="rvp">71</b></span></div>
         <div class="rc">
@@ -58,19 +106,16 @@
         </div>
       </div>
     </article>
-    
-    
-    <section class="trio" id="trio" aria-label="For teams, for agent builders, clean code and model choice">
-    <article class="tc tl"><h3 class="reveal" id="team">One GitHub Action for the whole team&nbsp;<svg class="h3i" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></h3><p class="reveal">Scaling to a larger team? <code class="ic">krypton setup</code> writes the GitHub workflow for you. Pick the gate, never worse or a target for the code each pull request changes, commit one file, and every pull request gets a purity check. Each developer keeps full control of their own local limits and agent loops, and old code never blocks anyone.</p>
-      <div class="fig checks reveal" role="img" aria-label="The workflow krypton setup writes, and example pull request checks with a Krypton gate line: Purity up from 71% to 74%, plus 3.">
-        <div class="wf"><code>.github/workflows/krypton.yml</code><span>written by krypton setup</span></div>
-        <div class="r"><i></i>build<span>passed</span></div>
-        <div class="r"><i></i>tests<span>passed</span></div>
-        <div class="r hl"><i></i>Krypton gate<span>Purity <svg class="tri" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8.5H1z"/></svg> 71% <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> 74% (+3)</span></div>
-        <div class="fn">Example values.</div>
+
+    <section class="trio" id="trio" aria-label="Lower bills">
+    <article class="tc tb"><h3 class="reveal">Clean code is cheaper to change</h3><p class="reveal">Once the code is cleaned up, an agent&rsquo;s later changes to it cost less.</p>
+      <div class="fig nums reveal">
+        <div><b>17%</b><span>average saving per later change, six runs</span></div>
+        <div><b>6%</b><span>the typical run</span></div>
+        <div class="fn">Measured on garth. The cleanup costs money once; savings vary by repo.</div>
       </div>
     </article>
-    <article class="tc tr"><h3 class="reveal">Smaller AI bills for the agents you build</h3><p class="reveal">Building your own agent? Run one command before you assemble its prompts. Krypton replays your git history against several file orders and picks the one that reuses the most of the prompt cache, or leaves yours alone.</p><pre class="cmd reveal"><span class="c">$</span> krypton order</pre>
+    <article class="tc tx"><h3 class="reveal">Smarter prompt caching</h3><p class="reveal">Once your code is clean, reorder what your agent reads. Building your own agent? Run <code class="ic">krypton order</code> before you assemble its prompts: it replays your git history against several file orders and picks the one that reuses the most of the prompt cache, or leaves yours alone.</p><pre class="cmd reveal"><span class="c">$</span> krypton order</pre>
       <div class="fig bills reveal" role="img" aria-label="Share of each prompt reused from cache on garth, live: stable files first 71% (picked), alphabetical 47%, reverse alphabetical 0%. 35% lower prompt bill than alphabetical.">
         <div class="lg"><span><i class="s1"></i>Reused from cache</span><span><i class="s2"></i>Sent fresh</span></div>
         <div class="bl pick"><div class="bh"><span>Stable files first <em>picked</em></span><b>71%</b></div><div class="st"><i class="s1" style="--w:71%" title="71% reused from cache"></i><i class="s2" style="--w:29%" title="29% sent fresh"></i></div></div>
@@ -79,30 +124,27 @@
         <div class="big">35%<span>lower prompt bill than alphabetical, on garth</span></div>
       </div>
     </article>
-    <article class="tc tb"><h3 class="reveal">Clean code is cheaper to change</h3><p class="reveal">Once the code is cleaned up, an agent&rsquo;s later changes to it cost less.</p>
-      <div class="fig nums reveal">
-        <div><b>17%</b><span>average saving per later change, six runs</span></div>
-        <div><b>6%</b><span>the typical run</span></div>
-        <div class="fn">Measured on garth. The cleanup costs money once; savings vary by repo.</div>
+    </section>
+
+    <article class="row safety"><div><h3 class="reveal" id="team">GitHub Action&nbsp;<svg class="h3i" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></h3><p class="reveal">Need team-wide guardrails? <code class="ic">krypton setup</code> writes <code class="ic">.github/workflows/krypton.yml</code> for you. Hold each pull request to never worse, or to a target for the code it changes, without legacy code ever blocking a merge.</p></div>
+      <div class="fig checks reveal" role="img" aria-label="The workflow krypton setup writes, and example pull request checks with a Krypton gate line: Purity up from 71% to 74%, plus 3.">
+        <div class="wf"><code>.github/workflows/krypton.yml</code><span>written by krypton setup</span></div>
+        <div class="r"><i></i>build<span>passed</span></div>
+        <div class="r"><i></i>tests<span>passed</span></div>
+        <div class="r hl"><b class="kd" aria-hidden="true">&#9670;</b>Krypton gate<span>Purity <svg class="tri" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8.5H1z"/></svg> 71% <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> 74% (+3)</span></div>
+        <div class="fn">Example values.</div>
       </div>
     </article>
-    <article class="tc tm"><h3 class="reveal">See which model writes your best code</h3><p class="reveal">The same check runs on every change, whoever or whatever wrote it, so you can compare the models you use on your own code. The choice is back in your hands, not an AI company&rsquo;s benchmark.</p>
-      <pre class="fig reveal"><span class="c">$</span> krypton scan . --base origin/main
-<span class="c"># scores only what this branch changed</span>
-<span class="c">$</span> krypton wire folder/filename.py
-<span class="c"># prints exactly what would be sent for that file</span></pre>
-    </article>
-  </section>
-    
   </section>
 
   <section class="close" id="start" aria-labelledby="start-h">
-    <div><h2 id="start-h" class="reveal">Start saving on your AI bills today.</h2>
-      <p class="reveal" style="margin:0 0 28px">Start clean from day one, or untangle legacy AI code incrementally without stopping to refactor.</p>
-      <div class="acts reveal"><a class="cta" href="#story">See the demo <svg class="ar up" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a><a class="lnk" href="docs">Read the docs</a></div></div>
+    <div><h2 id="start-h" class="reveal">Start clean. Stay clean.</h2>
+      <p class="reveal" style="margin:0 0 28px">Connect with GitHub, or install the CLI and wire Krypton into your agent&rsquo;s loop to write cleaner code today.</p>
+      <div class="acts reveal"><a class="cta" href="docs">Read the CLI docs <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a></div></div>
     <div class="fig own reveal" id="own">
-      <h3 class="ownh">Visualize your code with your GitHub repo</h3>
-      <a class="gh" href="tree"><svg class="ghi" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Continue with GitHub</a>
+      <h3 class="ownh">Visualize your code</h3>
+      <a class="gh" href="tree"><svg class="ghi" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Continue with GitHub<svg class="gha" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7-7l7 7l-7 7"/></svg>
+</a>
       <ul class="pts"><li>Read-only access</li><li>Scored in memory, never stored</li><li>Access ends with your visit</li></ul>
     </div>
   </section>
@@ -113,8 +155,57 @@
  /    \ 
  \    / 
   \  /  
-   \/   </pre><b>Krypton</b></a><span class="copy">&copy; 2026 Krypton</span></footer>
+   \/   </pre><b>Krypton</b></a><a class="early" href="https://github.com/pinklamb/Krypton/issues/new?title=GitLab%20support">Using GitLab? Request early access</a><span class="copy">&copy; 2026 Krypton</span></footer>
 
-<script src="assets/landing.js"></script>
+<script>
+/* the toggle: flip data-theme, remember it, and tell the 3D field to repaint */
+(function () {
+  var root = document.documentElement, button = document.getElementById('themeToggle');
+  function show() { button.setAttribute('aria-label', root.getAttribute('data-theme') === 'light' ? 'Switch to dark' : 'Switch to light'); }
+  button.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('kr-theme', next); } catch (e) { /* storage blocked: the choice lasts this visit */ }
+    document.dispatchEvent(new CustomEvent('kr-theme', { detail: next }));
+    show();
+  });
+  show();
+})();
+</script>
+<script>
+/* the Krypton gate line pulses its diamond the way the CLI does while it maps (client/src/loader.rs): ◇ ◈ ◆ ◈, then rests on a bright ◆ */
+(function () {
+  var marks = document.querySelectorAll('.checks .kd'), PULSE = ['◇', '◈', '◆', '◈'], tick = 0;
+  if (!marks.length || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  function draw(shape) { Array.prototype.forEach.call(marks, function (mark) { mark.textContent = shape; mark.classList.toggle('dim', shape !== '◆'); }); }
+  function step() {
+    if (tick < 8) { draw(PULSE[tick % 4]); tick++; setTimeout(step, 110); }
+    else { draw('◆'); tick = 0; setTimeout(step, 1800); }
+  }
+  step();
+})();
+</script>
+<script src="assets/landing.js?v=4"></script>
+<script>
+/* the garth spec box sits a fixed gap below whichever caption is showing, instead of at the bottom of a tall window */
+(function () {
+  var spec = document.getElementById('gspec'), caps = document.querySelectorAll('.caps p'), GAP = 40, queued = false;
+  if (!spec || !caps.length || !window.matchMedia || !matchMedia('(min-width: 901px)').matches) return;
+  function place() {
+    queued = false;
+    var lowest = 0;
+    Array.prototype.forEach.call(caps, function (cap) {
+      if (parseFloat(getComputedStyle(cap).opacity) > 0.5) lowest = Math.max(lowest, cap.getBoundingClientRect().bottom);
+    });
+    if (!lowest) return;
+    var top = Math.min(lowest + GAP, window.innerHeight - spec.offsetHeight - 24);
+    spec.style.top = top + 'px'; spec.style.bottom = 'auto';
+  }
+  function queue() { if (!queued) { queued = true; requestAnimationFrame(place); } }
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue);
+  queue();
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="assets/landing-3d.js"></script>
+<script src="assets/landing-3d-themes.js?v=4"></script>

@@ -150,3 +150,68 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
 .trio h3 { font:250 clamp(28px,2.7vw,42px)/1.08 var(--sans); letter-spacing:-.025em; text-wrap:balance; margin-bottom:14px; }
 .trio p { color:var(--ink2); max-width:46ch; } .trio .fig { margin-top:24px; } .trio .cmd { margin-top:18px; }
 @media (max-width:900px) { .trio { grid-template-columns:minmax(0,1fr); gap:56px; padding-top:40px; } }
+
+/* same ticket, two models: two example pull request checks side by side, right under the hero */
+.vs { position:relative; z-index:1; max-width:1320px; margin:0 auto; padding:clamp(40px,10vh,120px) var(--g) clamp(30px,8vh,90px); }
+.vs h2 { font:250 clamp(32px,4vw,60px)/1.04 var(--sans); letter-spacing:-.03em; max-width:20ch; text-wrap:balance; }
+.vs > p { color:var(--ink2); max-width:58ch; margin-top:18px; font:350 clamp(16px,1.25vw,18.5px)/1.6 var(--sans); text-wrap:pretty; }
+.vs > p.fn { margin-top:18px; font:400 11px/1.6 var(--mono); color:var(--ink3); letter-spacing:.03em; }
+.vsg { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(18px,3vw,40px); margin-top:clamp(28px,5vh,48px); max-width:1100px; }
+.vsc .r span { font-variant-numeric:tabular-nums; text-align:right; }
+.checks .bad i { background:#d79a8f; box-shadow:0 0 10px rgba(215,154,143,.6); } .checks .bad span { color:#e3b0a6; }
+.vst { margin-top:14px; font:italic 400 18px var(--serif); color:var(--ink2); }
+@media (max-width:760px) { .vsg { grid-template-columns:minmax(0,1fr); } .vsc .r { flex-wrap:wrap; } .vsc .r span { margin-left:0; width:100%; text-align:left; } }
+
+/* ---- the local-loop homepage (hero stats, the four-step loop, privacy, numbered pillars) ---- */
+.hero h1 { max-width:14ch; }
+.stats { list-style:none; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); max-width:880px; border:1px solid var(--line); border-radius:14px; background:var(--glass); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); overflow:hidden; }
+.stats li { padding:18px 22px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.stats li + li { border-left:1px solid var(--line); }
+.stats b { font:250 clamp(26px,2.6vw,38px)/1 var(--sans); letter-spacing:-.02em; color:var(--ink); display:flex; align-items:center; gap:8px; font-variant-numeric:tabular-nums; }
+.stats b .ar { width:.6em; height:.6em; }
+.stats span { font:italic 400 15px/1.35 var(--serif); color:var(--ink2); }
+.stats code { font:400 12px var(--mono); color:var(--ink); }
+.loop { position:relative; z-index:1; max-width:1320px; margin:0 auto; padding:clamp(48px,12vh,130px) var(--g) clamp(30px,8vh,90px); }
+.loop h2 { font:250 clamp(32px,4vw,60px)/1.04 var(--sans); letter-spacing:-.03em; max-width:22ch; text-wrap:balance; }
+.loop > p { color:var(--ink2); max-width:60ch; margin-top:18px; font:350 clamp(16px,1.25vw,18.5px)/1.6 var(--sans); text-wrap:pretty; }
+.steps { list-style:none; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr); align-items:stretch; gap:12px; margin-top:clamp(28px,5vh,48px); }
+.steps li:not(.sa) { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 18px 20px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.steps li.end { border-color:var(--acc); box-shadow:0 0 24px var(--glow); }
+.steps .sn { font:400 11px var(--mono); letter-spacing:.2em; color:var(--acc); }
+.steps b { font:400 19px/1.2 var(--sans); color:var(--ink); }
+.steps li > span:last-child { font:italic 400 15px/1.4 var(--serif); color:var(--ink2); }
+.steps .sa { display:flex; align-items:center; color:var(--ink3); }
+.steps .sa .ar { width:18px; height:18px; }
+.priv { position:relative; z-index:1; max-width:1320px; margin:0 auto; padding:clamp(48px,12vh,130px) var(--g) clamp(20px,4vh,40px); display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:clamp(24px,5vw,80px); align-items:center; }
+.priv h2 { font:250 clamp(32px,4vw,60px)/1.04 var(--sans); letter-spacing:-.03em; text-wrap:balance; margin-bottom:18px; }
+.priv p { color:var(--ink2); max-width:48ch; }
+.priv pre { min-width:0; overflow-x:auto; }
+.rows > h2 { max-width:none; }
+.row.safety h3 { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.foot .early { color:var(--ink2); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px; }
+.foot .early:hover { color:var(--acc); }
+@media (max-width: 900px) {
+  .steps { grid-template-columns:minmax(0,1fr); }
+  .steps .sa { justify-content:center; } .steps .sa .ar { transform:rotate(90deg); }
+  .priv { grid-template-columns:minmax(0,1fr); }
+}
+@media (max-width: 640px) {
+  .stats { grid-template-columns:minmax(0,1fr); }
+  .stats li + li { border-left:0; border-top:1px solid var(--line); }
+  .trio { grid-template-columns:minmax(0,1fr); }
+}
+/* the Krypton gate line: the CLI's pulsing diamond instead of a dot */
+.checks .kd { flex:none; width:12px; display:inline-flex; justify-content:center; font:400 13px/1 var(--mono); color:var(--acc); text-shadow:0 0 10px var(--glow); transition:opacity .1s; }
+.checks .kd.dim { opacity:.7; text-shadow:none; }
+/* icons from img/: the check marks take the accent colour through a mask, the arrow sits at the end of the GitHub button */
+.own .pts li::before { content:""; display:inline-block; width:13px; height:13px; margin-right:8px; vertical-align:-1px; background:var(--acc);
+  -webkit-mask:url(../img/check-2-fill.svg) center/contain no-repeat; mask:url(../img/check-2-fill.svg) center/contain no-repeat; }
+.gh .gha { width:16px; height:16px; margin-left:-2px; transition:transform .2s; } .gh:hover .gha { transform:translateX(3px); }
+/* the run log section: text left, the log and the review answer right */
+.log { grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); }
+.log p + p { margin-top:14px; }
+/* like a docs code block: card, three window dots, lines wrap instead of scrolling sideways */
+.log pre { position:relative; padding:40px 22px 18px; font:400 12.5px/1.65 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; overflow:visible; }
+.log pre::before { content:""; position:absolute; top:16px; left:20px; width:8px; height:8px; border-radius:50%; background:var(--line); box-shadow:14px 0 var(--line), 28px 0 var(--line); }
+.log pre .hl { color:var(--acc); font-weight:600; }
+@media (max-width:900px) { .log { grid-template-columns:minmax(0,1fr); } }

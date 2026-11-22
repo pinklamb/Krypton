@@ -1,0 +1,39 @@
+/* The landing page in two themes, on top of landing.css: dark (cocoa, as today) and light (sand), with a toggle at the right end
+   of the navbar. data-theme on <html> picks one; the 3D field repaints itself to match (landing-3d-themes.js). */
+
+/* commands and code: JetBrains Mono 500 */
+:root { --mono:"JetBrains Mono",ui-monospace,Consolas,monospace; }
+code, pre, .cmd, code.ic, .checks .r, .checks .wf { font-weight:500; }
+pre .c, code.ic::before, .cmd .c { font-weight:400; }
+
+/* light: the original sand palette, with the plum accent */
+:root[data-theme="light"] {
+  --bg:#e4d5c0; --card:#efe5d8; --ink:#2b241e; --ink2:rgba(43,36,30,.84); --ink3:rgba(43,36,30,.6); --line:rgba(43,36,30,.16);
+  --acc:#6b4f8a; --acc-ink:#f7f1ea; --glow:rgba(107,79,138,.22); --glass:rgba(228,213,192,.72); --bar:rgba(228,213,192,.9); --ok:#4f7d5c;
+  color-scheme:light;
+}
+:root[data-theme="light"] .fig, :root[data-theme="light"] .spec { box-shadow:0 6px 28px rgba(43,36,30,.08); }
+:root[data-theme="light"] .ghost { border-color:var(--acc); color:var(--acc); background:var(--card); }
+:root[data-theme="light"] .checks .hl i { background:var(--acc); box-shadow:0 0 8px rgba(107,79,138,.45); }
+:root[data-theme="light"] .checks .bad i { background:#b0605c; box-shadow:0 0 8px rgba(176,96,92,.4); }
+:root[data-theme="light"] .checks .bad span { color:#9a4f4b; }
+
+/* the toggle: a small pill at the right end of the navbar */
+.theme-toggle { display:inline-flex; align-items:center; gap:8px; padding:7px 13px; border-radius:999px; border:1px solid var(--line); background:var(--glass);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); color:var(--ink); font:400 12px var(--sans); cursor:pointer; transition:border-color .2s; align-self:center; }
+.theme-toggle:hover, .theme-toggle:focus-visible { border-color:var(--acc); outline:none; }
+.theme-toggle svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+.theme-toggle .moon { display:none; }
+:root[data-theme="light"] .theme-toggle .sun { display:none; } :root[data-theme="light"] .theme-toggle .moon { display:block; }
+
+/* icon only: a round button holding just the sun or the moon */
+.theme-toggle { width:34px; height:34px; padding:0; gap:0; justify-content:center; }
+.theme-toggle svg { width:16px; height:16px; }
+
+/* the icon is the button: no pill, no border; hovering fills the sun or the moon in the accent colour */
+.theme-toggle { width:auto; height:auto; padding:4px; border:0; border-radius:0; background:none; -webkit-backdrop-filter:none; backdrop-filter:none; color:var(--ink); }
+.theme-toggle svg { width:20px; height:20px; }
+.theme-toggle svg path, .theme-toggle svg circle { transition:fill .2s, color .2s; }
+.theme-toggle:hover, .theme-toggle:focus-visible { color:var(--acc); }
+.theme-toggle:hover .moon path, .theme-toggle:focus-visible .moon path, .theme-toggle:hover .sun circle, .theme-toggle:focus-visible .sun circle { fill:currentColor; }
+.theme-toggle:focus-visible { outline:2px solid var(--acc); outline-offset:3px; border-radius:6px; }

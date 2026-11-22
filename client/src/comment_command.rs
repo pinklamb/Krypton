@@ -23,7 +23,7 @@ pub const MARKER: &str = "<!-- krypton-gate -->";
 const LAVENDER: &str = "#9a7ed6";
 /// A thin lavender gradient bar across the top of the comment. GitHub drops inline SVG, so it is a plain image on Krypton's site. GitHub
 /// makes every image a link to its copy of the image unless it is already in a link, so it sits in a `#` link: clicking it goes nowhere.
-const BAR: &str = r##"<a href="#"><img src="https://krypton.software/bar.svg" width="100%" height="4" alt=""></a>"##;
+const BAR: &str = r##"<a href="#"><img src="https://krypton.software/img/bar.svg" width="100%" height="4" alt=""></a>"##;
 /// Krypton's mark before the name in the headline: a plain Unicode diamond, so it sits on the line with the words and draws the same in
 /// GitHub, email notifications and terminals, with no image to load.
 const CRYSTAL: &str = "◈";

@@ -6,9 +6,10 @@
 <meta name="description" content="Krypton scores the structure of AI-written code inside your agent's local loop, so the agent untangles brittle functions before a pull request is ever opened. Your source never leaves your machine.">
 <title>Krypton</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
-<link rel="stylesheet" href="assets/landing.css?v=4">
-<link rel="stylesheet" href="assets/landing-themes.css?v=4">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/landing.css?v=5">
+<link rel="stylesheet" href="assets/landing-themes.css?v=5">
+<link rel="stylesheet" href="assets/landing-b.css?v=5">
 <script>/* the theme before anything is drawn, so the page never flashes the other one: ?theme=light|dark in the address, else the saved
    choice, else dark */
 var asked = /[?&]theme=(light|dark)/.exec(location.search);
@@ -17,10 +18,9 @@ catch (e) { document.documentElement.setAttribute('data-theme', asked ? asked[1]
 
 <canvas id="scene" aria-hidden="true"></canvas>
 
-<header class="bar">
-  <a class="mark" href="./" aria-label="Krypton, home"><pre class="xtal" id="xtal" aria-hidden="true"></pre><b>Kr</b><span>ypton</span></a>
-  <nav class="nav" aria-label="Main"><a href="docs">Docs</a><a class="wide" href="#loop">How it works</a><a class="wide" href="#story">Demo</a><a class="wide" href="#start">Get started</a>
-</nav>
+<header class="bar bbar">
+  <span></span><pre class="xtal" id="xtal" hidden></pre>
+  <nav class="bnav" aria-label="Main"><a href="#loop">How it works</a><a href="#story">Demo</a><a href="docs">Docs</a><a href="tree">Visualize</a></nav>
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between light and dark">
     <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><circle cx="12" cy="12" r="4.25"/><path d="M19 12h2.25m-4.3 4.95l1.59 1.59M12 19v2.25m-4.95-4.3l-1.59 1.59M5 12H2.75m4.3-4.95L5.46 5.46M12 5V2.75m4.95 4.3l1.59-1.59"/></g></svg>
     <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"/></svg>
@@ -28,11 +28,24 @@ catch (e) { document.documentElement.setAttribute('data-theme', asked ? asked[1]
 </header>
 
 <main>
-  <section class="hero" aria-label="Krypton">
-    <div>
+  <section class="hero bhero" aria-label="Krypton">
+    <div class="word" aria-hidden="true">KRYPT<span class="o" id="bigGem" data-s="full"><svg viewBox="0 0 50 74" preserveAspectRatio="none"><path class="full" d="M25 2 48 37 25 72 2 37Z"/><path class="mid" d="M25 20 36.5 37 25 54 13.5 37Z"/><path class="out" d="M25 2 48 37 25 72 2 37Z"/></svg></span>N</div>
+    <script>
+    /* the big crystal pulses the way the CLI does while it maps (client/src/loader.rs): hollow, half, full, half, then rests full and bright */
+    (function () {
+      var gem = document.getElementById('bigGem'), SHAPES = ['out', 'mid', 'full', 'mid'], tick = 0;
+      if (!gem || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+      function step() {
+        if (tick < 8) { gem.setAttribute('data-s', SHAPES[tick % 4]); tick++; setTimeout(step, 110); }
+        else { gem.setAttribute('data-s', 'full'); tick = 0; setTimeout(step, 1800); }
+      }
+      step();
+    })();
+    </script>
+    <div class="msg">
       <h1>Keep the reins on your code.</h1>
-      <p class="lede">Untangle AI code before the PR is ever opened. Krypton&rsquo;s deterministic Rust engine scores your code&rsquo;s structure right inside your agent&rsquo;s local loop, spots brittle functions, and has the agent refactor them before anyone reviews them. Your source never leaves your machine.</p>
-      <div class="acts"><a class="cta" href="tree"><svg class="ghi" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Visualize your repo</a><a class="ghost" href="#loop">See how the loop works</a></div>
+      <p>Untangle AI code before the PR is ever opened.</p>
+      <div class="links"><a href="tree">Visualize your repo <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 9 9 3M4 3h5v5"/></svg></a><a href="#loop">See how the loop works</a></div>
     </div>
   </section>
 
@@ -93,9 +106,8 @@ Ticket: fix discount rounding
   </section>
 
   <section class="rows" id="rows" aria-label="How Krypton fits your workflow">
-    <h2>Built for local agent loops first. Ready for GitHub teams second.</h2>
     <article class="row">
-      <div><h3 class="reveal">Your agent cleans up after itself</h3><p class="reveal">Run <code class="ic">krypton setup</code> to set a target score and a cap on retries. Your agent scans after each change, untangles deep nesting and branching hotspots by itself, and only asks for your sign-off when a function hits your retry limit. Answer the questions in the terminal, or click your settings on a local dashboard.</p><p class="reveal">Krypton suggests a target from where you are: if your codebase scores 56, it suggests 70, and you can pick your own. Only new tickets are held to it, so the code they touch gets cleaner while old code never blocks a merge. Run setup again as the score climbs and the suggestion climbs with it.</p><div class="gate reveal" role="group" aria-label="Try the settings"><div class="gq"><span>Target score</span><div class="seg" data-k="target"><button type="button" data-v="60">60</button><button type="button" data-v="70" aria-pressed="true">70</button><button type="button" data-v="80">80</button><button type="button" data-v="90">90</button></div></div><div class="gq"><span>Max tries</span><div class="seg" data-k="tries"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3" aria-pressed="true">3</button><button type="button" data-v="5">5</button></div></div><div class="gq"><span>When stuck</span><div class="seg" data-k="mode"><button type="button" data-v="manual" aria-pressed="true">Ask me</button><button type="button" data-v="auto">Auto</button></div></div></div></div>
+      <div><h3 class="reveal">Your agent cleans up after itself.</h3><p class="reveal">Run <code class="ic">krypton setup</code> to set a target score and a cap on retries. Your agent scans after each change, untangles deep nesting and branching hotspots by itself, and only asks for your sign-off when a function hits your retry limit. Answer the questions in the terminal, or click your settings on a local dashboard.</p><p class="reveal">Krypton suggests a target from where you are: if your codebase scores 56, it suggests 70, and you can pick your own. Only new tickets are held to it, so the code they touch gets cleaner while old code never blocks a merge. Run setup again as the score climbs and the suggestion climbs with it.</p><div class="gate reveal" role="group" aria-label="Try the settings"><div class="gq"><span>Target score</span><div class="seg" data-k="target"><button type="button" data-v="60">60</button><button type="button" data-v="70" aria-pressed="true">70</button><button type="button" data-v="80">80</button><button type="button" data-v="90">90</button></div></div><div class="gq"><span>Max tries</span><div class="seg" data-k="tries"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3" aria-pressed="true">3</button><button type="button" data-v="5">5</button></div></div><div class="gq"><span>When stuck</span><div class="seg" data-k="mode"><button type="button" data-v="manual" aria-pressed="true">Ask me</button><button type="button" data-v="auto">Auto</button></div></div></div></div>
       <div class="fig rev reveal" role="group" aria-label="Example review screen">
         <div class="rh"><span>Example review &middot; fix discount rounding</span><span class="pills"><i id="pT">Target 70</i><i id="pM">Max tries 3</i></span><span id="rvh">Purity <span id="rv0">71</span> <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg> <b id="rvp">71</b></span></div>
         <div class="rc">
@@ -138,11 +150,12 @@ Ticket: fix discount rounding
   </section>
 
   <section class="close" id="start" aria-labelledby="start-h">
-    <div><h2 id="start-h" class="reveal">Start clean. Stay clean.</h2>
+    <div><h2 id="start-h" class="reveal">Take the reins.</h2>
       <p class="reveal" style="margin:0 0 28px">Connect with GitHub, or install the CLI and wire Krypton into your agent&rsquo;s loop to write cleaner code today.</p>
       <div class="acts reveal"><a class="cta" href="docs">Read the CLI docs <svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a></div></div>
     <div class="fig own reveal" id="own">
       <h3 class="ownh">Visualize your code</h3>
+      <p class="ownp">Try it on any public or private repository in your browser. No install needed.</p>
       <a class="gh" href="tree"><svg class="ghi" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Continue with GitHub<svg class="gha" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7-7l7 7l-7 7"/></svg>
 </a>
       <ul class="pts"><li>Read-only access</li><li>Scored in memory, never stored</li><li>Access ends with your visit</li></ul>
@@ -185,7 +198,7 @@ Ticket: fix discount rounding
   step();
 })();
 </script>
-<script src="assets/landing.js?v=4"></script>
+<script src="assets/landing.js?v=5"></script>
 <script>
 /* the garth spec box sits a fixed gap below whichever caption is showing, instead of at the bottom of a tall window */
 (function () {
@@ -208,4 +221,4 @@ Ticket: fix discount rounding
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="assets/landing-3d-themes.js?v=4"></script>
+<script src="assets/landing-3d-b.js?v=5"></script>

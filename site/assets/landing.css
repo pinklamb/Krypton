@@ -215,3 +215,23 @@ html { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
 .log pre::before { content:""; position:absolute; top:16px; left:20px; width:8px; height:8px; border-radius:50%; background:var(--line); box-shadow:14px 0 var(--line), 28px 0 var(--line); }
 .log pre .hl { color:var(--acc); font-weight:600; }
 @media (max-width:900px) { .log { grid-template-columns:minmax(0,1fr); } }
+
+/* hero: supported languages, a copyable install command, and the note under it */
+.hero .stack { margin-top:14px; max-width:60ch; font:italic 400 17px/1.5 var(--serif); color:var(--ink3); }
+.install { position:relative; margin-top:28px; max-width:620px; }
+.install pre { margin:0; padding:16px 92px 16px 20px; border:1px solid var(--line); border-radius:12px; background:var(--glass); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  font:500 13px/1.8 var(--mono); color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere; }
+.install pre .c { color:var(--ink3); user-select:none; }
+.install .copy { position:absolute; top:10px; right:10px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--line); border-radius:8px;
+  background:var(--card); color:var(--ink2); font:400 12px var(--sans); cursor:pointer; }
+.install .copy:hover, .install .copy:focus-visible { color:var(--acc); border-color:var(--acc); outline:none; }
+.install .copy svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.3; }
+.hero .inote { margin-top:10px; font:italic 400 15px/1.5 var(--serif); color:var(--ink3); }
+.hero .inote code { font:400 12.5px var(--mono); color:var(--ink2); } .hero .inote a { color:var(--acc); }
+.own .ownp { margin:-8px 0 0; color:var(--ink2); }
+
+/* the hero's language icons */
+.hero .stack { display:flex; flex-wrap:wrap; align-items:center; gap:8px 18px; }
+.hero .langs { display:inline-flex; align-items:center; gap:12px; font-style:italic; }
+.hero .lang { display:inline-flex; color:var(--ink2); }
+.hero .lang svg { width:20px; height:20px; }

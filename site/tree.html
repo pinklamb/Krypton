@@ -44,8 +44,6 @@
 /* the chevron in the lighter lavender */
 .pick select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23c7b5ec' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 .btn.small { padding:9px 18px; font-size:14px; } .linkbtn { background:none; border:0; color:var(--acc); font:inherit; cursor:pointer; padding:0; text-decoration:underline; }
-.ticks { list-style:none; padding:0; display:flex; flex-wrap:wrap; gap:6px 18px; margin:12px 0 0; font:italic 400 16px var(--serif); color:var(--ink3); }
-.ticks li::before { content:"\2713  "; color:var(--acc); }
 .meterbar { height:10px; border-radius:999px; background:var(--well); overflow:hidden; margin:6px 0 10px; } .meterbar i { display:block; height:100%; width:0; background:var(--acc); border-radius:999px; transition:width .2s; }
 .say { font-size:15px; color:var(--ink2); }
 .err { color:var(--bad); font-size:15px; margin-top:10px; }
@@ -71,7 +69,6 @@
 .worst div:last-child { border-bottom:0; } .worst span { min-width:0; overflow-wrap:anywhere; } .worst b { grid-column:2; grid-row:1; font:italic 400 17px var(--serif); color:var(--acc); font-weight:400; white-space:nowrap; }
 </style>
 
-<div class="eyebrow">See your own tree</div>
 <h1>Visualize your code with your GitHub repo</h1>
 <p class="lede">Connect GitHub with read-only access and pick a repository. Krypton reads it in memory, builds its tree and finds the most tangled functions, then lets it go.</p>
 
@@ -82,7 +79,6 @@
       <h3 id="h1s">Connect GitHub</h3>
       <div id="signedOut">
         <a class="btn small" href="/auth/github"><svg class="gh-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Continue with GitHub</a>
-        <ul class="ticks"><li>Read-only access</li><li>Scored in memory, never stored</li><li>Access ends with your visit</li></ul>
       </div>
       <div id="signedIn" class="acct" hidden>
         <div class="signed"><span class="who"><img id="avatar" alt=""><span>Signed in as <b id="login"></b></span></span><button class="signout" type="button" id="signOut">Sign out</button></div>

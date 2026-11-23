@@ -139,3 +139,12 @@ body::after { content:""; position:fixed; inset:0; z-index:30; pointer-events:no
 
 /* the Krypton gate's result (Purity 71% -> 74% (+3)) in lavender */
 .checks .hl span { color:var(--acc); }
+
+/* phones: the nav stays, as a smaller pill on the left with the sun or moon on the right; it scrolls inside itself on very narrow screens */
+@media (max-width:820px) {
+  .bbar { grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+  .bbar > span:first-child { display:none; }
+  .bnav { display:flex; justify-self:start; max-width:100%; overflow-x:auto; scrollbar-width:none; gap:16px; padding:8px 16px; }
+  .bnav::-webkit-scrollbar { display:none; }
+  .bnav a { font-size:13px; white-space:nowrap; }
+}

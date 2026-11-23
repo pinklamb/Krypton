@@ -1,5 +1,5 @@
 /* The landing page in two themes, on top of landing.css: dark (cocoa, as today) and light (sand), with a toggle at the right end
-   of the navbar. data-theme on <html> picks one; the 3D field repaints itself to match (landing-3d-themes.js). */
+   of the navbar. data-theme on <html> picks one; the 3D field repaints itself to match (landing-3d-b.js). */
 
 /* commands and code: JetBrains Mono 500 */
 :root { --mono:"JetBrains Mono",ui-monospace,Consolas,monospace; }

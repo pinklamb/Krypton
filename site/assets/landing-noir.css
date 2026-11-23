@@ -58,3 +58,14 @@
 
 /* ---------- the rows: "Your agent cleans up after itself" and the other row headings are white, like every heading ---------- */
 .rows .row:not(.safety) h3, .row h3 { color:var(--ink) !important; }
+
+/* ---------- phones: the menu ---------- */
+/* noir.css takes the nav's background away so it reads as plain words on wide screens; on a phone the open menu needs a solid panel,
+   or its links sit straight on the horse and the page. The menu button gets the same frosted night background. */
+@media (max-width:820px) {
+  .bbar .menu { background:rgba(26,16,36,.85) !important; border:1px solid var(--line) !important; color:var(--ink); }
+  .bbar.open .bnav { background:rgba(15,9,20,.96) !important; border:1px solid var(--line) !important; box-shadow:0 18px 48px rgba(0,0,0,.6) !important;
+    -webkit-backdrop-filter:blur(16px) !important; backdrop-filter:blur(16px) !important; }
+  .bbar.open .bnav a { color:var(--ink) !important; }
+  .bbar.open .bnav a:hover, .bbar.open .bnav a:focus-visible { color:var(--horse) !important; background:rgba(46,27,71,.5); }
+}

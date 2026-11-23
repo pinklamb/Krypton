@@ -86,7 +86,7 @@ When a new version is out, Krypton says so after a scan or setup (at most once a
 <pre><code><span class="p">$</span> git add .github/workflows/krypton.yml
 <span class="p">$</span> git commit -m "Add the Krypton gate"
 <span class="p">$</span> git push</code></pre></li>
-<li><b>Scan</b>Every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file is read, skipping whatever <code>.gitignore</code> and <code>.kryptonignore</code> exclude, and <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like. Setup writes a starter <code>.kryptonignore</code> that leaves test files out (<code>tests/</code>, <code>test_*.py</code>, <code>*.test.*</code>, <code>*.spec.*</code> and the like); edit it to change what is skipped, and commit it so the gate skips the same files. At a terminal you see the trees being built, then the purity score from 0 to 100 (higher is lighter) and the most tangled functions; <code>krypton scan . --full</code> adds every hint, and that full review is what an agent or CI reads anyway. Example values:
+<li><b>Scan</b>Every <code>.py .js .jsx .mjs .cjs .ts .tsx .mts .cts</code> file is read, skipping whatever <code>.gitignore</code> and <code>.kryptonignore</code> exclude, and <code>node_modules</code>, <code>dist</code>, <code>.git</code> and the like. Setup writes a starter <code>.kryptonignore</code> that leaves test files out (<code>tests/</code>, <code>test_*.py</code>, <code>*.test.*</code>, <code>*.spec.*</code> and the like); edit it to change what is skipped, and commit it so the gate skips the same files. At a terminal you see the trees being built, then the purity score from 0 to 100 (higher is lighter) and the most tangled functions; <code>krypton scan . --full</code> adds every hint, and that full review is what an agent or CI reads anyway. It ends with <b>What was scored</b>: how many source files were scored, and every one that was not, with why (the <code>.gitignore</code> or <code>.kryptonignore</code> rule, a dependency folder, unchanged since <code>--base</code>, or set aside by the server as a bundled library or generated code), plus a count of the other kinds of file Krypton does not read, such as <code>.css</code> and <code>.html</code>. <code>--json</code> has the same as <code>coverage</code>, and at a terminal one line under the score says how many source files were not scored. Example values:
 <pre><code><span class="p">$</span> krypton scan .
   ◆  Krypton
   Purity  38/100
@@ -111,7 +111,10 @@ When a new version is out, Krypton says so after a scan or setup (at most once a
 - If a function you wrote is flagged, refactor it before finishing:
   early returns, small named helpers, one job per function.
 - Do not pack code onto fewer lines or split one function into trivial wrappers.
-- Re-run Krypton after refactoring and report the purity score.</code></pre>
+- Re-run Krypton after refactoring and report the purity score.
+- Read the "What was scored" list at the end of the review: anything
+  named there (ignored, set aside, unchanged, other kinds of file)
+  was not checked, so say so instead of calling it clean.</code></pre>
 
 <h2 id="how">What happens to a file</h2>
 <div class="flow">

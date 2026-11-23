@@ -16,6 +16,7 @@ use krypton_client::{Builder, ClientConfig, Names};
 use serde_json::Value;
 
 use crate::attempts;
+use crate::coverage::Coverage;
 use crate::diff::changed_since;
 use crate::http::Server;
 use crate::loader::{self, Loader};
@@ -25,7 +26,7 @@ use crate::Failure;
 const USAGE: &str =
     "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--full] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]";
 const EXTENSIONS: [&str; 9] = ["py", "js", "jsx", "mjs", "cjs", "ts", "mts", "cts", "tsx"];
-const SKIP_DIRS: [&str; 12] =
+pub const SKIP_DIRS: [&str; 12] =
     [".git", "node_modules", "dist", "build", "venv", ".venv", "__pycache__", "target", ".next", "coverage", "vendor", "site-packages"];
 const LEVELS: [&str; 3] = ["relaxed", "standard", "strict"];
 
@@ -96,7 +97,8 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
     Ok(options)
 }
 
-fn is_source(path: &Path) -> bool {
+/// A file Krypton reads: Python, JavaScript or TypeScript, by its extension.
+pub fn is_source(path: &Path) -> bool {
     path.extension().and_then(|extension| extension.to_str()).is_some_and(|extension| EXTENSIONS.contains(&extension.to_ascii_lowercase().as_str()))
 }
 
@@ -112,16 +114,9 @@ pub const KRYPTON_IGNORE: &str = ".kryptonignore";
 ///
 /// [`Failure`] when the folder cannot be walked.
 pub fn source_files(root: &Path) -> Result<Vec<String>, Failure> {
-    let walker = ignore::WalkBuilder::new(root)
-        .hidden(false)
-        .git_global(false)
-        .require_git(false)
-        .add_custom_ignore_filename(KRYPTON_IGNORE)
-        .filter_entry(|entry| !(entry.file_type().is_some_and(|kind| kind.is_dir()) && SKIP_DIRS.contains(&entry.file_name().to_string_lossy().as_ref())))
-        .build();
     let mut found = BTreeSet::new();
-    for entry in walker {
-        let entry = entry.map_err(|error| Failure::Read(root.display().to_string(), std::io::Error::other(error.to_string())))?;
+    for entry in crate::coverage::rule_walker(root, true) {
+        let entry = entry.map_err(|error| crate::coverage::walk_failure(root, &error))?;
         let path = entry.path();
         if entry.file_type().is_some_and(|kind| kind.is_file()) && is_source(path) {
             found.extend(path.strip_prefix(root).ok().map(|relative| relative.to_string_lossy().replace('\\', "/")));
@@ -141,8 +136,8 @@ fn put_names_back(text: &str, names: &Names) -> Result<String, Failure> {
     Ok(restored)
 }
 
-/// The request body, and the real names that stay on this machine.
-type Built = (Vec<u8>, Names);
+/// The request body, the real names that stay on this machine, and how many files went into it.
+type Built = (Vec<u8>, Names, usize);
 
 /// The tree of every file to score, as the request body, and the real names that stay here. With `--base`, only the files changed since that ref,
 /// each with the lines that changed.
@@ -170,7 +165,7 @@ fn build_body(options: &Options, files: &[String], loader: Option<&Loader>) -> R
     }
     progress(loader, count, count);
     let body = serde_json::to_vec(&builder.request(wire_files, &options.level, "summary")).map_err(|error| Failure::Output(error.to_string()))?;
-    Ok((body, names))
+    Ok((body, names, count))
 }
 
 /// A progress line on standard error, left out when the loader is drawing there.
@@ -197,7 +192,8 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     if let Some(active) = &loader {
         active.stage(&format!("Reading {} files", files.len()));
     }
-    let (body, names) = build_body(&options, &files, loader.as_ref())?;
+    let (body, names, sent) = build_body(&options, &files, loader.as_ref())?;
+    let mut coverage = Coverage::survey(&options.repo)?;
     note(loader.as_ref(), &format!("sending {} KB of tree (no source text) ...", body.len() / 1000));
     if let Some(active) = &loader {
         active.stage("Scoring on the Krypton server");
@@ -212,22 +208,38 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     }
     let result = answer.get("result").cloned().unwrap_or(Value::Null);
     record(&options, &result, &names)?;
+    coverage.add_answer(&result, files.len(), sent);
     let conclusion = result.get("check_conclusion").and_then(Value::as_str).unwrap_or("unknown");
-    if options.output.json {
-        println!("{}", serde_json::to_string_pretty(&result).map_err(|error| Failure::Output(error.to_string()))?);
-    } else if !options.output.full && io::stdout().is_terminal() {
-        // a person at a terminal: the mark, the score and the worst functions; the hints are one flag away
-        let run = runlog::from_answer(&result, &names, "", 0)?;
-        let color = env::var_os("NO_COLOR").is_none();
-        print!("{}", crate::report::compact(&run, &result, answer.get("usage").unwrap_or(&Value::Null), &options.repo.display().to_string(), color));
-    } else {
-        print_review(&result, answer.get("usage").unwrap_or(&Value::Null), options.output.names.then_some(&names))?;
-    }
+    show(&options, &answer, &names, &coverage)?;
     if conclusion == "success" || options.summary.is_some() {
         Ok(())
     } else {
         Err(Failure::Flagged)
     }
+}
+
+/// The answer as `--json`, the short terminal view, or the full review; each says what was and was not scored.
+fn show(options: &Options, answer: &Value, names: &Names, coverage: &Coverage) -> Result<(), Failure> {
+    let result = answer.get("result").unwrap_or(&Value::Null);
+    let usage = answer.get("usage").unwrap_or(&Value::Null);
+    if options.output.json {
+        let mut shown = result.clone();
+        let covered = serde_json::to_value(coverage).map_err(|error| Failure::Output(error.to_string()))?;
+        shown.as_object_mut().map(|fields| fields.insert("coverage".to_string(), covered));
+        println!("{}", serde_json::to_string_pretty(&shown).map_err(|error| Failure::Output(error.to_string()))?);
+        return Ok(());
+    }
+    if !options.output.full && io::stdout().is_terminal() {
+        // a person at a terminal: the mark, the score and the worst functions; the hints are one flag away
+        let run = runlog::from_answer(result, names, "", 0)?;
+        let color = env::var_os("NO_COLOR").is_none();
+        let notes: Vec<String> = coverage.brief().into_iter().collect();
+        print!("{}", crate::report::compact(&run, result, usage, &crate::report::Target { folder: &options.repo.display().to_string(), notes: &notes }, color));
+        return Ok(());
+    }
+    print_review(result, usage, options.output.names.then_some(names))?;
+    println!("{}", coverage.markdown());
+    Ok(())
 }
 
 /// With `--log` or `--summary`: the scores of this run under their real names, added to the run log (with the attempt) and/or written to a file.

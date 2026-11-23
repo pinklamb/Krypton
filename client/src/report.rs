@@ -76,16 +76,23 @@ fn worst(run: &Run, color: bool) -> Vec<String> {
     lines
 }
 
-/// The whole terminal view for one scan of `target` (the folder as it was typed, for the `--full` hint).
+/// What was scanned: the folder as it was typed (for the `--full` hint), and notes on what was not scored, shown under the count.
+pub struct Target<'a> {
+    pub folder: &'a str,
+    pub notes: &'a [String],
+}
+
+/// The whole terminal view for one scan.
 #[must_use]
-pub fn compact(run: &Run, result: &Value, usage: &Value, target: &str, color: bool) -> String {
+pub fn compact(run: &Run, result: &Value, usage: &Value, target: &Target, color: bool) -> String {
     let mut lines: Vec<String> = head(run, result, usage, color).iter().map(|text| format!("  {text}").trim_end().to_string()).collect();
+    lines.extend(target.notes.iter().map(|note| format!("  {}", paint(note, MUTED, color))));
     if !run.functions.is_empty() {
         lines.push(String::new());
         lines.extend(worst(run, color));
     }
     lines.push(String::new());
-    lines.push(paint(&format!("  Hints and the full report: krypton scan {target} --full"), MUTED, color));
+    lines.push(paint(&format!("  Hints and the full report: krypton scan {} --full", target.folder), MUTED, color));
     lines.join("\n") + "\n"
 }
 
@@ -106,7 +113,7 @@ mod tests {
             62,
             &[("garth/http.py::Client.configure", 11.8), ("garth/data/body_battery.py::BodyBatteryData.get", 46.2), ("garth/http.py::Client.request", 3.3)],
         );
-        compact(&scored, &json!({ "flagged_file_count": 2 }), &json!({ "files": 145, "ms": 412 }), ".", false)
+        compact(&scored, &json!({ "flagged_file_count": 2 }), &json!({ "files": 145, "ms": 412 }), &Target { folder: ".", notes: &[] }, false)
     }
 
     // Krypton's mark and name head the score, the verdict and what was scored, as plain text with no bar.
@@ -141,7 +148,7 @@ mod tests {
     #[test]
     fn test_grouped_and_aligned() {
         assert_eq!([grouped(7), grouped(1150), grouped(1_234_567)], ["7", "1,150", "1,234,567"], "thousands");
-        let text = compact(&run(40, &[("a.py::f", 107.0), ("a.py::g", 9.5)]), &json!({}), &json!({}), ".", true);
+        let text = compact(&run(40, &[("a.py::f", 107.0), ("a.py::g", 9.5)]), &json!({}), &json!({}), &Target { folder: ".", notes: &[] }, true);
         let starts: Vec<usize> = text.lines().filter(|line| line.contains('×')).map(|line| line.find('×').unwrap_or(0)).collect();
         assert!(starts.len() == 2 && starts.windows(2).all(|pair| pair.first() == pair.last()), "the × signs line up even in colour");
     }
@@ -149,12 +156,21 @@ mod tests {
     // A clean codebase gets no list, and a long one is cut to five with a count.
     #[test]
     fn test_compact_lists() {
-        let clean = compact(&run(100, &[]), &json!({}), &json!({ "files": 1, "ms": 5 }), "src", false);
+        let clean = compact(&run(100, &[]), &json!({}), &json!({ "files": 1, "ms": 5 }), &Target { folder: "src", notes: &[] }, false);
         assert!(clean.contains("No function is over the limit.") && !clean.contains("Most tangled"), "nothing to list");
         assert!(clean.contains("1 file scored"), "one file, singular");
         let many: Vec<(String, f64)> = (0..8).map(|n| (format!("a.py::f{n}"), f64::from(n) + 1.5)).collect();
         let borrowed: Vec<(&str, f64)> = many.iter().map(|(k, v)| (k.as_str(), *v)).collect();
-        let long = compact(&run(40, &borrowed), &json!({ "flagged_file_count": 1 }), &json!({}), ".", false);
+        let long = compact(&run(40, &borrowed), &json!({ "flagged_file_count": 1 }), &json!({}), &Target { folder: ".", notes: &[] }, false);
         assert!(long.contains("…and 3 more") && long.contains("8.5×") && !long.contains("  2.5×"), "five shown, worst first");
+    }
+
+    // A note on what was not scored sits right under the count of files scored.
+    #[test]
+    fn test_compact_notes() {
+        let notes = ["2 source files not scored; --full lists them and why".to_string()];
+        let text = compact(&run(90, &[]), &json!({}), &json!({ "files": 3, "ms": 5 }), &Target { folder: ".", notes: &notes }, false);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(lines.get(4).copied(), Some("  2 source files not scored; --full lists them and why"), "the note under the count");
     }
 }

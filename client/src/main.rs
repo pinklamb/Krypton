@@ -21,6 +21,7 @@ use krypton_client::{WalkError, WireError};
 mod attempts;
 mod cancel;
 mod comment_command;
+mod coverage;
 mod diff;
 mod http;
 mod loader;

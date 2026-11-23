@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="assets/landing.css?v=5">
 <link rel="stylesheet" href="assets/landing-themes.css?v=5">
-<link rel="stylesheet" href="assets/landing-b.css?v=6">
+<link rel="stylesheet" href="assets/landing-b.css?v=9">
 <script>/* the theme before anything is drawn, so the page never flashes the other one: ?theme=light|dark in the address, else the saved
    choice, else dark */
 var asked = /[?&]theme=(light|dark)/.exec(location.search);
@@ -20,7 +20,8 @@ catch (e) { document.documentElement.setAttribute('data-theme', asked ? asked[1]
 
 <header class="bar bbar">
   <span></span><pre class="xtal" id="xtal" hidden></pre>
-  <nav class="bnav" aria-label="Main"><a href="#loop">How it works</a><a href="#story">Demo</a><a href="docs">Docs</a><a href="tree">Visualize</a></nav>
+  <button class="menu" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="bnav"><i></i><i></i></button>
+  <nav class="bnav" id="bnav" aria-label="Main"><a href="#loop">How it works</a><a href="#story">Demo</a><a href="docs">Docs</a><a href="tree">Visualize</a></nav>
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between light and dark">
     <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><circle cx="12" cy="12" r="4.25"/><path d="M19 12h2.25m-4.3 4.95l1.59 1.59M12 19v2.25m-4.95-4.3l-1.59 1.59M5 12H2.75m4.3-4.95L5.46 5.46M12 5V2.75m4.95 4.3l1.59-1.59"/></g></svg>
     <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"/></svg>
@@ -198,7 +199,7 @@ Ticket: fix discount rounding
   step();
 })();
 </script>
-<script src="assets/landing.js?v=5"></script>
+<script src="assets/landing.js?v=6"></script>
 <script>
 /* the garth spec box sits a fixed gap below whichever caption is showing, instead of at the bottom of a tall window */
 (function () {
@@ -221,4 +222,4 @@ Ticket: fix discount rounding
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="assets/landing-3d-b.js?v=5"></script>
+<script src="assets/landing-3d-b.js?v=7"></script>

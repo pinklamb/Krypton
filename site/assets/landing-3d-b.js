@@ -16,7 +16,7 @@
   // ---------- two palettes, one per theme. On dark, points glow and add up; on light, they are drawn darker and blended normally,
   // or they would wash out to white ----------
   var THEMES = {
-    dark: { bg: 0x1b1613, add: true, ink: [.62, .56, .50], hot0: [.42, .36, .66], hot1: [.84, .76, 1], fix: [.88, .87, 1], amb: [.66, .58, .50], tree: 1, ambA: .5 },
+    dark: { bg: 0x0b0509, add: true, ink: [.6, .59, .64], hot0: [.46, .36, .78], hot1: [.86, .76, 1], fix: [.9, .83, .72], amb: [.62, .61, .66], tree: 1, ambA: .45 },
     light: { bg: 0xe4d5c0, add: false, ink: [.40, .34, .28], hot0: [.74, .63, .84], hot1: [.38, .22, .55], fix: [.17, .14, .12], amb: [.58, .49, .40], tree: 1.25, ambA: .42 }
   };
 

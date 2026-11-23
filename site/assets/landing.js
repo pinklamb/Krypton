@@ -72,5 +72,25 @@
     draw();
   }
 
-  startHeader(); startMenu(); startReview();
+  // the running horse in the hero: art/horse-frames.json holds each frame of the run as rows of characters, played in the <pre> like a
+  // terminal. Every frame is padded to the same number of rows, so the text never jumps; with reduced motion it shows one still frame.
+  function playHorse(pre, art) {
+    var n = 0, still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, blank = new Array(art.rows + 1).join("\n");
+    pre.style.setProperty("--cols", art.cols); pre.style.setProperty("--rows", art.rows);
+    function show() { pre.textContent = art.frames[n].join("\n") + blank.slice(art.frames[n].length); }
+    show();
+    if (still) { return; }
+    setInterval(function () { n = (n + 1) % art.frames.length; show(); }, art.ms);
+  }
+  function horseFrames(r) {
+    if (!r.ok) { throw new Error("horse-frames.json: HTTP " + r.status); }
+    return r.json();
+  }
+  function startHorse() {
+    var pre = document.getElementById("horse");
+    if (!pre) { return; }
+    fetch("art/horse-frames.json").then(horseFrames).then(function (art) { playHorse(pre, art); }).catch(function (err) { console.error("horse:", err); });
+  }
+
+  startHeader(); startMenu(); startReview(); startHorse();
 })();

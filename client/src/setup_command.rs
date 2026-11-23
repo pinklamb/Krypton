@@ -350,10 +350,10 @@ fn next_steps(settings: &Settings, ignore: Option<&Path>, themes: Option<&Path>,
     }
     match gate {
         Written::Wrote(path) => {
-            lines.push(format!("Wrote {} (the pull request gate: {}). Commit it to turn the gate on.", path.display(), settings.gate.name()));
+            lines.push(format!("Wrote {} (the pull request gate: {}). Commit it to turn the gate on.", path.display(), gate_words(settings)));
         }
         Written::Updated(path) => {
-            lines.push(format!("Updated {} to the new gate ({}). Commit it so pull requests use the new rule.", path.display(), settings.gate.name()));
+            lines.push(format!("Updated {} to the new gate ({}). Commit it so pull requests use the new rule.", path.display(), gate_words(settings)));
         }
         Written::Unchanged(path) => lines.push(format!("{} already has this gate.", path.display())),
         Written::Kept(path) => lines.push(format!("{} has your own edits (setup's line is gone), so it was left as it is.", path.display())),

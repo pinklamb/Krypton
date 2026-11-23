@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500;600&family=Geist+Mono:wght@400;500&display=swap");
+/* Noir: the running-horse look across the whole site, one dark theme (no light theme, no toggle). Loaded last on every page, on top of
+   site.css (the docs pages) or the landing styles (the homepage).
+
+   Type: Geist Mono for the title, the headings, code and small labels, like a terminal; Geist for running text. Sentence case everywhere, no glow on type.
+
+   The palette, from the night-sky reference, and what each colour is for:
+     --bg      #0b0509  night: every page's background, and both 3D scenes' clear colour
+     --card    #1a1024  night lifted toward dusk: cards, code blocks and other raised surfaces
+     --dusk    #2e1b47  dusk: selected states, the hairline under the header, quiet fills
+     --violet  #7d52a8  violet: focus rings and borders that need to show
+     --btn     #dccbea  lilac: buttons
+     --horse   #b08cf4  the horse's lavender: the horse, the title, link hovers
+     --ink     #f6f1fa  white: text and headings
+     --muted   #a497b4  lilac grey: small labels and quiet text */
+
+
+:root {
+  --bg:#0b0509; --card:#1a1024; --well:#07030a; --dusk:#2e1b47; --violet:#7d52a8; --btn:#dccbea; --btn-ink:#0b0509; --horse:#b08cf4;
+  --ink:#f6f1fa; --ink2:rgba(246,241,250,.74); --ink3:#a497b4; --muted:#a497b4; --line:rgba(220,203,234,.1);
+  --acc:#b08cf4; --acc-ink:#0b0509; --sand:#f6f1fa; --glow:rgba(176,140,244,.22); --glass:rgba(11,5,9,.74); --bar:rgba(11,5,9,.86);
+  --code:#dccbea; --word:#f6f1fa; --ok:#9fd3b3; --bad:#e8a0a0;
+  --haze:transparent; --hz1:transparent; --hz2:transparent; --hz3:transparent;
+  --sans:"Geist",system-ui,"Segoe UI",sans-serif; --mono:"Geist Mono",ui-monospace,Consolas,monospace; --serif:"Geist",system-ui,sans-serif; --big:"Geist",system-ui,sans-serif;
+  --display:"Geist Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+html, body { background:var(--bg) !important; }
+body { font-family:var(--sans); font-weight:300; color:var(--ink); }
+body::after { opacity:.25; }
+
+/* ---------- headings: Geist Mono, white, sentence case, no glow ---------- */
+:is(.loop h2, .priv h2, .close h2, .vs h2, main h1:not(.msg h1)) {
+  font:400 clamp(26px,3vw,44px)/1.2 var(--display) !important; text-transform:none; letter-spacing:-.02em; word-spacing:0; color:var(--ink);
+  text-shadow:none; max-width:30ch; text-wrap:balance; }
+main h2:not(.loop h2, .priv h2, .close h2, .vs h2, .rows > h2) {
+  font:400 clamp(19px,1.7vw,24px)/1.3 var(--display); text-transform:none; letter-spacing:-.02em; color:var(--ink); text-shadow:none; }
+:is(.row h3, .trio h3, .ownh, .card h3, main h3) { font-family:var(--sans); font-weight:400; letter-spacing:-.01em; text-transform:none; color:var(--ink); text-shadow:none; }
+
+/* ---------- small labels: Geist Mono, small, lilac grey, no capitals ---------- */
+:is(.eyebrow, .rows > h2, .pages h2, legend, .k2, .rh, .vst, .lab, .caps .st, .hud) {
+  font:500 12.5px/1.5 var(--mono) !important; font-style:normal !important; text-transform:none !important; letter-spacing:0 !important; color:var(--muted); }
+
+/* ---------- text and links: white, the horse's lavender on hover ---------- */
+:is(p, li, td) { color:var(--ink2); }
+a:not(.cta):not(.gh):not(.go):hover { color:var(--horse); }
+:is(.bnav a, nav.main > a, .more summary, .bhero .links a) { color:var(--ink) !important; opacity:1; transition:color .2s; }
+:is(.bnav a, nav.main > a, .more summary, .bhero .links a):is(:hover, :focus-visible) { color:var(--horse) !important; }
+.bhero .links a { border-bottom-color:rgba(246,241,250,.28); } .bhero .links a:hover { border-bottom-color:var(--horse); }
+:focus-visible { outline-color:var(--violet); }
+
+/* ---------- surfaces: night lifted toward dusk, a lilac hairline, no glow ---------- */
+:is(.card, .fig, .spec, .rev, .vsc, .own, .note, .limit, .glance > div, .tile, .rc, .poster, .bills, .log .runs, .pop) {
+  background:var(--card) !important; border:1px solid var(--line); box-shadow:0 12px 40px rgba(0,0,0,.4) !important; }
+:is(.card, .tile):hover { border-color:rgba(125,82,168,.6); }
+:is(pre:not(.xtal), code.ic, .cmd) { background:var(--well) !important; border:1px solid var(--line); }
+code { color:var(--code); }
+:is(table, th, td) { border-color:var(--line) !important; }
+.pages a[aria-current="page"] { background:var(--dusk) !important; }
+
+/* ---------- numbers and data highlights: white, a touch heavier ---------- */
+:is(.nums b, .checks .hl span, .glance .num, #pur, .bars .big, .gate .gq > span) { color:var(--ink) !important; font-weight:500; text-shadow:none; }
+
+/* ---------- buttons: lilac, filled; a second one beside it is an outline; hover brings in the horse's lavender ---------- */
+:is(a, button):is(.cta, .gh, .acts2 .go, .ghost, .go), div.cta a:first-child {
+  background:var(--btn) !important; color:var(--btn-ink) !important; border:1px solid var(--btn) !important; text-shadow:none; box-shadow:none; transition:background .2s, border-color .2s; }
+:is(a, button):is(.cta, .gh, .acts2 .go, .ghost, .go):hover, div.cta a:first-child:hover { background:var(--horse) !important; border-color:var(--horse) !important; }
+div.cta { background:none !important; border:0 !important; box-shadow:none !important; }
+div.cta.cta a + a { background:transparent !important; color:var(--btn) !important; border:1px solid rgba(220,203,234,.5) !important; }
+div.cta.cta a + a:hover { color:var(--horse) !important; border-color:var(--horse) !important; }
+.seg button[aria-pressed="true"] { background:var(--btn); color:var(--btn-ink); }
+
+/* ---------- the headers: just words on the night, no pill and no box ---------- */
+.bnav { background:none !important; border:0 !important; box-shadow:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+:is(header.top, header.top .bar) { background:rgba(11,5,9,.82) !important; box-shadow:none !important; }
+header.top { -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border-bottom:1px solid var(--dusk); }
+.foot { background:var(--bg); border-top:1px solid var(--line); }
+/* the light/dark switch is gone: one theme */
+.theme-toggle { display:none !important; }
+
+
+/* ---------- code windows ---------- */
+/* the docs' crystal logo is drawn in a <pre>: it is not a code block, so it gets no box */
+pre.xtal { background:none !important; border:0 !important; box-shadow:none !important; padding:0 !important; }
+/* the three dots at the top of a code window are the red, yellow and green window buttons */
+pre:not(.xtal)::before { background:#ff5f57 !important; box-shadow:14px 0 #febc2e, 28px 0 #28c840 !important; }
+/* a long line scrolls inside the code, not the whole window, so the Copy button stays put in its corner */
+pre:has(> code) { overflow:hidden !important; }
+pre > code { display:block; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
+/* commands: the $ and what you type in light purple; output and comments stay as they are */
+pre .p, pre .cm { color:#c6b0f7 !important; }

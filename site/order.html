@@ -8,6 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/noir.css?v=1">
 <script src="assets/site.js" defer></script>
 </head>
 <body>
@@ -78,7 +79,7 @@
 <p>Providers cache the longest identical prefix of a request, so files that rarely change belong at the front. <a href="prompt-caching">Prompt caching</a> shows that this helps a lot on some repositories and can hurt on others, for example after a refactor. A tool that always reorders would sometimes make a request worse. <code>krypton order</code> is built so that it cannot do that on evidence: it tests the order against your history first.</p>
 
 <h2 id="use">Using it</h2>
-<pre><code><span class="p">$</span> krypton order . --subdir src --ext .py,.ts --files request.txt --model gpt-4o --post
+<pre><code><span class="p">$</span> <span class="cm">krypton order . --subdir src --ext .py,.ts --files request.txt --model gpt-4o --post</span>
 <span class="c"># request.txt: the files in this request, one per line, in your current order</span></code></pre>
 <p>The client reads git on your machine and sends the server <b>only file names, token counts, and which files each recent commit touched</b>: no source, no commit messages, no authors. The server decides and answers.</p>
 <div class="scroll"><table>

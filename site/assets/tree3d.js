@@ -10,7 +10,7 @@
   'use strict';
   var CODES = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   // the cocoa palette: points on the dark background add up, so they glow
-  var C = { bg: 0x1b1613, ink: [.62, .56, .50], hot0: [.42, .36, .66], hot1: [.84, .76, 1] };
+  var C = { bg: 0x0b0509, ink: [.6, .59, .64], hot0: [.46, .36, .78], hot1: [.86, .76, 1] };
   // the function under the pointer grows and turns the deepest lavender; the other tangled functions step back while one is picked
   var VERT = 'attribute float sev; attribute float size; attribute float alpha; attribute float fn; uniform float k; uniform float uSel; uniform mat3 uRot; uniform vec3 uInk; uniform vec3 uHot0; uniform vec3 uHot1; varying vec3 vc; varying float va;' +
     'void main(){ bool picked = uSel >= 0.0 && abs(fn - uSel) < 0.5; bool other = uSel >= 0.0 && fn >= 0.0 && !picked;' +

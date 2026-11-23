@@ -10,11 +10,9 @@
 <link rel="stylesheet" href="assets/landing.css?v=5">
 <link rel="stylesheet" href="assets/landing-themes.css?v=5">
 <link rel="stylesheet" href="assets/landing-b.css?v=9">
-<script>/* the theme before anything is drawn, so the page never flashes the other one: ?theme=light|dark in the address, else the saved
-   choice, else dark */
-var asked = /[?&]theme=(light|dark)/.exec(location.search);
-try { document.documentElement.setAttribute('data-theme', asked ? asked[1] : localStorage.getItem('kr-theme') === 'light' ? 'light' : 'dark'); }
-catch (e) { document.documentElement.setAttribute('data-theme', asked ? asked[1] : 'dark'); }</script>
+<link rel="stylesheet" href="assets/noir.css?v=1">
+<link rel="stylesheet" href="assets/landing-noir.css?v=1">
+<script>document.documentElement.setAttribute('data-theme', 'dark');</script>
 
 <canvas id="scene" aria-hidden="true"></canvas>
 
@@ -22,30 +20,15 @@ catch (e) { document.documentElement.setAttribute('data-theme', asked ? asked[1]
   <span></span><pre class="xtal" id="xtal" hidden></pre>
   <button class="menu" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="bnav"><i></i><i></i></button>
   <nav class="bnav" id="bnav" aria-label="Main"><a href="#loop">How it works</a><a href="#story">Demo</a><a href="docs">Docs</a><a href="tree">Visualize</a></nav>
-  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between light and dark">
-    <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><circle cx="12" cy="12" r="4.25"/><path d="M19 12h2.25m-4.3 4.95l1.59 1.59M12 19v2.25m-4.95-4.3l-1.59 1.59M5 12H2.75m4.3-4.95L5.46 5.46M12 5V2.75m4.95 4.3l1.59-1.59"/></g></svg>
-    <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"/></svg>
-  </button>
 </header>
 
 <main>
   <section class="hero bhero" aria-label="Krypton">
-    <div class="word" aria-hidden="true">KRYPT<span class="o" id="bigGem" data-s="full"><svg viewBox="0 0 50 74" preserveAspectRatio="none"><path class="full" d="M25 2 48 37 25 72 2 37Z"/><path class="mid" d="M25 20 36.5 37 25 54 13.5 37Z"/><path class="out" d="M25 2 48 37 25 72 2 37Z"/></svg></span>N</div>
-    <script>
-    /* the big crystal pulses the way the CLI does while it maps (client/src/loader.rs): hollow, half, full, half, then rests full and bright */
-    (function () {
-      var gem = document.getElementById('bigGem'), SHAPES = ['out', 'mid', 'full', 'mid'], tick = 0;
-      if (!gem || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-      function step() {
-        if (tick < 8) { gem.setAttribute('data-s', SHAPES[tick % 4]); tick++; setTimeout(step, 110); }
-        else { gem.setAttribute('data-s', 'full'); tick = 0; setTimeout(step, 1800); }
-      }
-      step();
-    })();
-    </script>
+    <div class="plainname"><span class="pr">&gt;</span>krypton<span class="cur" aria-hidden="true"></span></div>
+    <pre class="horse-ascii" id="horse" role="img" aria-label="A horse running, drawn in characters" style="--cols:96;--rows:32"></pre>
     <div class="msg">
       <h1>Keep the reins on your code.</h1>
-      <p>Untangle AI code before the PR is ever opened.</p>
+      <p class="sum">Krypton untangles AI code before the PR is ever opened. It maps every function your agent writes into a tree on your machine, and a fast scoring engine written in Rust tells the agent what to clean up while it works.</p>
       <div class="links"><a href="tree">Visualize your repo <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 9 9 3M4 3h5v5"/></svg></a><a href="#loop">See how the loop works</a></div>
     </div>
   </section>
@@ -53,15 +36,14 @@ catch (e) { document.documentElement.setAttribute('data-theme', asked ? asked[1]
   <section class="loop" id="loop" aria-labelledby="loop-h">
     <h2 id="loop-h" class="reveal">Don&rsquo;t wait for a CI gate to tell you an agent broke your architecture.</h2>
     <p class="reveal">Linters and GitHub Actions run after the work is done, and leave you reviewing messy diffs. Krypton closes the loop on your machine: your agent writes a change, Krypton scores it across the full syntax tree, and the agent refactors the hotspots before it opens a clean pull request.</p>
-    <ol class="steps reveal" aria-label="The loop">
-      <li><span class="sn">1</span><b>Agent edits</b><span>writes the change on your machine</span></li>
-      <li class="sa" aria-hidden="true"><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></li>
-      <li><span class="sn">2</span><b>Krypton scores</b><span>every function, across the full syntax tree</span></li>
-      <li class="sa" aria-hidden="true"><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></li>
-      <li><span class="sn">3</span><b>Agent refactors</b><span>the hotspots, until the code meets your target</span></li>
-      <li class="sa" aria-hidden="true"><svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></li>
-      <li class="end"><span class="sn">4</span><b>Clean pull request</b><span>the GitHub Action stays as an optional safety net</span></li>
-    </ol>
+    <div class="pipe reveal" role="list" aria-label="The loop">
+      <div class="pipe-bar"><span>agent loop</span><span>on your machine</span></div>
+      <div class="pipe-row" role="listitem"><span class="pc"><i>&gt;</i>Agent edits</span><span class="pd">writes the change on your machine</span></div>
+      <div class="pipe-row" role="listitem"><span class="pc"><i>&gt;</i>Krypton scores</span><span class="pd">every function, across the full syntax tree</span></div>
+      <div class="pipe-row" role="listitem"><span class="pc"><i>&gt;</i>Agent refactors</span><span class="pd">the hotspots, until the code meets your target</span></div>
+      <div class="pipe-loop" aria-hidden="true"><svg class="lp" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"/></svg>scores and refactors repeat until the target is met</div>
+      <div class="pipe-row end" role="listitem"><span class="pc"><i>&gt;</i>Clean pull request</span><span class="pd">the GitHub Action stays as an optional safety net</span></div>
+    </div>
   </section>
 
   <section class="priv log" id="log" aria-labelledby="log-h">
@@ -73,7 +55,7 @@ catch (e) { document.documentElement.setAttribute('data-theme', asked ? asked[1]
 {"run":2,"ticket":"fix discount rounding","purity":71,"functions":{"checkout.py::apply_discount":43.0}}
 {"run":3,"ticket":"fix discount rounding","purity":71,"functions":{"checkout.py::apply_discount":44.0}}
 
-<span class="c">$</span> krypton review
+<span class="p">$</span> <span class="cm">krypton review</span>
 Ticket: fix discount rounding
 <span class="hl">Stuck after 3 runs: 1</span>
   checkout.py &middot; apply_discount: 46&times; &rarr; 45&times; &rarr; 43&times; &rarr; 44&times; (best: run 2)
@@ -100,9 +82,9 @@ Ticket: fix discount rounding
   <section class="priv" id="privacy" aria-labelledby="priv-h">
     <div><h2 id="priv-h" class="reveal">Your source code never leaves your machine.</h2>
       <p class="reveal">Krypton parses your code on your computer and swaps every function, variable and file name for a keyed hash. Only the structure is sent to be scored. The key is made fresh for every scan and stays with you.</p></div>
-    <pre class="fig reveal"><span class="c">$</span> krypton wire folder/filename.py
+    <pre class="fig reveal"><span class="p">$</span> <span class="cm">krypton wire folder/filename.py</span>
 <span class="c"># prints exactly what would be sent for that file</span>
-<span class="c">$</span> krypton scan . --base origin/main
+<span class="p">$</span> <span class="cm">krypton scan . --base origin/main</span>
 <span class="c"># scores only what this branch changed</span></pre>
   </section>
 
@@ -128,7 +110,7 @@ Ticket: fix discount rounding
         <div class="fn">Measured on garth. The cleanup costs money once; savings vary by repo.</div>
       </div>
     </article>
-    <article class="tc tx"><h3 class="reveal">Smarter prompt caching</h3><p class="reveal">Once your code is clean, reorder what your agent reads. Building your own agent? Run <code class="ic">krypton order</code> before you assemble its prompts: it replays your git history against several file orders and picks the one that reuses the most of the prompt cache, or leaves yours alone.</p><pre class="cmd reveal"><span class="c">$</span> krypton order</pre>
+    <article class="tc tx"><h3 class="reveal">Smarter prompt caching</h3><p class="reveal">Once your code is clean, reorder what your agent reads. Building your own agent? Run <code class="ic">krypton order</code> before you assemble its prompts: it replays your git history against several file orders and picks the one that reuses the most of the prompt cache, or leaves yours alone.</p><pre class="cmd reveal"><span class="p">$</span> <span class="cm">krypton order</span></pre>
       <div class="fig bills reveal" role="img" aria-label="Share of each prompt reused from cache on garth, live: stable files first 71% (picked), alphabetical 47%, reverse alphabetical 0%. 35% lower prompt bill than alphabetical.">
         <div class="lg"><span><i class="s1"></i>Reused from cache</span><span><i class="s2"></i>Sent fresh</span></div>
         <div class="bl pick"><div class="bh"><span>Stable files first <em>picked</em></span><b>71%</b></div><div class="st"><i class="s1" style="--w:71%" title="71% reused from cache"></i><i class="s2" style="--w:29%" title="29% sent fresh"></i></div></div>
@@ -172,21 +154,6 @@ Ticket: fix discount rounding
    \/   </pre><b>Krypton</b></a><a class="early" href="https://github.com/pinklamb/Krypton/issues/new?title=GitLab%20support">Using GitLab? Request early access</a><span class="copy">&copy; 2026 Krypton</span></footer>
 
 <script>
-/* the toggle: flip data-theme, remember it, and tell the 3D field to repaint */
-(function () {
-  var root = document.documentElement, button = document.getElementById('themeToggle');
-  function show() { button.setAttribute('aria-label', root.getAttribute('data-theme') === 'light' ? 'Switch to dark' : 'Switch to light'); }
-  button.addEventListener('click', function () {
-    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    root.setAttribute('data-theme', next);
-    try { localStorage.setItem('kr-theme', next); } catch (e) { /* storage blocked: the choice lasts this visit */ }
-    document.dispatchEvent(new CustomEvent('kr-theme', { detail: next }));
-    show();
-  });
-  show();
-})();
-</script>
-<script>
 /* the Krypton gate line pulses its diamond the way the CLI does while it maps (client/src/loader.rs): ◇ ◈ ◆ ◈, then rests on a bright ◆ */
 (function () {
   var marks = document.querySelectorAll('.checks .kd'), PULSE = ['◇', '◈', '◆', '◈'], tick = 0;
@@ -199,7 +166,7 @@ Ticket: fix discount rounding
   step();
 })();
 </script>
-<script src="assets/landing.js?v=7"></script>
+<script src="assets/landing.js?v=8"></script>
 <script>
 /* the garth spec box sits a fixed gap below whichever caption is showing, instead of at the bottom of a tall window */
 (function () {
@@ -222,4 +189,4 @@ Ticket: fix discount rounding
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="assets/landing-3d-b.js?v=8"></script>
+<script src="assets/landing-3d-b.js?v=12"></script>

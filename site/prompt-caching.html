@@ -8,6 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1 13 8 8 15 3 8Z%27 fill=%27none%27 stroke=%27%236b4f8a%27 stroke-width=%271.4%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200..600&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/noir.css?v=1">
 <script src="assets/site.js" defer></script>
 </head>
 <body>
@@ -80,7 +81,7 @@
 <p>So the best order puts the files that rarely change first and the ones that change often last.</p>
 
 <h2 id="order">Krypton's ordering</h2>
-<pre><code><span class="p">$</span> krypton order . --subdir src --ext .py,.ts --model gpt-4o --post
+<pre><code><span class="p">$</span> <span class="cm">krypton order . --subdir src --ext .py,.ts --model gpt-4o --post</span>
 <span class="c"># the order to send the files in, or your own order when Krypton would not win</span></code></pre>
 <p>Krypton's ordering algorithm uses each file's change history. Build your prompt from the files in that order. The ordering is a hint from history, not a guarantee, and it never changes a score.</p>
 

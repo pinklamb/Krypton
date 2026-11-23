@@ -6,7 +6,12 @@
   'use strict';
   var V = THREE.Vector3, ZERO = new THREE.Vector3();
   var CODES = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  var REDUCE = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || location.hash === '#rm';
+  // still pictures for anyone who asked their system for less motion (or #rm in the address, for testing)
+  function prefersStill() {
+    if (location.hash === '#rm') { return true; }
+    return !!window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  var REDUCE = prefersStill();
 
   // ---------- two palettes, one per theme. On dark, points glow and add up; on light, they are drawn darker and blended normally,
   // or they would wash out to white ----------
@@ -407,8 +412,12 @@
     if (document.fonts && document.fonts.ready) { document.fonts.ready.then(go); } else { go(); }
   }
 
-  fetch('assets/garth-tree.json?v=1').then(function (r) {
+  function treeData(r) {
     if (!r.ok) { throw new Error('garth-tree.json: HTTP ' + r.status); }
     return r.json();
-  }).then(startField).catch(function (err) { console.error('landing 3D field:', err); });
+  }
+  function loadTree() {
+    fetch('assets/garth-tree.json?v=1').then(treeData).then(startField).catch(function (err) { console.error('landing 3D field:', err); });
+  }
+  loadTree();
 })();

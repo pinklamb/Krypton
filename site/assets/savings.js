@@ -16,15 +16,22 @@
   var NS = 'http://www.w3.org/2000/svg';
   var $ = function (id) { return document.getElementById(id); };
 
-  var repo = null;
-  try { repo = JSON.parse(sessionStorage.getItem('kr-repo') || 'null'); } catch (e) { repo = null; }
-  var S = { devs: 50, turns: 100, lines: 25000, tpl: 11.5, model: 'sonnet', refactor: true, effect: REFACTOR };
-  if (repo && repo.lines > 0) {
+  // a repository scanned on the tree page, if there is one
+  function readRepo() {
+    try { return JSON.parse(sessionStorage.getItem('kr-repo') || 'null'); } catch (e) { return null; }
+  }
+  // the example team's numbers, or the scanned repository's: its size, tokens a line, and how much cleaner code would save
+  function startState(repo) {
+    var S = { devs: 50, turns: 100, lines: 25000, tpl: 11.5, model: 'sonnet', refactor: true, effect: REFACTOR };
+    if (!repo || !(repo.lines > 0)) { return S; }
+    var tangledShare = repo.functions ? repo.tangled / repo.functions : 0;
     S.devs = 10; S.lines = repo.lines;
     S.tpl = Math.min(20, Math.max(1, Math.round(10 * (repo.characters / CHARS_PER_TOKEN) / repo.lines) / 10));
-    S.effect = REFACTOR * Math.min(1, (repo.functions ? repo.tangled / repo.functions : 0) / GARTH_TANGLED_SHARE);
+    S.effect = REFACTOR * Math.min(1, tangledShare / GARTH_TANGLED_SHARE);
     S.refactor = repo.tangled > 0;
+    return S;
   }
+  var repo = readRepo(), S = startState(repo);
 
   function money(v) { return v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : v >= 1e4 ? '$' + (v / 1e3).toFixed(1) + 'K' : v >= 100 ? '$' + Math.round(v).toLocaleString('en-US') : '$' + v.toFixed(2); }
   function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
@@ -106,8 +113,8 @@
     for (var d = 0; d < 9; d++) { el('circle', { cx: x0 + 34 + d * 28, cy: base, r: 1.6, fill: 'rgba(255,255,255,.5)' }, svg); }
   }
 
-  function render() {
-    var b = calc();
+  // the headline numbers: what is saved, as money, a share and per developer
+  function renderTotals(b) {
     $('saved').textContent = money(b.saved);
     $('facts').innerHTML = '<span><b>' + fmt(S.devs) + '</b> developer' + (S.devs === 1 ? '' : 's') + '</span><span><b>' + S.turns + '</b> agent turns a day each</span><span><b>' + fmt(S.lines) + '</b> lines</span><span>' + MODELS[S.model].name + ', list prices</span>';
     $('pct').textContent = Math.round(100 * b.saved / b.today) + '%';
@@ -118,32 +125,58 @@
     $('arcToday').textContent = money(b.today) + ' today';
     $('arcPay').textContent = (100 * b.full / b.today).toFixed(1) + '%';
     $('arcKr').textContent = money(b.full) + ' with Krypton';
+  }
+
+  // the controls' own read-outs and the cleaner-code switch's wording
+  function renderControls(b) {
     $('devsOut').textContent = fmt(S.devs); $('turnsOut').textContent = S.turns; $('linesOut').textContent = fmt(S.lines) + ' lines';
     $('tokHint').textContent = 'About ' + tokK(b.C) + ' tokens each time an agent reads it (' + S.tpl + ' a line).';
     $('modelPick').innerHTML = Object.keys(MODELS).map(function (k) { return '<button type="button" data-k="' + k + '" aria-pressed="' + (k === S.model) + '">' + MODELS[k].name + '</button>'; }).join('');
     $('effLabel').textContent = 'Include cleaner code: ' + (S.effect * 100).toFixed(1) + '% fewer tokens per change';
     $('effNote').textContent = repo ? (repo.tangled ? 'Scaled from the 16.9% measured after a cleanup to your share of tangled functions.' : 'No tangled functions were found, so no cleaner-code saving is assumed.') : 'The average over six measured runs after a cleanup; the typical run saved about 6%.';
+  }
+
+  // the assumptions behind the numbers, listed under the chart
+  function renderAssumptions() {
     var m = MODELS[S.model];
     $('assume').innerHTML = [['Prompt reused: today / krypton order (garth)', Math.round(REUSE.alpha * 100) + '% / ' + Math.round(REUSE.krypton * 100) + '%'],
       ['Fewer tokens per change after a cleanup', S.refactor ? (S.effect * 100).toFixed(1) + '%' : 'off'],
       ['Price per million: input / cached / write', '$' + m.input.toFixed(2) + ' / $' + m.read.toFixed(2) + ' / $' + m.write.toFixed(2)],
       ['Working days a month · tokens a line', DAYS + ' · ' + S.tpl]].map(function (r) { return '<div><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('');
+  }
+
+  function render() {
+    var b = calc();
+    renderTotals(b); renderControls(b); renderAssumptions();
     drawModels(); drawArcs(b);
   }
 
-  if (repo) {
+  // the badge naming the scanned repository, when the numbers are its own
+  function showRepo() {
+    if (!repo) { return; }
     $('svEyebrow').textContent = 'Savings for ' + clean(repo.repo);
     $('repoBadge').hidden = false;
     $('repoBadge').innerHTML = 'Based on <b>' + clean(repo.repo) + '</b><span>' + fmt(repo.files) + ' files</span><span>' + fmt(repo.lines) + ' lines</span><span>about ' + tokK(repo.characters / CHARS_PER_TOKEN) + ' tokens each time it is read</span><span>' + fmt(repo.tangled) + ' tangled functions</span>';
   }
-  ['devs', 'turns', 'lines'].forEach(function (k) {
+  // the sliders, the model buttons and the cleaner-code switch all redraw the page
+  function wireSlider(k) {
     var input = $(k);
     if (k === 'lines' && S.lines > +input.max) { input.max = S.lines; }
     input.value = S[k];
     input.addEventListener('input', function () { S[k] = +input.value; render(); });
-  });
-  $('modelPick').addEventListener('click', function (e) { var b = e.target.closest('[data-k]'); if (b) { S.model = b.getAttribute('data-k'); render(); } });
-  $('refactor').checked = S.refactor;
-  $('refactor').addEventListener('change', function () { S.refactor = $('refactor').checked; render(); });
+  }
+  function pickModel(e) {
+    var b = e.target.closest('[data-k]');
+    if (!b) { return; }
+    S.model = b.getAttribute('data-k'); render();
+  }
+  function wireControls() {
+    ['devs', 'turns', 'lines'].forEach(wireSlider);
+    $('modelPick').addEventListener('click', pickModel);
+    $('refactor').checked = S.refactor;
+    $('refactor').addEventListener('change', function () { S.refactor = $('refactor').checked; render(); });
+  }
+
+  showRepo(); wireControls();
   drawArt(); drawBarcode(); render();
 })();

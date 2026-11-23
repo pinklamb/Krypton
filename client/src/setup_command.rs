@@ -1,4 +1,4 @@
-//! `krypton setup [REPO] [--page] [--mode manual|auto] [--target N] [--runs N] [--gate off|worse|target] [--no-map]`: set up Krypton for one
+//! `krypton setup [REPO] [--page [--theme cocoa|blossom]] [--mode manual|auto] [--target N] [--runs N] [--gate off|worse|target] [--no-map]`: set up Krypton for one
 //! repository, once.
 //!
 //! 0. It logs you in with GitHub if you are not yet (`krypton login`): the server scores only for a logged-in user.
@@ -30,7 +30,7 @@ use crate::workflow::{self, Gate, Written};
 use crate::Failure;
 
 const USAGE: &str =
-    "usage: krypton setup [REPO] [--page [--listen HOST:PORT]] [--mode manual|auto] [--target 0-100] [--runs 1-10] [--gate off|worse|target] [--no-map]";
+    "usage: krypton setup [REPO] [--page [--listen HOST:PORT] [--theme cocoa|blossom]] [--mode manual|auto] [--target 0-100] [--runs 1-10] [--gate off|worse|target] [--no-map]";
 const SETTINGS: &str = "settings.json";
 const BASELINE: &str = "baseline.json";
 /// Used when nobody answers a question (an empty line) and no flag was given.
@@ -337,8 +337,10 @@ fn ask_all(prompt: &mut Prompt, given: &Options, baseline: Option<i64>, suggest:
 fn next_steps(settings: &Settings, ignore: Option<&Path>, themes: Option<&Path>, gate: &Written) -> String {
     let handled = if settings.mode == Mode::Auto { "automatically (best run kept)" } else { "by you, on a local review page" };
     let mut lines = vec![format!(
-        "Saved: target {} purity per ticket, {} tries before a function is stuck, stuck functions handled {handled}.",
-        settings.target, settings.max_runs
+        "Saved: target {} purity per ticket, {} tries before a function is stuck, stuck functions handled {handled}, pull request gate: {}.",
+        settings.target,
+        settings.max_runs,
+        gate_words(settings)
     )];
     if let Some(path) = ignore {
         lines.push(format!("Wrote {} so test files are not scored. Edit it to change what is skipped, and commit it.", path.display()));
@@ -363,7 +365,17 @@ fn next_steps(settings: &Settings, ignore: Option<&Path>, themes: Option<&Path>,
         "Change any of this with krypton setup again, krypton setup --page, or: krypton setup --mode manual|auto --target N --runs N --gate off|worse|target"
             .to_string(),
     );
+    lines.push("Setup finished.".to_string());
     lines.join("\n")
+}
+
+/// The gate as a person would say it.
+fn gate_words(settings: &Settings) -> String {
+    match settings.gate {
+        Gate::Off => "none".to_string(),
+        Gate::Worse => "never worse".to_string(),
+        Gate::Target => format!("changed files must reach {}", settings.target),
+    }
 }
 
 #[derive(Default)]
@@ -376,6 +388,7 @@ struct Options {
     no_map: bool,
     page: bool,
     listen: String,
+    theme: crate::setup_page::Theme,
 }
 
 fn usage(message: &str) -> Failure {
@@ -396,6 +409,7 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
             "--no-map" => options.no_map = true,
             "--page" => options.page = true,
             "--listen" => options.listen = value("--listen")?,
+            "--theme" => options.theme = crate::setup_page::Theme::parse(&value("--theme")?).ok_or_else(|| usage("--theme is cocoa or blossom"))?,
             flag if flag.starts_with("--") => return Err(usage(&format!("unknown option {flag}"))),
             path => options.repo = PathBuf::from(path),
         }
@@ -426,7 +440,7 @@ fn choose(options: &Options, baseline: Option<i64>, suggest: i64) -> Result<Sett
     let everything_given = options.mode.is_some() && options.target.is_some() && options.max_runs.is_some() && options.gate.is_some();
     let page = options.page || (!everything_given && prompt.ask(WHERE_QUESTION, false, parse_where)?);
     if page {
-        return crate::setup_page::choose(&options.listen, &from_flags(options, baseline, suggest, Gate::Worse));
+        return crate::setup_page::choose(&options.listen, &from_flags(options, baseline, suggest, Gate::Worse), options.theme);
     }
     ask_all(&mut prompt, options, baseline, suggest)
 }

@@ -1,0 +1,15 @@
+# Files Krypton does not score, in .gitignore's syntax. Whatever .gitignore skips is skipped too.
+# Written by `krypton setup`. Edit it freely, and commit it so the pull request gate skips the same files.
+
+# Tests check the code; they are not the code people change, so they do not count toward purity.
+# Delete a line, or add one starting with ! (for example !tests/helpers.py), to score those files again.
+test_*.py
+*_test.py
+conftest.py
+tests/
+test/
+spec/
+__tests__/
+__mocks__/
+*.test.*
+*.spec.*

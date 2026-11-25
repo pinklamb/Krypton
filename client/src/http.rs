@@ -57,16 +57,56 @@ fn address(flag: Option<&str>, environment: Option<String>) -> String {
     flag.filter(|text| named(text)).map(ToString::to_string).or_else(|| environment.filter(|text| named(text))).unwrap_or_else(|| DEFAULT_SERVER.to_string())
 }
 
+/// Hosts plain `http://` may go to: this computer only. `host.docker.internal` is this computer as seen from inside the Docker container
+/// the client runs in.
+const LOCAL_HOSTS: [&str; 4] = ["localhost", "127.0.0.1", "[::1]", "host.docker.internal"];
+
+/// The host of an address after its scheme: no user, no port, no path, lower case.
+fn host_of(rest: &str) -> String {
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or("");
+    let host_port = authority.rsplit('@').next().unwrap_or(authority);
+    let host =
+        if host_port.starts_with('[') { host_port.split_inclusive(']').next().unwrap_or(host_port) } else { host_port.split(':').next().unwrap_or(host_port) };
+    host.to_ascii_lowercase()
+}
+
+/// Refuse an address that would send the Krypton token unencrypted over a network: only `https://`, or plain `http://` to this computer.
+///
+/// # Errors
+///
+/// [`Failure::Usage`] naming the address and what to use instead.
+fn secure(url: &str) -> Result<(), Failure> {
+    let lower = url.to_ascii_lowercase();
+    if lower.starts_with("https://") {
+        return Ok(());
+    }
+    if let Some(rest) = lower.strip_prefix("http://") {
+        if LOCAL_HOSTS.contains(&host_of(rest).as_str()) {
+            return Ok(());
+        }
+        return Err(Failure::Usage(format!(
+            "refusing to send your Krypton token to {url} over plain http, unencrypted; use https:// (plain http is only for localhost and 127.0.0.1)"
+        )));
+    }
+    Err(Failure::Usage(format!("the Krypton server address must start with https:// (got {url})")))
+}
+
 /// Where to send requests.
 pub struct Server {
     url: String,
 }
 
 impl Server {
-    /// The `--server` address, else a non-empty `KRYPTON_SERVER`, else the hosted server.
-    #[must_use]
-    pub fn from_flag(flag: Option<&str>) -> Self {
-        Self { url: address(flag, env::var("KRYPTON_SERVER").ok()).trim_end_matches('/').to_string() }
+    /// The `--server` address, else a non-empty `KRYPTON_SERVER`, else the hosted server; refused unless it is https (or plain http to this
+    /// computer), so a token never crosses a network unencrypted.
+    ///
+    /// # Errors
+    ///
+    /// [`Failure::Usage`] for an address that is not `https://`, or `http://` to a host other than this computer.
+    pub fn from_flag(flag: Option<&str>) -> Result<Self, Failure> {
+        let url = address(flag, env::var("KRYPTON_SERVER").ok()).trim().trim_end_matches('/').to_string();
+        secure(&url)?;
+        Ok(Self { url })
     }
 
     /// POST `body` (compressed here) to `path` and return the server's JSON answer.
@@ -239,5 +279,23 @@ mod tests {
         assert_eq!(address(None, Some("http://b".to_string())), "http://b", "then the environment");
         assert_eq!(address(None, Some("  ".to_string())), DEFAULT_SERVER, "a blank environment variable is not an address");
         assert_eq!(address(None, None), DEFAULT_SERVER, "nothing set means the hosted server");
+    }
+
+    // Tokens go only over https, or plain http to this computer; anything else is refused before a request is made.
+    #[test]
+    fn test_secure() {
+        let fine = [
+            "https://krypton.example",
+            "HTTPS://k.example/x",
+            "http://localhost:8080",
+            "http://127.0.0.1",
+            "http://[::1]:9/v1",
+            "http://host.docker.internal:8080",
+        ];
+        assert!(fine.iter().all(|url| secure(url).is_ok()), "https and this computer");
+        let refused =
+            ["http://krypton.example", "http://localhost.evil.com", "http://127.0.0.1.evil.com", "http://user@evil.com", "ftp://x", "krypton.example"];
+        assert!(refused.iter().all(|url| secure(url).is_err()), "plain http elsewhere, other schemes, no scheme");
+        assert!(matches!(secure("http://evil.com"), Err(Failure::Usage(text)) if text.contains("unencrypted")), "says why");
     }
 }

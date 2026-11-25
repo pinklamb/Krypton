@@ -221,7 +221,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     if let Some(active) = &loader {
         active.stage("Scoring on the Krypton server");
     }
-    let answer = Server::from_flag(options.server.as_deref()).post("/v1/score", &body)?;
+    let answer = Server::from_flag(options.server.as_deref())?.post("/v1/score", &body)?;
     if let Some(active) = loader {
         active.finish();
     }

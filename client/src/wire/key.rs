@@ -8,6 +8,7 @@
 //! constructors). They keep the plain [`expression_digest`] so the server can recognise them; they are public API names, never the user's own.
 
 use sha2::{Digest, Sha256};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 use super::digest::{expression_digest, hex};
 use super::lines::collapsed;
@@ -43,8 +44,8 @@ pub const PUBLIC_WORDS: [&str; 24] = [
 const ONMESSAGE: &str = "onmessage";
 const BLOCK: usize = 64;
 
-/// A 256-bit secret that stays on the client.
-#[derive(Clone)]
+/// A 256-bit secret that stays on the client, wiped from memory when dropped (every clone too).
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct NameKey([u8; 32]);
 
 /// What is wrong with a key given as text.
@@ -73,12 +74,12 @@ impl NameKey {
         if text.len() != 64 || !text.bytes().all(|byte| byte.is_ascii_hexdigit()) {
             return Err(BadKey);
         }
-        let mut bytes = [0_u8; 32];
+        let mut bytes = Zeroizing::new([0_u8; 32]);
         for (slot, pair) in bytes.iter_mut().zip(text.as_bytes().chunks(2)) {
             let pair = std::str::from_utf8(pair).map_err(|_bad| BadKey)?;
             *slot = u8::from_str_radix(pair, 16).map_err(|_bad| BadKey)?;
         }
-        Ok(Self(bytes))
+        Ok(Self(*bytes))
     }
 
     /// The key as 64 hex characters.
@@ -102,12 +103,13 @@ impl NameKey {
 /// HMAC-SHA256 (RFC 2104) with a 32-byte key, which is shorter than the 64-byte block and so is used as is, padded with zeros.
 #[must_use]
 pub fn hmac_sha256(key: &[u8; 32], message: &[u8]) -> [u8; 32] {
-    let mut padded = [0_u8; BLOCK];
+    // the padded key and both pads are the key in another form, so they are wiped when they go out of scope too
+    let mut padded = Zeroizing::new([0_u8; BLOCK]);
     for (slot, byte) in padded.iter_mut().zip(key) {
         *slot = *byte;
     }
-    let inner_pad: Vec<u8> = padded.iter().map(|byte| byte ^ 0x36).collect();
-    let outer_pad: Vec<u8> = padded.iter().map(|byte| byte ^ 0x5c).collect();
+    let inner_pad: Zeroizing<Vec<u8>> = Zeroizing::new(padded.iter().map(|byte| byte ^ 0x36).collect());
+    let outer_pad: Zeroizing<Vec<u8>> = Zeroizing::new(padded.iter().map(|byte| byte ^ 0x5c).collect());
     let inner = Sha256::new().chain_update(&inner_pad).chain_update(message).finalize();
     Sha256::new().chain_update(&outer_pad).chain_update(inner).finalize().into()
 }

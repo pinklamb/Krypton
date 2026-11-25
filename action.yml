@@ -127,8 +127,9 @@ runs:
         if [ "$code" = "0" ]; then
           echo "posted=true" >> "$GITHUB_OUTPUT"
         elif [ "$code" = "3" ]; then
-          echo "The Krypton app is not installed on this repository; posting as github-actions instead."
+          echo "::notice::The Krypton app is not installed on this repository, so this posts as github-actions. Install it once to post as Krypton: https://github.com/apps/kr-ypton/installations/new"
           echo "posted=false" >> "$GITHUB_OUTPUT"
+          echo "app_missing=true" >> "$GITHUB_OUTPUT"
         else
           echo "::warning::Krypton could not post as its app (exit $code); posting as github-actions instead."
           echo "posted=false" >> "$GITHUB_OUTPUT"
@@ -168,7 +169,11 @@ runs:
           // One comment per pull request: find ours by the hidden marker on its first line and edit it; create it only the first time.
           const fs = require('fs');
           const marker = '<!-- krypton-gate -->';
-          const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/scorecard.md`, 'utf8');
+          // without the Krypton app the comment says how to get it, so it comes from Krypton next time
+          const install = '${{ steps.report.outputs.app_missing }}' === 'true'
+            ? '\n<sub>Posted by github-actions because the Krypton app is not installed on this repository. [Install it](https://github.com/apps/kr-ypton/installations/new) to have Krypton post this.</sub>\n'
+            : '';
+          const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/scorecard.md`, 'utf8') + install;
           const { owner, repo } = context.repo;
           const issue_number = context.payload.pull_request.number;
           try {

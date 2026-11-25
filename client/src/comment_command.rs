@@ -19,8 +19,6 @@ use crate::Failure;
 const LISTED: usize = 10;
 /// The hidden first line of the scorecard: the Action finds its own pull request comment by it, so it edits one comment instead of adding more.
 pub const MARKER: &str = "<!-- krypton-gate -->";
-/// The light lavender of the headline's scores, the middle of the bar's gradient, readable on GitHub's light and dark themes alike.
-const LAVENDER: &str = "#9a7ed6";
 /// A thin lavender gradient bar across the top of the comment. GitHub drops inline SVG, so it is a plain image on Krypton's site. GitHub
 /// makes every image a link to its copy of the image unless it is already in a link, so it sits in a `#` link: clicking it goes nowhere.
 const BAR: &str = r##"<a href="#"><img src="https://krypton.software/img/bar.svg" width="100%" height="4" alt=""></a>"##;
@@ -29,21 +27,8 @@ const BAR: &str = r##"<a href="#"><img src="https://krypton.software/img/bar.svg
 const CRYSTAL: &str = "◈";
 const USAGE: &str = "usage: krypton comment BEFORE.json AFTER.json [--line FILE] [--fail-if-worse] [--target N [--changed CHANGED.json]]  |  krypton comment --unscored CODE [--on-server-error pass|fail] [--line FILE] [--state FILE]";
 
-/// The scorecard's headline: the arrow, before, after and the change, all in lavender. GitHub has no text colour in markdown, but its math
-/// does: `$\color{...}{...}$`. Each % is written `\\%`: GitHub's markdown turns it into `\%` before the maths reads it, where a bare % would
-/// start a TeX comment and drop the rest.
-///
-/// The arrow is the ordinary character (`\text{▲}`), full size, where the maths' own triangle is tiny. The scores are bold sans-serif to
-/// sit with the heading's own letters, and the sign is `{-}` so the maths does not space it like a subtraction.
-fn coloured_headline(before: i64, after: i64) -> String {
-    let (arrow, scores) = match after.cmp(&before) {
-        Ordering::Greater => ("▲", format!(r"{before}\\%\ \rightarrow\ {after}\\%\ ({{+}}{})", after.saturating_sub(before))),
-        Ordering::Less => ("▼", format!(r"{before}\\%\ \rightarrow\ {after}\\%\ ({{-}}{})", before.saturating_sub(after))),
-        Ordering::Equal => ("●", format!(r"{after}\\%\ unchanged")),
-    };
-    format!(r"$\color{{{LAVENDER}}}{{\text{{{arrow}}}\ \boldsymbol{{\mathsf{{{scores}}}}}}}$")
-}
-
+/// The headline's scores: the arrow, before, after and the change, as plain text, in the scorecard and the gate line alike. The scorecard
+/// once coloured them with GitHub's maths (`$\color{...}$`), but email notifications and other markdown readers show that as raw code.
 fn headline(before: i64, after: i64) -> String {
     match after.cmp(&before) {
         Ordering::Greater => format!("▲ {before}% → {after}% (+{})", after.saturating_sub(before)),
@@ -227,7 +212,7 @@ impl NewCode {
 pub fn markdown(before: &Run, after: &Run, new_code: NewCode) -> String {
     let list = worse_functions(before, after);
     let mut lines = vec![
-        format!("### {CRYSTAL} Krypton · {}", coloured_headline(before.purity, after.purity)),
+        format!("### {CRYSTAL} Krypton · {}", headline(before.purity, after.purity)),
         String::new(),
         "**Repo Purity · Scores**".to_string(),
         String::new(),
@@ -465,10 +450,8 @@ mod tests {
     fn test_comment_better() {
         let text = markdown(&run(71, &[("a.py::f", 3.0), ("a.py::g", 2.0)]), &run(74, &[("a.py::f", 2.0)]), NewCode::Unchecked);
         assert!(text.starts_with(&format!("<!-- krypton-gate -->\n{BAR}\n\n### {CRYSTAL} Krypton")), "the marker, the bar, then the headline");
-        assert!(
-            text.contains(r"Krypton · $\color{#9a7ed6}{\text{▲}\ \boldsymbol{\mathsf{71\\%\ \rightarrow\ 74\\%\ ({+}3)}}}$"),
-            "arrow and scores in lavender"
-        );
+        assert!(text.contains("### ◈ Krypton · ▲ 71% → 74% (+3)\n"), "arrow and scores as plain text, readable in email too");
+        assert!(!text.contains(r"\color"), "no maths");
         assert!(text.contains("**Repo Purity · Scores**") && text.contains("| Over the limit | 2 | 1 |"), "the scores");
         assert!(!text.contains("This PR") && text.contains("Nice: this change made the code simpler."), "no target column, a kind word");
     }
@@ -488,7 +471,7 @@ mod tests {
     #[test]
     fn test_comment_worse() {
         let text = markdown(&run(74, &[("a.py::f", 3.0)]), &run(70, &[("a.py::f", 4.5), ("b.ts::g", 2.0)]), NewCode::Unchecked);
-        assert!(text.contains(r"$\color{#9a7ed6}{\text{▼}\ \boldsymbol{\mathsf{74\\%\ \rightarrow\ 70\\%\ ({-}4)}}}$"), "down arrow");
+        assert!(text.contains("▼ 74% → 70% (−4)"), "down arrow");
         assert!(text.contains("**2 functions got worse**"), "the count");
         assert!(text.contains("- `b.ts · g` under the limit → 2×"), "a new over-limit function");
         assert!(text.contains("- `a.py · f` 3× → 4.5×"), "a function that grew");
@@ -498,7 +481,7 @@ mod tests {
     #[test]
     fn test_comment_same() {
         let text = markdown(&run(74, &[("a.py::f", 3.0)]), &run(74, &[("a.py::f", 3.0)]), NewCode::Unchecked);
-        assert!(text.contains(r"$\color{#9a7ed6}{\text{●}\ \boldsymbol{\mathsf{74\\%\ unchanged}}}$"), "dot headline");
+        assert!(text.contains("● 74% unchanged"), "dot headline");
         assert!(text.contains("No functions got worse."), "nothing worse");
     }
 

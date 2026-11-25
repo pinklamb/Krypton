@@ -50,7 +50,7 @@ Variables on its Railway service (or a git-ignored `dashboard/.env` locally, see
 | `GITHUB_APP_SLUG` | the app's slug, for the "Choose repositories" link |
 | `BASE_URL` | the site's public address, no trailing slash, `https://…` in production (cookies are then Secure) |
 | `SESSION_SECRET` | a long random string |
-| `KRYPTON_SCORE_URL` | the scoring server's address |
+| `KRYPTON_SCORE_URL` | the scoring server's address; on Railway, its private address `http://<service>.railway.internal:8080` keeps the demo's traffic inside the project |
 | `KRYPTON_SERVICE_TOKEN` | the token minted in step 1 |
 
 Sessions are held in memory, so keep one instance (`numReplicas = 1` in `railway.toml`). The deploy log prints `GitHub sign-in: on; scoring: on` once both are set.

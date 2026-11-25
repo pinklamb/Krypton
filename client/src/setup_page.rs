@@ -256,10 +256,11 @@ fn page(current: &Settings, problem: Option<&str>, theme: Theme) -> String {
 <fieldset><legend>Target score for each ticket</legend><input type=number name=target min=0 max=100 value={target} required></fieldset>
 <fieldset><legend>Max tries on a function before it counts as stuck</legend>{runs}</fieldset>
 <fieldset><legend>When the agent is still stuck</legend>{modes}<p class=hint>Ask me: your agent builds a review page for the current ticket, styled by themes.md, and you decide before anything goes to GitHub. Auto: Krypton keeps the best run and the agent carries on.</p></fieldset>
-<fieldset><legend>Pull request gate on GitHub</legend>{gates}<p class=hint>Writes .github/workflows/krypton.yml; commit it to turn the gate on. Never worse: a pull request fails only if it lowers the purity score. Target: the files a pull request changes must reach your target; old code is never judged. An existing workflow is never overwritten.</p></fieldset>
+<fieldset><legend>Pull request gate on GitHub</legend>{gates}<p class=hint>Writes .github/workflows/krypton.yml; commit it to turn the gate on. Never worse: a pull request fails only if it lowers the purity score. Target: the files a pull request changes must reach your target; old code is never judged. An existing workflow is never overwritten.</p><p class=hint>So the comment on each pull request comes from Krypton rather than github-actions, <a href={app} target=_blank rel=noopener>install the Krypton app</a> on this repository once.</p></fieldset>
 <fieldset><legend>Before each git push on this computer</legend>{hooks}<p class=hint>Installs a git pre-push hook: every push is scored first with the same rule, and a push that breaks it is stopped, so pushes without a pull request are checked too. git push --no-verify skips it once. A pre-push hook of your own is never overwritten.</p></fieldset>
 <button type=submit>Save settings</button></form></main></body></html>",
         target = current.target,
+        app = crate::workflow::APP_INSTALL,
         head = head(theme),
         mark = theme.mark()
     )

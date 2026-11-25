@@ -81,6 +81,74 @@ fn times(value: f64) -> String {
     }
 }
 
+/// A waiver this change added: on a function that had none before.
+struct NewWaiver<'a> {
+    key: &'a str,
+    reason: Option<&'a str>,
+}
+
+/// The longest reason shown; a waiver's reason is one line of a comment, but nothing stops it being long.
+const REASON_CHARS: usize = 120;
+
+fn new_waivers<'a>(before: &Run, after: &'a Run) -> Vec<NewWaiver<'a>> {
+    let added = after.waived.iter().filter(|(key, _)| !before.waived.contains_key(*key));
+    added.map(|(key, reason)| NewWaiver { key: key.as_str(), reason: reason.as_deref() }).collect()
+}
+
+/// A reason as one short line with no backticks, so it can sit inside inline code, where GitHub neither formats it nor notifies an `@name`.
+fn short_reason(reason: &str) -> String {
+    let flat: String = reason.chars().map(|letter| if letter == '`' || letter.is_control() { ' ' } else { letter }).collect();
+    let trimmed = flat.trim();
+    if trimmed.chars().count() > REASON_CHARS {
+        format!("{}…", trimmed.chars().take(REASON_CHARS).collect::<String>().trim_end())
+    } else {
+        trimmed.to_string()
+    }
+}
+
+/// A waiver's file, function and shortened reason (none when it gave none, or only blanks).
+fn waiver_parts<'a>(waiver: &NewWaiver<'a>) -> (&'a str, &'a str, Option<String>) {
+    let (file, function) = waiver.key.split_once("::").unwrap_or((waiver.key, ""));
+    (file, function, waiver.reason.map(short_reason).filter(|reason| !reason.is_empty()))
+}
+
+fn waiver_line(waiver: &NewWaiver<'_>) -> String {
+    let (file, function, reason) = waiver_parts(waiver);
+    reason.map_or_else(|| format!("- `{file} · {function}` no reason given"), |reason| format!("- `{file} · {function}` reason: `{reason}`"))
+}
+
+fn waived_section(before: &Run, after: &Run, added: &[NewWaiver<'_>]) -> Vec<String> {
+    let noun = if added.len() == 1 { "function" } else { "functions" };
+    let mut lines = vec![
+        format!("**{} {noun} waived in this change**", added.len()),
+        String::new(),
+        "A `krypton: ignore` comment leaves a function out of the score, so these are not counted above.".to_string(),
+        String::new(),
+    ];
+    lines.extend(added.iter().take(LISTED).map(waiver_line));
+    if added.len() > LISTED {
+        lines.push(format!("- …and {} more", added.len().saturating_sub(LISTED)));
+    }
+    let earlier = after.waived.keys().filter(|key| before.waived.contains_key(*key)).count();
+    if earlier > 0 {
+        lines.push(String::new());
+        lines.push(format!("{earlier} {} waived before this change.", if earlier == 1 { "function was" } else { "functions were" }));
+    }
+    lines
+}
+
+/// The waivers a change added, one plain line each, for the terminal (the push check prints them under its line).
+#[must_use]
+pub fn waiver_notes(before: &Run, after: &Run) -> Vec<String> {
+    new_waivers(before, after)
+        .iter()
+        .map(|waiver| {
+            let (file, function, reason) = waiver_parts(waiver);
+            reason.map_or_else(|| format!("waived {file} · {function} (no reason given)"), |reason| format!("waived {file} · {function} (reason: {reason})"))
+        })
+        .collect()
+}
+
 fn line(worse: &Worse) -> String {
     let (file, function) = worse.key.split_once("::").unwrap_or((worse.key.as_str(), ""));
     let was = worse.before.map_or_else(|| "under the limit".to_string(), times);
@@ -166,12 +234,20 @@ pub fn markdown(before: &Run, after: &Run, new_code: NewCode) -> String {
     ];
     lines.extend(table(before, after, new_code));
     lines.push(String::new());
+    let added = new_waivers(before, after);
     if !list.is_empty() {
         lines.extend(worse_section(&list));
+    } else if !added.is_empty() {
+        // a waiver takes a function out of the score, so a rise is not the code getting simpler
+        lines.push("No counted functions got worse, but this change waives some (below).".to_string());
     } else if after.purity > before.purity {
         lines.push("Nice: this change made the code simpler.".to_string());
     } else {
         lines.push("No functions got worse.".to_string());
+    }
+    if !added.is_empty() {
+        lines.push(String::new());
+        lines.extend(waived_section(before, after, &added));
     }
     // the blank line after the bar ends its HTML block, or GitHub would read the headline as more HTML
     format!("{MARKER}\n{BAR}\n\n{}\n", lines.join("\n"))
@@ -183,16 +259,22 @@ pub fn gate_line(before: &Run, after: &Run, new_code: NewCode) -> String {
     status_line(before, after) + &new_code.tail()
 }
 
-/// The one line the "Krypton gate" status shows next to the other checks on a pull request: the purity before and after, the change, and how
-/// many functions got worse. It is the whole signal on the pull request; Details opens the tree and the run summary has the scorecard.
+/// The one line the "Krypton gate" status shows next to the other checks on a pull request: the purity before and after, the change, how
+/// many functions got worse, and how many this change waived. It is the whole signal on the pull request; Details opens the tree and the run
+/// summary has the scorecard.
 #[must_use]
 pub fn status_line(before: &Run, after: &Run) -> String {
-    let tail = match worse_functions(before, after).len() {
+    let worse = match worse_functions(before, after).len() {
         0 => String::new(),
         1 => " · 1 function worse".to_string(),
         many => format!(" · {many} functions worse"),
     };
-    format!("Purity {}{tail}", headline(before.purity, after.purity))
+    let waived = match new_waivers(before, after).len() {
+        0 => String::new(),
+        1 => " · 1 new waiver".to_string(),
+        many => format!(" · {many} new waivers"),
+    };
+    format!("Purity {}{worse}{waived}", headline(before.purity, after.purity))
 }
 
 /// Why a push could not be scored, from the exit code of the step that stopped, and whether it was the Krypton server's doing (only then
@@ -334,7 +416,48 @@ mod tests {
             ticket: String::new(),
             purity,
             functions: functions.iter().map(|(key, value)| ((*key).to_string(), *value)).collect::<BTreeMap<_, _>>(),
+            waived: BTreeMap::new(),
         }
+    }
+
+    /// A waived function's `file::function` key and its reason.
+    type Given<'a> = (&'a str, Option<&'a str>);
+
+    fn waiving(mut run: Run, waivers: &[Given<'_>]) -> Run {
+        run.waived = waivers.iter().map(|(key, reason)| ((*key).to_string(), reason.map(str::to_string))).collect();
+        run
+    }
+
+    // A new waiver is listed with its reason, the rise is not praised, and the gate line counts it; an earlier waiver is only counted.
+    #[test]
+    fn test_new_waivers() {
+        let before = waiving(run(70, &[("a.py::charge", 4.0)]), &[("a.py::old", None)]);
+        let after = waiving(run(74, &[]), &[("a.py::old", None), ("a.py::charge", Some("legacy retry `now` @team")), ("b.py::fmt", None)]);
+        let text = markdown(&before, &after, NewCode::Unchecked);
+        assert!(text.contains("**2 functions waived in this change**"), "heading");
+        assert!(text.contains("- `a.py · charge` reason: `legacy retry  now  @team`"), "reason in code, backticks gone: {text}");
+        assert!(text.contains("- `b.py · fmt` no reason given"), "no reason");
+        assert!(text.contains("1 function was waived before this change."), "earlier waiver counted");
+        assert!(!text.contains("Nice"), "a rise from waivers is not praised");
+        assert_eq!(status_line(&before, &after), "Purity ▲ 70% → 74% (+4) · 2 new waivers");
+        assert_eq!(waiver_notes(&before, &after), ["waived a.py · charge (reason: legacy retry  now  @team)", "waived b.py · fmt (no reason given)"]);
+    }
+
+    // Waivers already there before the change add nothing to the scorecard or the line.
+    #[test]
+    fn test_old_waivers_quiet() {
+        let before = waiving(run(70, &[]), &[("a.py::old", Some("why"))]);
+        let after = waiving(run(70, &[]), &[("a.py::old", Some("why"))]);
+        assert!(!markdown(&before, &after, NewCode::Unchecked).contains("waived"), "nothing new to show");
+        assert_eq!(status_line(&before, &after), "Purity ● 70% unchanged");
+        assert_eq!(waiver_notes(&before, &after), Vec::<String>::new(), "no notes");
+    }
+
+    // A long reason is cut short.
+    #[test]
+    fn test_long_reason() {
+        let long = "x".repeat(300);
+        assert_eq!(short_reason(&long).chars().count(), REASON_CHARS + 1, "cut with an ellipsis");
     }
 
     // A higher score gets an up arrow, the table, and a kind word when nothing got worse.

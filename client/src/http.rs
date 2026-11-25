@@ -202,7 +202,7 @@ mod tests {
     use super::*;
 
     fn status(code: u16, retry_after: Option<&str>) -> ureq::Error {
-        let header = retry_after.map(|seconds| format!("Retry-After: {seconds}\r\n")).unwrap_or_default();
+        let header = retry_after.map_or_else(String::new, |seconds| format!("Retry-After: {seconds}\r\n"));
         let raw = format!("HTTP/1.1 {code} X\r\n{header}Content-Length: 0\r\n\r\n");
         ureq::Error::Status(code, raw.parse::<ureq::Response>().unwrap())
     }

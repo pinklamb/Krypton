@@ -24,6 +24,6 @@ pub use lang::Lang;
 pub use parse::parse;
 pub use wire::{
     build_repository, collapsed, dirname, expression_digest, hex, hmac_sha256, import_candidates, line_shapes, linguist_globs, longest_line, normpath,
-    posix_join, split_lines, BadKey, Builder, CharIndex, ClientConfig, ImportConfig, NameKey, Names, PythonImport, RawImports, Shapes, Vendored, WireError,
-    WireFile, WireRequest, PUBLIC_WORDS,
+    observe_imports, posix_join, split_lines, BadKey, Builder, CharIndex, ClientConfig, ImportConfig, NameKey, Names, PythonImport, RawImports, Shapes,
+    Vendored, WireError, WireFile, WireRequest, PUBLIC_WORDS,
 };

@@ -241,7 +241,7 @@ mod tests {
     }
 
     fn run(number: usize) -> Run {
-        Run { number, time: 0, ticket: "t".to_string(), purity: 70, functions: std::collections::BTreeMap::new() }
+        Run { number, time: 0, ticket: "t".to_string(), purity: 70, functions: std::collections::BTreeMap::new(), waived: std::collections::BTreeMap::new() }
     }
 
     /// Edit the tree, log it as `number`, and return nothing: the log and the attempt are on disk.

@@ -12,6 +12,8 @@
 //! 5. It asks whether to set up the **pull request gate** on GitHub: never worse (a pull request fails only if it lowers the score) or
 //!    target (the files a pull request changes must reach the target), and writes `.github/workflows/krypton.yml` for it (see
 //!    `workflow.rs`). That file is never overwritten, and nothing is committed: committing it turns the gate on.
+//! 6. It asks whether to **check each push on this computer** first: a git pre-push hook (see `hook.rs`) that scores the commits being
+//!    pushed with the same rule and stops a push that breaks it, for pushes made without a pull request.
 //!
 //! The questions are asked in the terminal, or, with `--page` (or by answering "browser" to the first question), on a one-time local
 //! page where the settings are clicked instead (see `setup_page.rs`).
@@ -25,12 +27,13 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{json, Value};
 
+use crate::hook::{self, Hook};
 use crate::runlog;
 use crate::workflow::{self, Gate, Written};
 use crate::Failure;
 
 const USAGE: &str =
-    "usage: krypton setup [REPO] [--page [--listen HOST:PORT] [--theme cocoa|blossom]] [--mode manual|auto] [--target 0-100] [--runs 1-10] [--gate off|worse|target] [--no-map]";
+    "usage: krypton setup [REPO] [--page [--listen HOST:PORT] [--theme cocoa|blossom]] [--mode manual|auto] [--target 0-100] [--runs 1-10] [--gate off|worse|target] [--hook on|off] [--no-map]";
 const SETTINGS: &str = "settings.json";
 const BASELINE: &str = "baseline.json";
 /// Used when nobody answers a question (an empty line) and no flag was given.
@@ -96,11 +99,13 @@ pub struct Settings {
     pub baseline: Option<i64>,
     /// What fails a pull request on GitHub, if the gate was set up.
     pub gate: Gate,
+    /// Whether a git pre-push hook checks each push from this computer with the same rule.
+    pub hook: bool,
 }
 
 impl Settings {
     /// What review uses before setup has been run.
-    pub const DEFAULT: Self = Self { mode: Mode::Manual, target: DEFAULT_TARGET, max_runs: DEFAULT_RUNS, baseline: None, gate: Gate::Off };
+    pub const DEFAULT: Self = Self { mode: Mode::Manual, target: DEFAULT_TARGET, max_runs: DEFAULT_RUNS, baseline: None, gate: Gate::Off, hook: false };
 }
 
 fn settings_path(repo: &Path) -> PathBuf {
@@ -139,13 +144,15 @@ pub fn saved(repo: &Path) -> Result<Option<Settings>, Failure> {
         .and_then(Value::as_str)
         .map_or(Some(Gate::Off), Gate::parse)
         .ok_or_else(|| bad_settings(&path, "has a gate that is not off, worse or target"))?;
-    Ok(Some(Settings { mode, target, max_runs, baseline: value.get("baseline").and_then(Value::as_i64), gate }))
+    // Settings saved before the push check existed have none: no hook was ever installed there.
+    let hook = value.get("hook").and_then(Value::as_bool).unwrap_or(false);
+    Ok(Some(Settings { mode, target, max_runs, baseline: value.get("baseline").and_then(Value::as_i64), gate, hook }))
 }
 
 fn save(repo: &Path, settings: &Settings) -> Result<PathBuf, Failure> {
     runlog::ensure_folder(repo)?;
     let path = settings_path(repo);
-    let body = json!({ "review": settings.mode.name(), "target": settings.target, "max_runs": settings.max_runs, "baseline": settings.baseline, "gate": settings.gate.name() });
+    let body = json!({ "review": settings.mode.name(), "target": settings.target, "max_runs": settings.max_runs, "baseline": settings.baseline, "gate": settings.gate.name(), "hook": settings.hook });
     let text = serde_json::to_string_pretty(&body).map_err(|error| Failure::Output(error.to_string()))?;
     fs::write(&path, text + "\n").map_err(|error| Failure::Log(format!("cannot write {}: {error}", path.display())))?;
     Ok(path)
@@ -313,6 +320,25 @@ Choose 1, 2 or 3 [2]: "
     )
 }
 
+const HOOK_QUESTION: &str = "
+Check each git push on this computer first? Krypton installs a git pre-push hook that scores the commits being pushed with the
+same rule and stops a push that breaks it (git push --no-verify skips it once). It checks pushes made without a pull request too.
+
+  1) Yes
+  2) No
+
+Choose 1 or 2 [1]: ";
+
+/// A yes or a no, typed or as a flag value.
+#[must_use]
+pub fn parse_yes_no(text: &str) -> Option<bool> {
+    match text.trim().to_ascii_lowercase().as_str() {
+        "1" | "yes" | "y" | "on" => Some(true),
+        "2" | "no" | "n" | "off" => Some(false),
+        _ => None,
+    }
+}
+
 /// Ask whatever the flags left open.
 fn ask_all(prompt: &mut Prompt, given: &Options, baseline: Option<i64>, suggest: i64) -> Result<Settings, Failure> {
     let target = match given.target {
@@ -331,16 +357,21 @@ fn ask_all(prompt: &mut Prompt, given: &Options, baseline: Option<i64>, suggest:
         Some(gate) => gate,
         None => prompt.ask(&gate_question(target), Gate::Worse, Gate::parse)?,
     };
-    Ok(Settings { mode, target, max_runs, baseline, gate })
+    let hook = match given.hook {
+        Some(hook) => hook,
+        None => prompt.ask(HOOK_QUESTION, true, parse_yes_no)?,
+    };
+    Ok(Settings { mode, target, max_runs, baseline, gate, hook })
 }
 
-fn next_steps(settings: &Settings, ignore: Option<&Path>, themes: Option<&Path>, gate: &Written) -> String {
+fn next_steps(settings: &Settings, ignore: Option<&Path>, themes: Option<&Path>, gate: &Written, hook: &Hook) -> String {
     let handled = if settings.mode == Mode::Auto { "automatically (best run kept)" } else { "by you, on a local review page" };
     let mut lines = vec![format!(
-        "Saved: target {} purity per ticket, {} tries before a function is stuck, stuck functions handled {handled}, pull request gate: {}.",
+        "Saved: target {} purity per ticket, {} tries before a function is stuck, stuck functions handled {handled}, pull request gate: {}, check before each push: {}.",
         settings.target,
         settings.max_runs,
-        gate_words(settings)
+        gate_words(settings),
+        if settings.hook { "on" } else { "off" }
     )];
     if let Some(path) = ignore {
         lines.push(format!("Wrote {} so test files are not scored. Edit it to change what is skipped, and commit it.", path.display()));
@@ -360,13 +391,28 @@ fn next_steps(settings: &Settings, ignore: Option<&Path>, themes: Option<&Path>,
         Written::StillOn(path) => lines.push(format!("{} from an earlier setup still gates pull requests; delete it to turn the gate off.", path.display())),
         Written::Off => {}
     }
+    lines.extend(hook_line(hook));
     lines.push("Next: krypton scan . --log --ticket \"what you are fixing\"   (before and after each change)".to_string());
     lines.push(
-        "Change any of this with krypton setup again, krypton setup --page, or: krypton setup --mode manual|auto --target N --runs N --gate off|worse|target"
+        "Change any of this with krypton setup again, krypton setup --page, or: krypton setup --mode manual|auto --target N --runs N --gate off|worse|target --hook on|off"
             .to_string(),
     );
     lines.push("Setup finished.".to_string());
     lines.join("\n")
+}
+
+/// What happened to the pre-push hook, as a line of the summary.
+fn hook_line(hook: &Hook) -> Option<String> {
+    match hook {
+        Hook::Wrote(path) | Hook::Updated(path) => {
+            Some(format!("Installed {}: every git push from this computer is checked first (git push --no-verify skips it once).", path.display()))
+        }
+        Hook::Unchanged(path) => Some(format!("{} already checks every push.", path.display())),
+        Hook::Kept(path) => Some(format!("{} is a pre-push hook of your own, so it was left as it is and pushes are not checked.", path.display())),
+        Hook::Removed(path) => Some(format!("Removed {}: pushes are no longer checked first.", path.display())),
+        Hook::NotGit => Some("This folder is not a git checkout, so no pre-push hook was installed.".to_string()),
+        Hook::Off => None,
+    }
 }
 
 /// The gate as a person would say it.
@@ -385,6 +431,7 @@ struct Options {
     target: Option<i64>,
     max_runs: Option<usize>,
     gate: Option<Gate>,
+    hook: Option<bool>,
     no_map: bool,
     page: bool,
     listen: String,
@@ -406,6 +453,7 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
             "--target" => options.target = Some(parse_target(&value("--target")?).ok_or_else(|| usage("--target is a whole number from 0 to 100"))?),
             "--runs" => options.max_runs = Some(parse_runs(&value("--runs")?).ok_or_else(|| usage("--runs is a whole number from 1 to 10"))?),
             "--gate" => options.gate = Some(Gate::parse(&value("--gate")?).ok_or_else(|| usage("--gate is off, worse or target"))?),
+            "--hook" => options.hook = Some(parse_yes_no(&value("--hook")?).ok_or_else(|| usage("--hook is on or off"))?),
             "--no-map" => options.no_map = true,
             "--page" => options.page = true,
             "--listen" => options.listen = value("--listen")?,
@@ -422,25 +470,26 @@ pub fn interactive() -> bool {
     io::stdin().is_terminal()
 }
 
-/// The settings the flags give, with the suggested target and the defaults for anything left open. `gate` is the gate when no flag names
-/// one: never worse when a person is choosing, off when nobody is (no workflow is written unasked).
-fn from_flags(options: &Options, baseline: Option<i64>, suggest: i64, gate: Gate) -> Settings {
+/// The settings the flags give, with the suggested target and the defaults for anything left open. `gate` and `hook` are what to use when
+/// no flag names them: never worse and on when a person is choosing, off when nobody is (nothing is installed unasked).
+fn from_flags(options: &Options, baseline: Option<i64>, suggest: i64, gate: Gate, hook: bool) -> Settings {
     Settings {
         mode: options.mode.unwrap_or(Mode::Manual),
         target: options.target.unwrap_or(suggest),
         max_runs: options.max_runs.unwrap_or(DEFAULT_RUNS),
         baseline,
         gate: options.gate.unwrap_or(gate),
+        hook: options.hook.unwrap_or(hook),
     }
 }
 
 /// Ask in the terminal or on the settings page, whichever the person picks; flags already given are not asked again in the terminal.
 fn choose(options: &Options, baseline: Option<i64>, suggest: i64) -> Result<Settings, Failure> {
     let mut prompt = Prompt { input: &mut io::stdin().lock(), output: &mut io::stdout().lock() };
-    let everything_given = options.mode.is_some() && options.target.is_some() && options.max_runs.is_some() && options.gate.is_some();
+    let everything_given = options.mode.is_some() && options.target.is_some() && options.max_runs.is_some() && options.gate.is_some() && options.hook.is_some();
     let page = options.page || (!everything_given && prompt.ask(WHERE_QUESTION, false, parse_where)?);
     if page {
-        return crate::setup_page::choose(&options.listen, &from_flags(options, baseline, suggest, Gate::Worse), options.theme);
+        return crate::setup_page::choose(&options.listen, &from_flags(options, baseline, suggest, Gate::Worse, true), options.theme);
     }
     ask_all(&mut prompt, options, baseline, suggest)
 }
@@ -479,11 +528,12 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     let ignore = starter_ignore(&options.repo)?;
     let baseline = if options.no_map { None } else { Some(map_codebase(&options.repo)?) };
     let suggest = suggested_target(baseline, kept_target(&options.repo));
-    let settings = if asking || options.page { choose(&options, baseline, suggest)? } else { from_flags(&options, baseline, suggest, Gate::Off) };
+    let settings = if asking || options.page { choose(&options, baseline, suggest)? } else { from_flags(&options, baseline, suggest, Gate::Off, false) };
     save(&options.repo, &settings)?;
     let themes = if settings.mode == Mode::Manual { starter_themes(&options.repo)? } else { None };
     let gate = workflow::write(&options.repo, settings.gate, settings.target)?;
-    println!("{}", next_steps(&settings, ignore.as_deref(), themes.as_deref(), &gate));
+    let hook = hook::write(&options.repo, settings.hook)?;
+    println!("{}", next_steps(&settings, ignore.as_deref(), themes.as_deref(), &gate, &hook));
     Ok(())
 }
 
@@ -491,7 +541,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
 mod tests {
     use std::io::Cursor;
 
-    use super::{ask_all, parse_where, save, saved, starter_ignore, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings};
+    use super::{ask_all, parse_where, parse_yes_no, save, saved, starter_ignore, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings};
 
     fn answers(typed: &str) -> Option<Settings> {
         let mut input = Cursor::new(typed.as_bytes().to_vec());
@@ -503,9 +553,9 @@ mod tests {
     #[test]
     fn test_defaults() {
         assert_eq!(
-            answers("\n\n\n\n"),
-            Some(Settings { mode: Mode::Manual, target: 40, max_runs: 3, baseline: Some(28), gate: Gate::Worse }),
-            "40 (28 + 10, rounded up), 3, ask me, never worse"
+            answers("\n\n\n\n\n"),
+            Some(Settings { mode: Mode::Manual, target: 40, max_runs: 3, baseline: Some(28), gate: Gate::Worse, hook: true }),
+            "40 (28 + 10, rounded up), 3, ask me, never worse, push check on"
         );
     }
 
@@ -525,10 +575,21 @@ mod tests {
     #[test]
     fn test_asks_again() {
         assert_eq!(
-            answers("150\n75%\n0\n5\nmaybe\n2\nsure\n3\n").map(|s| (s.target, s.max_runs, s.mode, s.gate)),
-            Some((75, 5, Mode::Auto, Gate::Target)),
+            answers("150\n75%\n0\n5\nmaybe\n2\nsure\n3\nperhaps\nno\n").map(|s| (s.target, s.max_runs, s.mode, s.gate, s.hook)),
+            Some((75, 5, Mode::Auto, Gate::Target, false)),
             "the fitting answers count"
         );
+    }
+
+    // Settings saved before the push check existed read back with it off, and yes or no is understood as typed or as a flag.
+    #[test]
+    fn test_hook_setting() {
+        let repo = std::env::temp_dir().join(format!("krypton-setup-old-{}", std::process::id()));
+        std::fs::create_dir_all(repo.join(".krypton")).unwrap();
+        std::fs::write(repo.join(".krypton/settings.json"), r#"{"review":"auto","target":70,"max_runs":3,"gate":"worse"}"#).unwrap();
+        assert!(!saved(&repo).unwrap().unwrap().hook, "older settings: no hook");
+        std::fs::remove_dir_all(&repo).unwrap();
+        assert_eq!([parse_yes_no("1"), parse_yes_no("off"), parse_yes_no("Y"), parse_yes_no("x")], [Some(true), Some(false), Some(true), None], "yes or no");
     }
 
     // "Here" or "browser" picks where the settings are chosen.
@@ -548,7 +609,7 @@ mod tests {
     fn test_saved() {
         let repo = std::env::temp_dir().join(format!("krypton-setup-{}", std::process::id()));
         std::fs::create_dir_all(&repo).unwrap();
-        let wanted = Settings { mode: Mode::Auto, target: 72, max_runs: 4, baseline: Some(28), gate: Gate::Target };
+        let wanted = Settings { mode: Mode::Auto, target: 72, max_runs: 4, baseline: Some(28), gate: Gate::Target, hook: true };
         save(&repo, &wanted).unwrap();
         assert_eq!(saved(&repo).unwrap(), Some(wanted), "what was saved comes back");
         std::fs::write(repo.join("themes.md"), "mine").unwrap();

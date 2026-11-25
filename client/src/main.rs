@@ -7,6 +7,10 @@
 //! * `krypton comment` writes the pull request comment from two scan summaries; `krypton report` has the Krypton server post it as the
 //!   Krypton GitHub App (exit 3 when the app is not set up or installed, so the Action posts it itself).
 //! * `krypton login` / `krypton logout`: the server scores only for a logged-in user (GitHub's device flow) or a GitHub Actions run.
+//! * `krypton impact` shows what a change reaches downstream: the functions it touched and every function that calls them, from a call graph
+//!   built on this machine (see `callgraph/`). Nothing is sent and nothing is scored.
+//! * `krypton prepush` is the check before a git push: the hook `krypton setup` installs hands it the commits being pushed, and it stops a
+//!   push that breaks the pull request gate's rule (see `prepush_command.rs` and `hook.rs`).
 //! * `krypton setup` asks once whether stuck functions go to a person (a local review page) or are approved automatically; `krypton` alone, in a
 //!   terminal, starts it.
 //! * After `scan` and `setup` at a terminal, at most once a day: a newer release is offered (see `update.rs`); `krypton update` updates.
@@ -19,15 +23,19 @@ use std::process::ExitCode;
 use krypton_client::{WalkError, WireError};
 
 mod attempts;
+mod callgraph;
 mod cancel;
 mod comment_command;
 mod coverage;
 mod diff;
+mod hook;
 mod http;
+mod impact_command;
 mod loader;
 mod login_command;
 mod name_key;
 mod order_command;
+mod prepush_command;
 mod report;
 mod report_command;
 mod restore_command;
@@ -42,7 +50,7 @@ mod wire_command;
 mod workflow;
 
 const USAGE: &str =
-    "usage: krypton setup | login | logout | scan REPO | order REPO | wire FILE... | review | restore --run N | comment BEFORE AFTER | report | update";
+    "usage: krypton setup | login | logout | scan REPO | impact [REPO] | order REPO | wire FILE... | review | restore --run N | comment BEFORE AFTER | report | update";
 
 /// Why the command stopped. Each kind has its own exit code (see [`exit`]) and, after the message, a hint on how to fix it.
 #[derive(Debug)]
@@ -186,11 +194,13 @@ fn run(args: &[String]) -> Result<(), Failure> {
         Some("logout") => login_command::logout(rest),
         None if setup_command::interactive() => setup_command::run(&[]),
         Some("scan") => scan_command::run(rest),
+        Some("impact") => impact_command::run(rest),
         Some("order") => order_command::run(rest),
         Some("wire") => wire_command::run(rest),
         Some("review") => review_command::run(rest),
         Some("restore") => restore_command::run(rest),
         Some("comment") => comment_command::comment(rest),
+        Some("prepush") => prepush_command::run(rest),
         Some("report") => report_command::run(rest),
         _ => Err(Failure::Usage(USAGE.to_string())),
     }

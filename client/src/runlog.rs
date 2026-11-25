@@ -24,6 +24,10 @@ pub struct Run {
     pub purity: i64,
     /// `file::function` to how many times over the limit it is (1.0 is exactly at it).
     pub functions: BTreeMap<String, f64>,
+    /// `file::function` to the reason on its `krypton: ignore` comment (`None` when it gives none). A waived function is left out of the
+    /// score, so it is kept here to be shown instead. Absent from summaries and logs written before waivers were recorded.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub waived: BTreeMap<String, Option<String>>,
 }
 
 fn failure(message: impl Into<String>) -> Failure {
@@ -120,15 +124,36 @@ fn real_name(digest: &str, names: &Names) -> String {
     digest.split('.').map(|part| names.get(part).map_or(part, String::as_str)).collect::<Vec<_>>().join(".")
 }
 
+/// A file's functions in the answer, each with its `file::function` key under the real name.
+fn functions_of<'a>(file: &'a Value, names: &'a Names) -> impl Iterator<Item = (String, &'a Value)> + 'a {
+    let filename = file.get("filename").and_then(Value::as_str);
+    let functions = filename.and_then(|_| file.get("functions")).and_then(Value::as_array).into_iter().flatten();
+    functions.filter_map(move |function| {
+        let digest = function.get("name").and_then(Value::as_str)?;
+        Some((format!("{}::{}", filename.unwrap_or_default(), real_name(digest, names)), function))
+    })
+}
+
 /// `file::function` and how many times over the limit, for every function in the answer that is at or over it.
 fn over_the_limit(file: &Value, names: &Names) -> Vec<(String, f64)> {
-    let Some(filename) = file.get("filename").and_then(Value::as_str) else { return Vec::new() };
-    let functions = file.get("functions").and_then(Value::as_array).into_iter().flatten();
-    functions
-        .filter_map(|function| {
-            let times = function.get("times_over_limit").and_then(Value::as_f64)?;
-            let digest = function.get("name").and_then(Value::as_str)?;
-            Some((format!("{filename}::{}", real_name(digest, names)), times))
+    functions_of(file, names).filter_map(|(key, function)| Some((key, function.get("times_over_limit").and_then(Value::as_f64)?))).collect()
+}
+
+/// The engine's `exempt_reason` as the waiver's own words: `waived: DIGEST` has its reason put back; `waived (no reason given)` has none.
+fn waiver_reason(exempt: &str, names: &Names) -> Option<String> {
+    let digest = exempt.strip_prefix("waived: ")?;
+    Some(names.get(digest).cloned().unwrap_or_else(|| digest.to_string()))
+}
+
+/// `file::function` and the reason its waiver gives, if any.
+type Waived = (String, Option<String>);
+
+/// Every waived function in the answer, with its reason.
+fn waived_in(file: &Value, names: &Names) -> Vec<Waived> {
+    functions_of(file, names)
+        .filter_map(|(key, function)| {
+            let exempt = function.get("exempt_reason").and_then(Value::as_str)?;
+            Some((key, waiver_reason(exempt, names)))
         })
         .collect()
 }
@@ -142,7 +167,8 @@ pub fn from_answer(result: &Value, names: &Names, ticket: &str, run: usize) -> R
     let purity = result.get("purity_score").and_then(Value::as_i64).ok_or_else(|| failure("the answer has no purity_score"))?;
     let files = result.get("files").and_then(Value::as_array).ok_or_else(|| failure("the answer has no list of files"))?;
     let functions = files.iter().flat_map(|file| over_the_limit(file, names)).collect();
-    Ok(Run { number: run, time: now()?, ticket: ticket.to_string(), purity, functions })
+    let waived = files.iter().flat_map(|file| waived_in(file, names)).collect();
+    Ok(Run { number: run, time: now()?, ticket: ticket.to_string(), purity, functions, waived })
 }
 
 /// Write one run as a standalone JSON file (the summary that `krypton comment` compares).
@@ -194,6 +220,29 @@ mod tests {
         let answer = json!({ "purity_score": 60, "files": [ { "filename": "a.py", "functions": [ { "name": "c1.m1", "times_over_limit": 2.0 } ] } ] });
         let run = from_answer(&answer, &names, "t", 0).unwrap();
         assert_eq!(run.functions.keys().next().map(String::as_str), Some("a.py::Client.connect"), "both parts are real names");
+    }
+
+    // A waived function is recorded with its reason put back, or with none; it is never counted as over the limit.
+    #[test]
+    fn test_waived() {
+        let names: Names = [("d1".to_string(), "charge".to_string()), ("d2".to_string(), "fmt".to_string()), ("r1".to_string(), "legacy retry".to_string())]
+            .into_iter()
+            .collect();
+        let answer = json!({ "purity_score": 80, "files": [ { "filename": "a.py", "functions": [
+            { "name": "d1", "times_over_limit": null, "exempt_reason": "waived: r1" },
+            { "name": "d2", "times_over_limit": null, "exempt_reason": "waived (no reason given)" } ] } ] });
+        let run = from_answer(&answer, &names, "t", 0).unwrap();
+        let expected = BTreeMap::from([("a.py::charge".to_string(), Some("legacy retry".to_string())), ("a.py::fmt".to_string(), None)]);
+        assert_eq!(run.waived, expected, "reasons put back");
+        assert!(run.functions.is_empty(), "waived functions are not over the limit");
+    }
+
+    // A summary written before waivers were recorded still reads, and one without waivers does not write the field.
+    #[test]
+    fn test_waived_optional() {
+        let run: Run = serde_json::from_str(r#"{"run":0,"time":0,"ticket":"t","purity":70,"functions":{}}"#).unwrap();
+        assert!(run.waived.is_empty(), "old summary reads");
+        assert!(!serde_json::to_string(&run).unwrap().contains("waived"), "empty list not written");
     }
 
     // A folder Krypton writes is invisible to git, even in a repository whose own .gitignore says nothing about it.

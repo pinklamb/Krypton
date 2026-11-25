@@ -105,7 +105,14 @@ mod tests {
     use super::*;
 
     fn run(purity: i64, functions: &[(&str, f64)]) -> Run {
-        Run { number: 0, time: 0, ticket: String::new(), purity, functions: functions.iter().map(|(k, v)| ((*k).to_string(), *v)).collect::<BTreeMap<_, _>>() }
+        Run {
+            number: 0,
+            time: 0,
+            ticket: String::new(),
+            purity,
+            functions: functions.iter().map(|(k, v)| ((*k).to_string(), *v)).collect::<BTreeMap<_, _>>(),
+            waived: BTreeMap::new(),
+        }
     }
 
     fn sample() -> String {

@@ -151,13 +151,15 @@ When a new version is out, Krypton says so after a scan or setup (at most once a
 <h2 id="commands">The whole client</h2>
 <div class="scroll"><table>
 <tr><th>Command</th><th>What it does</th></tr>
-<tr><td><code>krypton</code> or <code>krypton setup</code></td><td>Map the codebase, choose target, max tries, ask me or auto, and the pull request gate (it writes the workflow), in the terminal or a local dashboard (<code>--page</code>; <code>--theme blossom</code> dresses it in cherry blossom pink).</td></tr>
+<tr><td><code>krypton</code> or <code>krypton setup</code></td><td>Map the codebase, choose target, max tries, ask me or auto, and the pull request gate (it writes the workflow), and whether to check each <code>git push</code> on this computer first (a pre-push hook, <code>--hook on|off</code>), in the terminal or a local dashboard (<code>--page</code>; <code>--theme blossom</code> dresses it in cherry blossom pink).</td></tr>
 <tr><td><code>krypton scan REPO</code></td><td>Score a folder; <code>--base REF</code> only what changed, <code>--names</code> real names back, <code>--log</code> records the run.</td></tr>
-<tr><td><code>krypton review</code></td><td>List the functions that are stuck.</td></tr>
+<tr><td><code>krypton review</code></td><td>List the functions that are stuck, and every function over the limit in the order to fix them: inner helpers first.</td></tr>
 <tr><td><code>krypton restore --run N</code></td><td>Put the files back to how they were at run N.</td></tr>
 <tr><td><code>krypton order REPO</code></td><td>Pick the file order that keeps the most of a prompt cache, or keep yours.</td></tr>
 <tr><td><code>krypton login</code>, <code>krypton logout</code></td><td>Log in with GitHub (the server scores only for logged-in users and GitHub Actions runs).</td></tr>
 <tr><td><code>krypton comment</code></td><td>Write the pull request scorecard and the gate line.</td></tr>
+<tr><td><code>krypton impact</code></td><td>What a change reaches: the functions your uncommitted work (or <code>--base main</code>) touched, and every function that calls them, directly or through others, up to <code>--depth</code> steps (3 by default). <code>--function file.py::name</code> asks about one function instead, <code>--json</code> gives the full list for an agent. Each changed function says how it changed (new, logic, parameters, renamed, moved, or only comments and layout), deleted functions are listed, and a route handler is linked to the code that requests its URL. It runs on this computer only: nothing is sent, nothing is scored. A call is followed only when Krypton can tell which function it reaches; <code>--by-name</code> also follows methods matched by name alone, marked <code>~</code>.</td></tr>
+<tr><td><code>krypton prepush</code></td><td>The check before a <code>git push</code>: run by the pre-push hook that setup installs, it scores the commits being pushed with the gate&rsquo;s rule and stops a push that breaks it. <code>git push --no-verify</code> skips it once; a push Krypton cannot score goes ahead with a warning.</td></tr>
 <tr><td><code>krypton wire FILE</code></td><td>Print the exact request instead of sending it.</td></tr>
 </table></div>
 

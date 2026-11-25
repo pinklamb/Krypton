@@ -18,6 +18,8 @@ pub enum WalkError {
     NoTree,
     /// A node's byte range is not valid UTF-8 text.
     InvalidUtf8(Utf8Error),
+    /// A file a change touched does not parse: the first error's file and 1-based line.
+    Syntax(String, u32),
 }
 
 impl fmt::Display for WalkError {
@@ -27,6 +29,7 @@ impl fmt::Display for WalkError {
             Self::Language(error) => write!(f, "the grammar could not be loaded: {error}"),
             Self::NoTree => write!(f, "the parser returned no tree"),
             Self::InvalidUtf8(error) => write!(f, "a node is not valid UTF-8: {error}"),
+            Self::Syntax(path, line) => write!(f, "syntax error in {path} at line {line}: fix it first; Krypton checks a change once its code parses"),
         }
     }
 }

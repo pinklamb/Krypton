@@ -123,6 +123,13 @@ fn print_text(review: &Value) {
     println!("Stuck after {} runs: {}", text_of(review, "max_runs"), stuck.len());
     stuck.iter().for_each(print_stuck);
     println!("Improved by more than 10%: {}", text_of(review, "improved"));
+    let order = review.get("fix_order").and_then(Value::as_array).map_or(&[][..], Vec::as_slice);
+    if !order.is_empty() {
+        println!("Fix in this order, inner helpers before the functions that call them:");
+        for (number, item) in order.iter().enumerate() {
+            println!("  {}. {} · {}", number.saturating_add(1), text_of(item, "file"), text_of(item, "function"));
+        }
+    }
     if let Some(note) = review.get("note").and_then(Value::as_str) {
         println!("Note: {note}");
     }
@@ -156,6 +163,25 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
     Ok(options)
 }
 
+/// Every function over the limit in the latest run, in the order to untangle them (helpers first, see `Graph::helpers_first`), and the
+/// stuck list sorted the same way.
+fn add_fix_order(review: &mut Value, latest: &Run, repo: &std::path::Path) -> Result<(), Failure> {
+    let keys: Vec<String> = latest.functions.keys().cloned().collect();
+    let order = crate::impact_command::load_graph(repo)?.helpers_first(&keys);
+    let place = |item: &Value| order.iter().position(|key| *key == format!("{}::{}", text_of(item, "file"), text_of(item, "function"))).unwrap_or(usize::MAX);
+    if let Some(stuck) = review.get_mut("stuck").and_then(Value::as_array_mut) {
+        stuck.sort_by_key(place);
+    }
+    let listed: Vec<Value> = order
+        .iter()
+        .map(|key| key.split_once("::").map_or_else(|| json!({ "file": key }), |(file, function)| json!({ "file": file, "function": function })))
+        .collect();
+    if let Some(fields) = review.as_object_mut() {
+        fields.insert("fix_order".to_string(), Value::from(listed));
+    }
+    Ok(())
+}
+
 pub fn run(args: &[String]) -> Result<(), Failure> {
     let options = parse_options(args)?;
     let all = runlog::read_all(&options.repo)?;
@@ -171,6 +197,9 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     }
     let mode = settings.mode;
     let mut review = review_json(&ticket, &mine, &settings);
+    if let Some(latest) = mine.last() {
+        add_fix_order(&mut review, latest, &options.repo)?;
+    }
     let approved = auto_approve(&options.repo, &ticket, &mine, &review, mode)?;
     if let Some(fields) = review.as_object_mut() {
         fields.insert("mode".to_string(), Value::from(mode.name()));
@@ -210,6 +239,7 @@ mod tests {
             ticket: "t".to_string(),
             purity: *purity,
             functions: times.map(|value| ("a.py::f".to_string(), value)).into_iter().collect::<BTreeMap<_, _>>(),
+            waived: BTreeMap::new(),
         };
         values.iter().enumerate().map(make).collect()
     }

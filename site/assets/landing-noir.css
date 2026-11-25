@@ -69,3 +69,13 @@
   .bbar.open .bnav a { color:var(--ink) !important; }
   .bbar.open .bnav a:hover, .bbar.open .bnav a:focus-visible { color:var(--horse) !important; background:rgba(46,27,71,.5); }
 }
+
+/* ---------- the scroll cue: lower-right of the hero, "scroll" and an arrow that nudges down, so people know the page goes on ---------- */
+.bhero { position:relative; }
+.scrollcue { position:absolute; right:var(--g); bottom:calc(12vh + clamp(18px,4vh,36px)); display:inline-flex; align-items:center; gap:10px; z-index:2;
+  font:400 13px var(--mono); color:var(--muted); text-decoration:none; transition:color .2s; }
+.scrollcue svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; animation:nudge 1.8s ease-in-out infinite; }
+.scrollcue:hover, .scrollcue:focus-visible { color:var(--horse); }
+@keyframes nudge { 0%, 100% { transform:translateY(-2px); } 50% { transform:translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .scrollcue svg { animation:none; } }
+@media (max-width:820px) { .scrollcue { bottom:calc(12vh + 12px); } .scrollcue span { display:none; } }

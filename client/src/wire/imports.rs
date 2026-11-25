@@ -117,6 +117,10 @@ fn python_imports(node: Node, source: &str) -> Result<Vec<PythonImport>, WalkErr
 }
 
 /// Read what one node imports, if it is an import statement or call, into `raw`.
+///
+/// # Errors
+///
+/// [`WalkError::InvalidUtf8`] when the import's text is not valid UTF-8.
 pub fn observe(raw: &mut RawImports, node: Node, source: &str, lang: Lang) -> Result<(), WalkError> {
     let kind = node.kind();
     if lang == Lang::Python {

@@ -215,7 +215,7 @@ pub fn ensure(server: &Server) -> Result<(), Failure> {
 
 pub fn run(args: &[String]) -> Result<(), Failure> {
     let options = parse_options(args)?;
-    let server = Server::from_flag(options.server.as_deref());
+    let server = Server::from_flag(options.server.as_deref())?;
     if options.actions {
         let answer = server.post_anonymous("/v1/auth/actions", &json!({ "oidc_token": actions_identity()? }))?;
         return keep(&server, &answer);
@@ -225,7 +225,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
 
 pub fn logout(args: &[String]) -> Result<(), Failure> {
     let options = parse_options(args)?;
-    let server = Server::from_flag(options.server.as_deref());
+    let server = Server::from_flag(options.server.as_deref())?;
     let dir = home()?;
     let mut tokens = read_tokens(&dir)?;
     if tokens.remove(server.url()).is_none() {

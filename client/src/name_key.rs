@@ -21,7 +21,8 @@ pub fn for_this_run() -> Result<NameKey, Failure> {
         let text = text.to_string_lossy();
         return NameKey::from_hex(&text).map_err(|error| Failure::Usage(format!("KRYPTON_KEY: {error}")));
     }
-    let mut bytes = [0_u8; 32];
-    getrandom::getrandom(&mut bytes).map_err(|error| Failure::Output(format!("no randomness for the name key: {error}")))?;
-    Ok(NameKey::new(bytes))
+    // the random bytes are copied into the key, which wipes itself when dropped; this working copy is wiped as soon as it goes
+    let mut bytes = zeroize::Zeroizing::new([0_u8; 32]);
+    getrandom::getrandom(bytes.as_mut()).map_err(|error| Failure::Output(format!("no randomness for the name key: {error}")))?;
+    Ok(NameKey::new(*bytes))
 }

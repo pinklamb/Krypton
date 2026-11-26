@@ -81,7 +81,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
         "body": read(&options.scorecard)?,
     });
     let bytes = serde_json::to_vec(&body).map_err(|error| Failure::Output(error.to_string()))?;
-    match Server::from_flag(None).post("/v1/pr/report", &bytes) {
+    match Server::from_flag(None)?.post("/v1/pr/report", &bytes) {
         Ok(answer) => {
             let comment = answer.get("comment").and_then(serde_json::Value::as_str).unwrap_or("posted");
             println!("Posted as the Krypton app: comment {comment}, gate line set.");

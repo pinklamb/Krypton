@@ -382,9 +382,11 @@ fn next_steps(settings: &Settings, ignore: Option<&Path>, themes: Option<&Path>,
     match gate {
         Written::Wrote(path) => {
             lines.push(format!("Wrote {} (the pull request gate: {}). Commit it to turn the gate on.", path.display(), gate_words(settings)));
+            lines.push(app_line());
         }
         Written::Updated(path) => {
             lines.push(format!("Updated {} to the new gate ({}). Commit it so pull requests use the new rule.", path.display(), gate_words(settings)));
+            lines.push(app_line());
         }
         Written::Unchanged(path) => lines.push(format!("{} already has this gate.", path.display())),
         Written::Kept(path) => lines.push(format!("{} has your own edits (setup's line is gone), so it was left as it is.", path.display())),
@@ -413,6 +415,14 @@ fn hook_line(hook: &Hook) -> Option<String> {
         Hook::NotGit => Some("This folder is not a git checkout, so no pre-push hook was installed.".to_string()),
         Hook::Off => None,
     }
+}
+
+/// The one-time step that makes the gate's comment come from Krypton: installing its GitHub App on the repository.
+fn app_line() -> String {
+    format!(
+        "So the pull request comment comes from Krypton (not github-actions), install the Krypton app on this repository once: {}",
+        crate::workflow::APP_INSTALL
+    )
 }
 
 /// The gate as a person would say it.
@@ -520,7 +530,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     if asking {
         crate::loader::splash();
         if !options.no_map {
-            crate::login_command::ensure(&crate::http::Server::from_flag(None))?;
+            crate::login_command::ensure(&crate::http::Server::from_flag(None)?)?;
         }
         eprintln!("Mapping your codebase ...");
     }

@@ -33,11 +33,7 @@ use crate::workflow::{self, Gate, Written};
 use crate::Failure;
 
 const USAGE: &str =
-<<<<<<< HEAD
-    "usage: krypton setup [REPO] [--page [--listen HOST:PORT] [--theme cocoa|blossom]] [--mode manual|auto] [--target 0-90] [--runs 1-10] [--gate off|worse|target] [--no-map]";
-=======
-    "usage: krypton setup [REPO] [--page [--listen HOST:PORT] [--theme cocoa|blossom]] [--mode manual|auto] [--target 0-100] [--runs 1-10] [--gate off|worse|target] [--hook on|off] [--no-map]";
->>>>>>> 1ae4a413443145fe20bcadae14b80f671620a4a4
+    "usage: krypton setup [REPO] [--page [--listen HOST:PORT] [--theme cocoa|blossom]] [--mode manual|auto] [--target 0-90] [--runs 1-10] [--gate off|worse|target] [--hook on|off] [--no-map]";
 const SETTINGS: &str = "settings.json";
 const BASELINE: &str = "baseline.json";
 /// Used when nobody answers a question (an empty line) and no flag was given.
@@ -562,13 +558,10 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
 mod tests {
     use std::io::Cursor;
 
-<<<<<<< HEAD
     use super::{
-        ask_all, parse_score, parse_target, parse_where, save, saved, starter_ignore, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings,
+        ask_all, parse_score, parse_target, parse_where, parse_yes_no, save, saved, starter_ignore, starter_themes, suggested_target, Gate, Mode, Options,
+        Prompt, Settings,
     };
-=======
-    use super::{ask_all, parse_where, parse_yes_no, save, saved, starter_ignore, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings};
->>>>>>> 1ae4a413443145fe20bcadae14b80f671620a4a4
 
     fn answers(typed: &str) -> Option<Settings> {
         let mut input = Cursor::new(typed.as_bytes().to_vec());

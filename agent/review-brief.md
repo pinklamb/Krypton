@@ -42,7 +42,7 @@ result and decide, before anything goes to GitHub.
 The page also carries a small **Settings** panel, styled by `themes.md` like the rest, so the person can change how Krypton runs without the
 terminal. Read the current values from `mode`, `target` and `max_runs` in the review data.
 
-- **Target score** (0-100): the purity each ticket's code must reach. If `.krypton/settings.json` has a `baseline`, show it beside the target
+- **Target score** (0-90; no code scores above 90): the purity each ticket's code must reach. If `.krypton/settings.json` has a `baseline`, show it beside the target
   ("your codebase scores 28 today") so the person can aim above it.
 - **Max tries** (1-10): runs on a function before it counts as stuck.
 - **When stuck:** Ask me / Auto.

@@ -276,7 +276,7 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
             "--target" => {
                 let text = words.next().ok_or_else(|| Failure::Usage(format!("--target needs a number\n{USAGE}")))?;
                 let bad = || Failure::Usage(format!("--target is a whole number from 0 to 100\n{USAGE}"));
-                options.target = Some(crate::setup_command::parse_target(text).ok_or_else(bad)?);
+                options.target = Some(crate::setup_command::parse_score(text).ok_or_else(bad)?);
             }
             "--state" => options.state = Some(PathBuf::from(words.next().ok_or_else(|| Failure::Usage(format!("--state needs a file\n{USAGE}")))?)),
             "--changed" => options.changed = Some(PathBuf::from(words.next().ok_or_else(|| Failure::Usage(format!("--changed needs a file\n{USAGE}")))?)),

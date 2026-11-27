@@ -30,7 +30,7 @@ use crate::workflow::{self, Gate, Written};
 use crate::Failure;
 
 const USAGE: &str =
-    "usage: krypton setup [REPO] [--page [--listen HOST:PORT] [--theme cocoa|blossom]] [--mode manual|auto] [--target 0-100] [--runs 1-10] [--gate off|worse|target] [--no-map]";
+    "usage: krypton setup [REPO] [--page [--listen HOST:PORT] [--theme cocoa|blossom]] [--mode manual|auto] [--target 0-90] [--runs 1-10] [--gate off|worse|target] [--no-map]";
 const SETTINGS: &str = "settings.json";
 const BASELINE: &str = "baseline.json";
 /// Used when nobody answers a question (an empty line) and no flag was given.
@@ -39,8 +39,9 @@ pub const DEFAULT_RUNS: usize = 3;
 const MAX_RUNS: usize = 10;
 /// How far above today's score the suggested target sits: far enough that every ticket lifts the code it touches.
 const LIFT: i64 = 10;
-/// The highest target Krypton suggests on its own; asking for a perfect score on every ticket is left to the person.
-const SUGGEST_CAP: i64 = 95;
+/// The highest target: the server never scores above 90 (no measurement of structure can call code perfect), so a higher one could never
+/// be met.
+pub const MAX_TARGET: i64 = 90;
 
 const fn round_up_to_five(score: i64) -> i64 {
     match score.rem_euclid(5) {
@@ -54,8 +55,8 @@ const fn round_up_to_five(score: i64) -> i64 {
 /// and nothing lowers it except the person typing a lower number.
 #[must_use]
 pub fn suggested_target(baseline: Option<i64>, kept: Option<i64>) -> i64 {
-    let from_today = baseline.map_or(DEFAULT_TARGET, |score| round_up_to_five(score.saturating_add(LIFT)).min(SUGGEST_CAP).max(score));
-    kept.map_or(from_today, |target| target.max(from_today))
+    let from_today = baseline.map_or(DEFAULT_TARGET, |score| round_up_to_five(score.saturating_add(LIFT)).min(MAX_TARGET).max(score));
+    kept.map_or(from_today, |target| target.min(MAX_TARGET).max(from_today))
 }
 
 /// What happens when a ticket has functions the agent could not fix.
@@ -254,8 +255,14 @@ impl Prompt<'_> {
     }
 }
 
+/// A score from 0 to 100, with or without a percent sign: what an existing workflow's `--target` may say.
+pub fn parse_score(text: &str) -> Option<i64> {
+    text.trim().trim_end_matches('%').parse().ok().filter(|score| (0..=100).contains(score))
+}
+
+/// A target to set: a score no higher than [`MAX_TARGET`].
 pub fn parse_target(text: &str) -> Option<i64> {
-    text.trim().trim_end_matches('%').parse().ok().filter(|target| (0..=100).contains(target))
+    parse_score(text).filter(|target| *target <= MAX_TARGET)
 }
 
 pub fn parse_runs(text: &str) -> Option<usize> {
@@ -269,7 +276,7 @@ fn target_question(baseline: Option<i64>, suggest: i64) -> String {
              lifts the code it touches and old code is never blocked.\n"
         )
     });
-    format!("\n{today}Target purity for each ticket's code, 0-100 [{suggest}]: ")
+    format!("\n{today}Target purity for each ticket's code, 0-90 [{suggest}]: ")
 }
 
 const WHERE_QUESTION: &str = "
@@ -403,7 +410,7 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
         let mut value = |flag: &str| words.next().cloned().ok_or_else(|| usage(&format!("{flag} needs a value")));
         match word.as_str() {
             "--mode" => options.mode = Some(Mode::parse(&value("--mode")?).ok_or_else(|| usage("--mode is manual or auto"))?),
-            "--target" => options.target = Some(parse_target(&value("--target")?).ok_or_else(|| usage("--target is a whole number from 0 to 100"))?),
+            "--target" => options.target = Some(parse_target(&value("--target")?).ok_or_else(|| usage("--target is a whole number from 0 to 90"))?),
             "--runs" => options.max_runs = Some(parse_runs(&value("--runs")?).ok_or_else(|| usage("--runs is a whole number from 1 to 10"))?),
             "--gate" => options.gate = Some(Gate::parse(&value("--gate")?).ok_or_else(|| usage("--gate is off, worse or target"))?),
             "--no-map" => options.no_map = true,
@@ -491,7 +498,9 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
 mod tests {
     use std::io::Cursor;
 
-    use super::{ask_all, parse_where, save, saved, starter_ignore, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings};
+    use super::{
+        ask_all, parse_score, parse_target, parse_where, save, saved, starter_ignore, starter_themes, suggested_target, Gate, Mode, Options, Prompt, Settings,
+    };
 
     fn answers(typed: &str) -> Option<Settings> {
         let mut input = Cursor::new(typed.as_bytes().to_vec());
@@ -514,11 +523,18 @@ mod tests {
     fn test_suggested_target() {
         assert_eq!(suggested_target(Some(56), None), 70, "56 + 10 rounds up to 70");
         assert_eq!(suggested_target(Some(60), None), 70, "a multiple of 5 stays");
-        assert_eq!(suggested_target(Some(90), None), 95, "capped at 95");
-        assert_eq!(suggested_target(Some(98), None), 98, "never below today");
         assert_eq!(suggested_target(None, None), 70, "no map: the usual 70");
         assert_eq!(suggested_target(Some(56), Some(80)), 80, "a higher saved target is kept");
         assert_eq!(suggested_target(Some(78), Some(70)), 90, "a better codebase raises it");
+    }
+
+    // No suggestion is above 90, the highest score, not even an old saved target; a workflow's old 95 still reads.
+    #[test]
+    fn test_target_ceiling() {
+        assert_eq!(suggested_target(Some(84), None), 90, "capped at 90, the highest score");
+        assert_eq!(suggested_target(Some(90), None), 90, "never below today");
+        assert_eq!(suggested_target(Some(56), Some(95)), 90, "an old target above the ceiling comes down to 90");
+        assert_eq!((parse_target("90"), parse_target("95"), parse_score("95")), (Some(90), None, Some(95)));
     }
 
     // A wrong answer is asked again.

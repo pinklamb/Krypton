@@ -300,7 +300,7 @@ footer { color: var(--muted); font-size: 13px; display: flex; justify-content: s
           <div class="howcard" role="listitem"><b>1 · Compile</b>
             <svg viewBox="0 0 220 64" aria-hidden="true"><rect class="ln2" x="4" y="8" width="60" height="6" rx="3"/><rect class="ln2" x="14" y="22" width="48" height="6" rx="3"/><rect class="ln2" x="24" y="36" width="36" height="6" rx="3"/><rect class="ln2" x="14" y="50" width="52" height="6" rx="3"/><path d="M80 32h26m-6-6 6 6-6 6" class="ed"/><path class="ed" d="M170 12 140 34M170 12 200 34M140 34 126 54M140 34 154 54"/><circle class="nd2" cx="170" cy="12" r="6"/><circle class="nd2" cx="140" cy="34" r="6"/><circle class="nd2" cx="200" cy="34" r="6"/><circle class="nd2" cx="126" cy="54" r="5"/><circle class="nd2" cx="154" cy="54" r="5"/></svg></div>
           <div class="howcard" role="listitem"><b>2 · Score</b>
-            <svg viewBox="0 0 220 64" aria-hidden="true"><path class="ed" d="M50 10 30 30M50 10 70 30M30 30 20 52M30 30 40 52"/><circle class="nd2" cx="50" cy="10" r="5"/><circle class="nd2" cx="30" cy="30" r="5"/><circle class="nd2" cx="70" cy="30" r="5"/><circle class="nd2" cx="20" cy="52" r="4"/><circle class="nd2" cx="40" cy="52" r="4"/><path d="M96 32h26m-6-6 6 6-6 6" class="ed"/><text x="140" y="42">91 / 100</text></svg></div>
+            <svg viewBox="0 0 220 64" aria-hidden="true"><path class="ed" d="M50 10 30 30M50 10 70 30M30 30 20 52M30 30 40 52"/><circle class="nd2" cx="50" cy="10" r="5"/><circle class="nd2" cx="30" cy="30" r="5"/><circle class="nd2" cx="70" cy="30" r="5"/><circle class="nd2" cx="20" cy="52" r="4"/><circle class="nd2" cx="40" cy="52" r="4"/><path d="M96 32h26m-6-6 6 6-6 6" class="ed"/><text x="140" y="42">91%</text></svg></div>
           <div class="howcard" role="listitem"><b>3 · Discard</b>
             <svg viewBox="0 0 220 64" aria-hidden="true"><rect class="ln2" x="4" y="8" width="60" height="6" rx="3"/><rect class="ln2" x="14" y="22" width="48" height="6" rx="3"/><rect class="ln2" x="24" y="36" width="36" height="6" rx="3"/><rect class="ln2" x="14" y="50" width="52" height="6" rx="3"/><path d="M80 32h26m-6-6 6 6-6 6" class="ed"/><text x="124" y="42">91 · hints</text></svg></div>
         </div></div>
@@ -773,7 +773,7 @@ function leftOutNote(d) {
 function renderYours(d) {
   const b = calc(S.devs).bill, saved = b.orig - b.full, worst = d.worst[0];
   $('h-yours').textContent = `What Krypton would do for ${d.repo}`;
-  const facts = [statBox(fmt(d.files), 'source files'), statBox(fmt(d.lines), 'lines of code'), statBox('~' + tokK(d.tokens * CLAUDE_TOKENS), 'tokens each time an agent reads it'), statBox(d.purity + ' / 100', 'structure score')];
+  const facts = [statBox(fmt(d.files), 'source files'), statBox(fmt(d.lines), 'lines of code'), statBox('~' + tokK(d.tokens * CLAUDE_TOKENS), 'tokens each time an agent reads it'), statBox(d.purity + '%', 'structure score')];
   const clean = d.tangled === 0
     ? '<p class="notice">Already clean: no function is over the limit, so there is little to untangle. Krypton would mainly keep it that way as agents keep editing, and order your files for caching.</p>'
     : `<p><b>${plural(d.tangled, 'function', 'functions')} of ${fmt(d.functions)}</b> too tangled${worst ? `, the hardest ${worst.times}× over the limit` : ''}. Krypton would have your agent split these first:</p>${worstTable(d)}
@@ -826,7 +826,7 @@ function worstTable(d) {
 function renderScan(d) {
   $('repoEyebrow').textContent = 'Your repository';
   const facts = [statBox(fmt(d.files), 'source files'), statBox(fmt(d.lines), 'lines of code'), statBox('~' + tokK(d.tokens * CLAUDE_TOKENS), 'tokens each time an agent reads it'),
-    statBox(d.purity + ' / 100', 'structure score'), statBox(`${d.tangled} of ${fmt(d.functions)}`, 'functions too tangled')];
+    statBox(d.purity + '%', 'structure score'), statBox(`${d.tangled} of ${fmt(d.functions)}`, 'functions too tangled')];
   $('scanOut').innerHTML = `<div class="scanfacts">${facts.join('')}</div><h3>Hardest functions to read</h3>${worstTable(d)}<p class="small muted">Token counts are estimates (characters ÷ 3.5).</p>`;
   $('scanOut').hidden = false; $('scanBtns').hidden = false; $('scanSave').hidden = false;
 }

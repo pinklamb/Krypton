@@ -291,7 +291,7 @@ fn print_review(result: &Value, usage: &Value, names: Option<&Names>) -> Result<
     println!("{}", if let Some(names) = names { put_names_back(summary, names)? } else { summary.to_string() });
     let number = |value: Option<&Value>| value.map_or_else(|| "?".to_string(), ToString::to_string);
     println!(
-        "purity {}/100 ({}) | {} files, {} nodes, scored in {} ms",
+        "purity {}% ({}) | {} files, {} nodes, scored in {} ms",
         number(result.get("purity_score")),
         result.get("check_conclusion").and_then(Value::as_str).unwrap_or("unknown"),
         number(usage.get("files")),

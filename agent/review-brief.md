@@ -17,8 +17,21 @@ result and decide, before anything goes to GitHub.
 2. Read `themes.md`. It only changes how the page **looks** (colors, fonts, shape, wording). It never changes what the page contains.
    Anything it leaves blank is your choice.
 3. Build **one self-contained HTML page** on this machine (no network, no external files) with the outline below.
-4. Add a small local script (about 20 lines) that listens on `127.0.0.1` on a random port, accepts one decision per stuck function from the page
-   (approve or send back) and settings saves (see below), with a one-time token in the address, writes `.krypton/decisions.json`, and exits when finished.
+4. Add a small local script that listens on `127.0.0.1` on a random port, accepts one decision per stuck function from the page
+   (approve or send back) and settings saves (see below), writes `.krypton/decisions.json`, and exits when finished. Any web page open in
+   the browser can send requests to `127.0.0.1`, so the script must guard itself exactly like this:
+   - **Secret:** make a fresh 256-bit secret from the operating system's random source (`secrets.token_urlsafe(32)` in Python) and print
+     the link `http://127.0.0.1:PORT/?t=SECRET`.
+   - **Swap it for a cookie, once:** on the first GET of that link, answer `302` to `/` with
+     `Set-Cookie: krypton_review=SECRET; HttpOnly; SameSite=Strict; Path=/`, and mark the link spent; any later visit to the link gets
+     `403` ("This link was already used"). The page itself calls the script with `credentials: "same-origin"` and never puts the secret
+     in an address or a POST.
+   - **Check every request:** the `krypton_review` cookie, compared in constant time (`hmac.compare_digest`); `Host` must be
+     `127.0.0.1:PORT`, `localhost:PORT` or `[::1]:PORT` (else `421`); every POST needs an `Origin` of this page, or a `Referer` from it
+     when there is no `Origin` (else `403`).
+   - **Refuse without stopping:** answer a refused request and keep serving, so a stray request cannot end the review.
+   - **Headers on every answer:** `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`.
+   - **End:** stop on Finish, or after 30 minutes without a valid request.
 5. Open the page and tell the human where it is. Wait for the decisions.
 6. If the human approved anything: run `krypton restore --run N` once, with the `restore_run` from the review data (the run with the best purity; it puts back the whole working tree as it was at that run, not one function), then continue to the GitHub steps (push, pull request).
    For each function **sent back**: try again on that function only, log the new run, and show the page again.

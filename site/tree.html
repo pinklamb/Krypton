@@ -169,7 +169,7 @@
   }
 
   function show(d) {
-    $('facts').innerHTML = [[d.purity + ' / 100', 'purity'], [fmt(d.files), 'files'], [fmt(d.lines), 'lines'], [fmt(d.tangled), 'tangled functions']]
+    $('facts').innerHTML = [[d.purity + '%', 'purity'], [fmt(d.files), 'files'], [fmt(d.lines), 'lines'], [fmt(d.tangled), 'tangled functions']]
       .map(function (x) { return '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('');
     $('worst').innerHTML = '';
     var fns = (d.tree && d.tree.fns) || [];

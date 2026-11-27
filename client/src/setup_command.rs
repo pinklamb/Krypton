@@ -279,7 +279,7 @@ pub fn parse_runs(text: &str) -> Option<usize> {
 fn target_question(baseline: Option<i64>, suggest: i64) -> String {
     let today = baseline.map_or_else(String::new, |score| {
         format!(
-            "Your codebase scores {score}/100 today. Krypton suggests {suggest}, a step above: only new tickets are held to it, so new code \
+            "Your codebase scores {score}% today. Krypton suggests {suggest}%, a step above: only new tickets are held to it, so new code \
              lifts the code it touches and old code is never blocked.\n"
         )
     });

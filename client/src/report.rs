@@ -48,7 +48,7 @@ fn head(run: &Run, result: &Value, usage: &Value, color: bool) -> [String; 4] {
     };
     [
         format!("{}  {}{}", paint(MARK, LAVENDER, color), paint("Kr", BRIGHT, color), paint("ypton", LAVENDER, color)),
-        format!("{}  {}", paint("Purity", MUTED, color), paint(&format!("{}/100", run.purity), BRIGHT, color)),
+        format!("{}  {}", paint("Purity", MUTED, color), paint(&format!("{}%", run.purity), BRIGHT, color)),
         verdict,
         paint(&format!("{} scored in {ms} ms", plural(usize::try_from(files).unwrap_or(0), "file", "files")), MUTED, color),
     ]
@@ -130,7 +130,7 @@ mod tests {
         let lines: Vec<&str> = text.lines().collect();
         let at = |n: usize| lines.get(n).copied().unwrap_or_default();
         assert_eq!(at(0), "  ◆  Krypton", "the mark and the name");
-        assert_eq!(at(1), "  Purity  62/100", "the score");
+        assert_eq!(at(1), "  Purity  62%", "the score");
         assert_eq!(at(2), "  3 functions over the limit, in 2 files.", "the verdict");
         assert_eq!(at(3), "  145 files scored in 412 ms", "what was scored");
         assert!(!text.contains('█') && !text.contains('░'), "no bar");

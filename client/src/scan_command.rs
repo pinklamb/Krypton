@@ -1,4 +1,4 @@
-//! `krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--full] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]`: build the tree of every source file under
+//! `krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--full] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader] [--quiet]`: build the tree of every source file under
 //! REPO on this machine, send only the tree to the Krypton server and print its review. The server never receives source text; names, strings and
 //! comments stay here, and `--names` puts the real function names back into the review locally. `--log` also adds the run to `.krypton/runs.jsonl` and
 //! saves an attempt (a patch) so the run can be put back; `--summary FILE` writes the scores with real names for `krypton comment`.
@@ -24,18 +24,40 @@ use crate::runlog;
 use crate::Failure;
 
 const USAGE: &str =
-    "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--full] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader]";
+    "usage: krypton scan REPO [--level relaxed|standard|strict] [--base REF] [--full] [--names] [--json] [--save FILE] [--log] [--ticket TEXT] [--summary FILE] [--no-loader] [--quiet]";
 const EXTENSIONS: [&str; 9] = ["py", "js", "jsx", "mjs", "cjs", "ts", "mts", "cts", "tsx"];
 pub const SKIP_DIRS: [&str; 12] =
     [".git", "node_modules", "dist", "build", "venv", ".venv", "__pycache__", "target", ".next", "coverage", "vendor", "site-packages"];
 const LEVELS: [&str; 3] = ["relaxed", "standard", "strict"];
 
 /// How the answer is shown.
+/// What the answer is printed as. When several flags are given, the later one in this list wins: quiet over JSON over full.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum Shape {
+    /// Short at a terminal; the full report with every hint for a pipe, an agent or CI.
+    Auto,
+    /// The full report with every hint even at a terminal (`--full`).
+    Full,
+    /// The answer as JSON, with what was scored added (`--json`).
+    Json,
+    /// Nothing: only the `--summary` file is wanted (the pre-push check scores two trees and prints its own one line).
+    Quiet,
+}
+
+/// How the answer is shown.
 struct Output {
     names: bool,
-    json: bool,
-    /// The full report with every hint even at a terminal (a pipe, an agent or CI always gets it).
-    full: bool,
+    shape: Shape,
+}
+
+impl Output {
+    fn want(&mut self, shape: Shape) {
+        self.shape = self.shape.max(shape);
+    }
+
+    fn quiet(&self) -> bool {
+        self.shape == Shape::Quiet
+    }
 }
 
 struct Options {
@@ -60,7 +82,7 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
         repo: PathBuf::new(),
         level: "standard".to_string(),
         server: None,
-        output: Output { names: false, json: false, full: false },
+        output: Output { names: false, shape: Shape::Auto },
         no_loader: false,
         base: None,
         save: None,
@@ -74,9 +96,10 @@ fn parse_options(args: &[String]) -> Result<Options, Failure> {
         let mut value = |flag: &str| words.next().cloned().ok_or_else(|| usage(&format!("{flag} needs a value")));
         match word.as_str() {
             "--names" => options.output.names = true,
-            "--json" => options.output.json = true,
-            "--full" => options.output.full = true,
+            "--json" => options.output.want(Shape::Json),
+            "--full" => options.output.want(Shape::Full),
             "--no-loader" => options.no_loader = true,
+            "--quiet" => options.output.want(Shape::Quiet),
             "--log" => options.log = true,
             "--ticket" => options.ticket = value("--ticket")?,
             "--summary" => options.summary = Some(PathBuf::from(value("--summary")?)),
@@ -147,7 +170,7 @@ fn build_body(options: &Options, files: &[String], loader: Option<&Loader>) -> R
     if selected.is_empty() {
         return Err(Failure::Usage("no source files changed since that ref: nothing to score".to_string()));
     }
-    note(loader, &format!("building the tree of {} files ...", selected.len()));
+    note(loader, options.output.quiet(), &format!("building the tree of {} files ...", selected.len()));
     if let Some(active) = loader {
         active.stage("Building the trees");
     }
@@ -168,9 +191,9 @@ fn build_body(options: &Options, files: &[String], loader: Option<&Loader>) -> R
     Ok((body, names, count))
 }
 
-/// A progress line on standard error, left out when the loader is drawing there.
-fn note(loader: Option<&Loader>, text: &str) {
-    if loader.is_none() {
+/// A progress line on standard error, left out when the loader is drawing there or the scan is quiet.
+fn note(loader: Option<&Loader>, quiet: bool, text: &str) {
+    if loader.is_none() && !quiet {
         eprintln!("{text}");
     }
 }
@@ -188,17 +211,17 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     if files.is_empty() {
         return Err(Failure::Usage(format!("no source files found under {}", options.repo.display())));
     }
-    let loader = loader::start_if_wanted(options.no_loader);
+    let loader = loader::start_if_wanted(options.no_loader || options.output.quiet());
     if let Some(active) = &loader {
         active.stage(&format!("Reading {} files", files.len()));
     }
     let (body, names, sent) = build_body(&options, &files, loader.as_ref())?;
     let mut coverage = Coverage::survey(&options.repo)?;
-    note(loader.as_ref(), &format!("sending {} KB of tree (no source text) ...", body.len() / 1000));
+    note(loader.as_ref(), options.output.quiet(), &format!("sending {} KB of tree (no source text) ...", body.len() / 1000));
     if let Some(active) = &loader {
         active.stage("Scoring on the Krypton server");
     }
-    let answer = Server::from_flag(options.server.as_deref()).post("/v1/score", &body)?;
+    let answer = Server::from_flag(options.server.as_deref())?.post("/v1/score", &body)?;
     if let Some(active) = loader {
         active.finish();
     }
@@ -222,14 +245,17 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
 fn show(options: &Options, answer: &Value, names: &Names, coverage: &Coverage) -> Result<(), Failure> {
     let result = answer.get("result").unwrap_or(&Value::Null);
     let usage = answer.get("usage").unwrap_or(&Value::Null);
-    if options.output.json {
+    if options.output.quiet() {
+        return Ok(());
+    }
+    if options.output.shape == Shape::Json {
         let mut shown = result.clone();
         let covered = serde_json::to_value(coverage).map_err(|error| Failure::Output(error.to_string()))?;
         shown.as_object_mut().map(|fields| fields.insert("coverage".to_string(), covered));
         println!("{}", serde_json::to_string_pretty(&shown).map_err(|error| Failure::Output(error.to_string()))?);
         return Ok(());
     }
-    if !options.output.full && io::stdout().is_terminal() {
+    if options.output.shape == Shape::Auto && io::stdout().is_terminal() {
         // a person at a terminal: the mark, the score and the worst functions; the hints are one flag away
         let run = runlog::from_answer(result, names, "", 0)?;
         let color = env::var_os("NO_COLOR").is_none();

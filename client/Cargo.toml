@@ -23,6 +23,7 @@ cli = ["dep:flate2", "dep:ureq", "dep:tiktoken-rs", "dep:getrandom", "dep:ignore
 
 [dependencies]
 tree-sitter = "0.27"
+petgraph = { version = "0.6", default-features = false }  # the call graph (src/callgraph/): edges, connected groups and cycles
 tree-sitter-python = "0.25"
 tree-sitter-javascript = "0.25"
 tree-sitter-typescript = "0.23"
@@ -32,6 +33,7 @@ serde_json = { version = "1", features = ["preserve_order"] }  # config order ma
 sha2 = "0.10"
 getrandom = { version = "0.2", optional = true }  # the per-run name key (src/name_key.rs)
 regex = "1"
+zeroize = { version = "1", features = ["derive"] }  # the per-run name key and its working copies are wiped when dropped
 flate2 = { version = "1", optional = true }
 ureq = { version = "2", optional = true }
 tiktoken-rs = { version = "0.7", optional = true }

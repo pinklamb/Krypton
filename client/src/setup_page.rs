@@ -84,7 +84,8 @@ pub fn parse_form(body: &str, baseline: Option<i64>) -> Result<Settings, String>
     let max_runs = field("runs").as_deref().and_then(parse_runs).ok_or("Max tries is a whole number from 1 to 10.")?;
     let mode = field("mode").as_deref().and_then(Mode::parse).ok_or("Choose Ask me or Auto.")?;
     let gate = field("gate").as_deref().and_then(Gate::parse).ok_or("Choose whether to set up the pull request gate.")?;
-    Ok(Settings { mode, target, max_runs, baseline, gate })
+    let hook = field("hook").as_deref().and_then(crate::setup_command::parse_yes_no).ok_or("Choose whether to check each push on this computer.")?;
+    Ok(Settings { mode, target, max_runs, baseline, gate, hook })
 }
 
 fn respond(mut stream: &TcpStream, status: &str, html: &str) {
@@ -248,15 +249,18 @@ fn page(current: &Settings, problem: Option<&str>, theme: Theme) -> String {
         .iter()
         .map(|(gate, text)| choice("gate", gate.name(), text, *gate == current.gate))
         .collect();
+    let hooks = choice("hook", "on", "Check it", current.hook) + &choice("hook", "off", "Don't", !current.hook);
     format!(
         "{head}
 <body><main><h1>{mark}<span>Kr<small>ypton</small> setup</span></h1>{today}{error}<form method=post class=card>
 <fieldset><legend>Target score for each ticket</legend><input type=number name=target min=0 max=90 value={target} required></fieldset>
 <fieldset><legend>Max tries on a function before it counts as stuck</legend>{runs}</fieldset>
 <fieldset><legend>When the agent is still stuck</legend>{modes}<p class=hint>Ask me: your agent builds a review page for the current ticket, styled by themes.md, and you decide before anything goes to GitHub. Auto: Krypton keeps the best run and the agent carries on.</p></fieldset>
-<fieldset><legend>Pull request gate on GitHub</legend>{gates}<p class=hint>Writes .github/workflows/krypton.yml; commit it to turn the gate on. Never worse: a pull request fails only if it lowers the purity score. Target: the files a pull request changes must reach your target; old code is never judged. An existing workflow is never overwritten.</p></fieldset>
+<fieldset><legend>Pull request gate on GitHub</legend>{gates}<p class=hint>Writes .github/workflows/krypton.yml; commit it to turn the gate on. Never worse: a pull request fails only if it lowers the purity score. Target: the files a pull request changes must reach your target; old code is never judged. An existing workflow is never overwritten.</p><p class=hint>So the comment on each pull request comes from Krypton rather than github-actions, <a href={app} target=_blank rel=noopener>install the Krypton app</a> on this repository once.</p></fieldset>
+<fieldset><legend>Before each git push on this computer</legend>{hooks}<p class=hint>Installs a git pre-push hook: every push is scored first with the same rule, and a push that breaks it is stopped, so pushes without a pull request are checked too. git push --no-verify skips it once. A pre-push hook of your own is never overwritten.</p></fieldset>
 <button type=submit>Save settings</button></form></main></body></html>",
         target = current.target,
+        app = crate::workflow::APP_INSTALL,
         head = head(theme),
         mark = theme.mark()
     )
@@ -276,8 +280,9 @@ mod tests {
     // A submitted form becomes the settings, and a wrong one says what is wrong.
     #[test]
     fn test_parse_form() {
-        let settings = parse_form("target=72&runs=4&mode=auto&gate=target", Some(28)).unwrap();
-        assert_eq!(settings, Settings { mode: Mode::Auto, target: 72, max_runs: 4, baseline: Some(28), gate: Gate::Target }, "all four read");
+        let settings = parse_form("target=72&runs=4&mode=auto&gate=target&hook=on", Some(28)).unwrap();
+        assert_eq!(settings, Settings { mode: Mode::Auto, target: 72, max_runs: 4, baseline: Some(28), gate: Gate::Target, hook: true }, "all five read");
+        assert!(parse_form("target=72&runs=4&mode=auto&gate=target", None).is_err(), "a missing push check answer is refused");
         assert!(parse_form("target=150&runs=4&mode=auto", None).is_err(), "a target over 100 is refused");
         assert!(parse_form("target=70&runs=3&gate=worse", None).is_err(), "a missing mode is refused");
         assert!(parse_form("target=70&runs=3&mode=auto", None).is_err(), "a missing gate is refused");
@@ -286,17 +291,18 @@ mod tests {
     // The page starts from the current settings and shows the baseline.
     #[test]
     fn test_page() {
-        let html = page(&Settings { mode: Mode::Auto, target: 72, max_runs: 3, baseline: Some(28), gate: Gate::Worse }, None, Theme::Cocoa);
+        let html = page(&Settings { mode: Mode::Auto, target: 72, max_runs: 3, baseline: Some(28), gate: Gate::Worse, hook: true }, None, Theme::Cocoa);
         assert!(html.contains("value=72 required"), "the target is filled in");
         assert!(html.contains("value=auto checked"), "the mode is chosen");
         assert!(html.contains("<b>28</b>"), "the baseline is shown");
         assert!(html.contains("value=worse checked"), "the gate is chosen");
+        assert!(html.contains("name=hook value=on checked"), "the push check is on");
     }
 
     // The blossom theme swaps the colours and adds the blossom; cocoa stays Krypton's own.
     #[test]
     fn test_page_theme() {
-        let settings = Settings { mode: Mode::Manual, target: 70, max_runs: 3, baseline: None, gate: Gate::Worse };
+        let settings = Settings { mode: Mode::Manual, target: 70, max_runs: 3, baseline: None, gate: Gate::Worse, hook: false };
         let blossom = page(&settings, None, Theme::Blossom);
         assert!(blossom.contains("--bg:#fcf0f3") && blossom.contains("<svg class=mark"), "pink, with the blossom");
         let cocoa = page(&settings, None, Theme::Cocoa);
@@ -314,7 +320,7 @@ mod tests {
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let _spare = std::net::TcpStream::connect(listener.local_addr().unwrap()).unwrap();
         let (stream, _) = listener.accept().unwrap();
-        let settings = Settings { mode: Mode::Manual, target: 70, max_runs: 3, baseline: None, gate: Gate::Worse };
+        let settings = Settings { mode: Mode::Manual, target: 70, max_runs: 3, baseline: None, gate: Gate::Worse, hook: false };
         let started = std::time::Instant::now();
         assert_eq!(super::answer(&stream, "/key", &settings, Theme::Cocoa), None, "nothing saved");
         assert!(started.elapsed() < std::time::Duration::from_secs(5), "given up on after the quiet limit, not waited on forever");

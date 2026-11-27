@@ -26,7 +26,7 @@ use crate::parse::parse;
 
 pub use attributes::linguist_globs;
 pub use digest::{expression_digest, hex};
-pub use imports::{candidates as import_candidates, ImportConfig, PythonImport, RawImports};
+pub use imports::{candidates as import_candidates, observe as observe_imports, ImportConfig, PythonImport, RawImports};
 pub use key::{hmac_sha256, BadKey, NameKey, PUBLIC_WORDS};
 pub use lines::{collapsed, line_shapes, longest_line, split_lines, Shapes};
 pub use model::{ClientInfo, WireFile, WireFlags, WireOptions, WireRequest, WIRE_VERSION};

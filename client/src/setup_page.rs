@@ -80,7 +80,7 @@ fn read_request(stream: &TcpStream) -> Result<Option<Request>, String> {
 /// The four settings from a submitted form (`target=70&runs=3&mode=manual&gate=worse`), or what is wrong with it.
 pub fn parse_form(body: &str, baseline: Option<i64>) -> Result<Settings, String> {
     let field = |key: &str| body.split('&').filter_map(|pair| pair.split_once('=')).find(|(name, _)| *name == key).map(|(_, value)| value.trim().to_string());
-    let target = field("target").as_deref().and_then(parse_target).ok_or("The target is a whole number from 0 to 100.")?;
+    let target = field("target").as_deref().and_then(parse_target).ok_or("The target is a whole number from 0 to 90 (no code scores above 90).")?;
     let max_runs = field("runs").as_deref().and_then(parse_runs).ok_or("Max tries is a whole number from 1 to 10.")?;
     let mode = field("mode").as_deref().and_then(Mode::parse).ok_or("Choose Ask me or Auto.")?;
     let gate = field("gate").as_deref().and_then(Gate::parse).ok_or("Choose whether to set up the pull request gate.")?;
@@ -253,7 +253,7 @@ fn page(current: &Settings, problem: Option<&str>, theme: Theme) -> String {
     format!(
         "{head}
 <body><main><h1>{mark}<span>Kr<small>ypton</small> setup</span></h1>{today}{error}<form method=post class=card>
-<fieldset><legend>Target score for each ticket</legend><input type=number name=target min=0 max=100 value={target} required></fieldset>
+<fieldset><legend>Target score for each ticket</legend><input type=number name=target min=0 max=90 value={target} required></fieldset>
 <fieldset><legend>Max tries on a function before it counts as stuck</legend>{runs}</fieldset>
 <fieldset><legend>When the agent is still stuck</legend>{modes}<p class=hint>Ask me: your agent builds a review page for the current ticket, styled by themes.md, and you decide before anything goes to GitHub. Auto: Krypton keeps the best run and the agent carries on.</p></fieldset>
 <fieldset><legend>Pull request gate on GitHub</legend>{gates}<p class=hint>Writes .github/workflows/krypton.yml; commit it to turn the gate on. Never worse: a pull request fails only if it lowers the purity score. Target: the files a pull request changes must reach your target; old code is never judged. An existing workflow is never overwritten.</p><p class=hint>So the comment on each pull request comes from Krypton rather than github-actions, <a href={app} target=_blank rel=noopener>install the Krypton app</a> on this repository once.</p></fieldset>

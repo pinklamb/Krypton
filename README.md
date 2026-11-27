@@ -94,7 +94,7 @@ The server is a separate program that holds the scoring.
 
 It exists because AI coding agents write quickly but tend to pile up deeply nested, branch-heavy functions, which are harder to change and cost tokens every time the code is read again.
 
-**Workflow:** scan (`krypton scan src` gives a 0 to 100 purity score and a ranked list), fix (hand the flagged functions to your agent; hints name the block to split), gate (run it in CI so a touched function over the limit fails the check).
+**Workflow:** scan (`krypton scan src` gives a 0 to 90 purity score and a ranked list), fix (hand the flagged functions to your agent; hints name the block to split), gate (run it in CI so a touched function over the limit fails the check).
 
 **Three ways to use it:**
 

@@ -79,7 +79,7 @@
     <div>
       <h3 id="h1s">Connect GitHub</h3>
       <div id="signedOut">
-        <a class="btn small" href="/auth/github"><svg class="gh-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Continue with GitHub</a>
+        <a class="btn small" id="connect" href="/auth/github"><svg class="gh-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Continue with GitHub</a>
       </div>
       <div id="signedIn" class="acct" hidden>
         <div class="signed"><span class="who"><img id="avatar" alt=""><span>Signed in as <b id="login"></b></span></span><button class="signout" type="button" id="signOut">Sign out</button></div>
@@ -206,6 +206,17 @@
   $('signOut').addEventListener('click', function () { fetch('/auth/logout', { method: 'POST', headers: SAME }).then(function () { location.href = 'tree'; }); });
   var said = { denied: 'GitHub sign-in was cancelled.', error: 'GitHub sign-in did not work. Try again.' }[new URLSearchParams(location.search).get('github')];
   if (said) { fail('err1', said); }
+  // Sign-in and scanning need the Krypton site server (krypton.software). A static copy of this page (GitHub Pages) has neither, so its
+  // button goes there: straight to GitHub sign-in, or to the tree page with the repository when one was linked (?repo=).
+  var APP = 'https://krypton.software';
+  var served = ['krypton.software', 'localhost', '127.0.0.1'].indexOf(location.hostname) >= 0;
+  if (!served) {
+    $('connect').href = location.search.indexOf('repo=') >= 0 ? APP + '/tree' + location.search : APP + '/auth/github';
+    var note = document.createElement('p'); note.className = 'hint';
+    note.textContent = 'Sign-in and scanning run on krypton.software; you continue there.';
+    $('signedOut').appendChild(note);
+    return;
+  }
   loadSession().then(function () { var q = new URLSearchParams(location.search).get('repo'); if (q && !$('signedIn').hidden) { var select = $('repoSelect'); if (Array.prototype.some.call(select.options, function (o) { return o.value === q; })) { select.value = q; scan(q); } } });
 })();
 </script>

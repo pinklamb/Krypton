@@ -55,3 +55,12 @@ fn test_key_hex() {
     assert_eq!(NameKey::from_hex(&key.to_hex()).map(|back| back.to_hex()), Ok(key.to_hex()), "round trip");
     assert!(NameKey::from_hex("abc").is_err() && NameKey::from_hex(&"g".repeat(64)).is_err(), "short or not hex is refused");
 }
+
+// Wiping a key zeroes it (it wipes itself the same way when dropped).
+#[test]
+fn test_key_wipe() {
+    use zeroize::Zeroize;
+    let mut key = NameKey::new([171; 32]);
+    key.zeroize();
+    assert_eq!(key.to_hex(), "0".repeat(64), "all zero after wiping");
+}

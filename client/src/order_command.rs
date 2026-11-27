@@ -192,7 +192,7 @@ pub fn run(args: &[String]) -> Result<(), Failure> {
     let body = json!({ "wire_version": 1, "files": files, "history": history, "in_flux": in_flux });
     if options.post {
         let answer =
-            Server::from_flag(options.server.as_deref()).post("/v1/order", &serde_json::to_vec(&body).map_err(|error| Failure::Output(error.to_string()))?)?;
+            Server::from_flag(options.server.as_deref())?.post("/v1/order", &serde_json::to_vec(&body).map_err(|error| Failure::Output(error.to_string()))?)?;
         let result = answer.get("result").cloned().unwrap_or(Value::Null);
         let text = if options.json {
             serde_json::to_string_pretty(&result).map_err(|error| Failure::Output(error.to_string()))?

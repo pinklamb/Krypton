@@ -22,6 +22,20 @@ fn git(root: &Path, args: &[&str]) -> Option<Vec<u8>> {
 ///
 /// [`Failure::Usage`] when git cannot diff against `base` (not a repository, or no such ref).
 pub fn changed_since(base: &str, root: &Path, files: &[String]) -> Result<Altered, Failure> {
+    lines_since(base, root, files, added_lines)
+}
+
+/// Like [`changed_since`], and a line where lines were only deleted counts too: the line just before the gap (0 when the gap is at the very
+/// top). `krypton impact` needs it, so a function that only lost lines still counts as changed; scoring keeps to the added lines.
+///
+/// # Errors
+///
+/// [`Failure::Usage`] when git cannot diff against `base` (not a repository, or no such ref).
+pub fn touched_since(base: &str, root: &Path, files: &[String]) -> Result<Altered, Failure> {
+    lines_since(base, root, files, touched_lines)
+}
+
+fn lines_since(base: &str, root: &Path, files: &[String], read: fn(&str) -> Altered) -> Result<Altered, Failure> {
     let args = [
         "-c",
         "core.quotepath=off",
@@ -39,7 +53,7 @@ pub fn changed_since(base: &str, root: &Path, files: &[String]) -> Result<Altere
     ];
     let diff = git(root, &args)
         .ok_or_else(|| Failure::Usage(format!("git diff against '{base}' failed; is {} inside a git repository, and is '{base}' a ref?", root.display())))?;
-    let mut altered = added_lines(&String::from_utf8_lossy(&diff));
+    let mut altered = read(&String::from_utf8_lossy(&diff));
     let untracked = git(root, &["ls-files", "--others", "--exclude-standard", "-z"]).unwrap_or_default();
     for name in untracked.split(|byte| *byte == 0).map(String::from_utf8_lossy) {
         if files.iter().any(|file| file.as_str() == name) {
@@ -68,6 +82,8 @@ struct Reader {
     current: Option<String>,
     in_header: bool,
     owed: u32,
+    /// Also mark where lines were only deleted (see [`touched_since`]).
+    deletions: bool,
 }
 
 impl Reader {
@@ -97,6 +113,9 @@ impl Reader {
         self.owed = removed.saturating_add(added);
         if let Some(lines) = self.current.as_ref().and_then(|name| self.altered.get_mut(name)) {
             lines.extend(start..start.saturating_add(added));
+            if self.deletions && added == 0 && removed > 0 {
+                lines.insert(start);
+            }
         }
     }
 }
@@ -104,7 +123,17 @@ impl Reader {
 /// Added line numbers per file from a `--unified=0` diff.
 #[must_use]
 pub fn added_lines(diff: &str) -> Altered {
-    let mut reader = Reader::default();
+    read_diff(diff, false)
+}
+
+/// Added line numbers per file, plus the line before each place where lines were only deleted.
+#[must_use]
+pub fn touched_lines(diff: &str) -> Altered {
+    read_diff(diff, true)
+}
+
+fn read_diff(diff: &str, deletions: bool) -> Altered {
+    let mut reader = Reader { deletions, ..Reader::default() };
     diff.lines().for_each(|line| reader.feed(line));
     reader.altered
 }
@@ -114,6 +143,25 @@ mod tests {
     use super::*;
 
     const DIFF: &str = "diff --git a/src/a.py b/src/a.py\nindex 1..2 100644\n--- a/src/a.py\n+++ b/src/a.py\n@@ -3,2 +3,3 @@ def f():\n-old one\n-old two\n+new one\n+++ looks like a header\n+new three\n@@ -10 +11 @@\n-x\n+y\ndiff --git a/gone.py b/gone.py\n--- a/gone.py\n+++ /dev/null\n@@ -1,2 +0,0 @@\n-a\n-b\n";
+
+    // A gap where lines were only deleted marks the line before it, for impact; scoring's added lines are unchanged.
+    #[test]
+    fn test_touched_lines() {
+        let diff = "diff --git a/a.py b/a.py
+--- a/a.py
++++ b/a.py
+@@ -7,2 +6,0 @@
+-gone
+-gone too
+@@ -20 +18,2 @@
+-x
++y
++z
+";
+        let lines = |altered: &Altered| altered.get("a.py").map(|lines| lines.iter().copied().collect::<Vec<_>>());
+        assert_eq!(lines(&touched_lines(diff)), Some(vec![6, 18, 19]), "the deletion marks line 6");
+        assert_eq!(lines(&added_lines(diff)), Some(vec![18, 19]), "added lines only");
+    }
 
     // Added lines come from the hunks and a body line that looks like a header is not one.
     #[test]

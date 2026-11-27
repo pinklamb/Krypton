@@ -14,6 +14,10 @@ pub const OURS: &str = "# Written by `krypton setup`";
 /// Where the workflow goes, relative to the repository.
 pub const WORKFLOW: &str = ".github/workflows/krypton.yml";
 
+/// Where a person installs the Krypton GitHub App on a repository. With it, the gate's comment and status line come from Krypton (its
+/// name and crystal); without it they come from github-actions, with a note pointing here.
+pub const APP_INSTALL: &str = "https://github.com/apps/kr-ypton/installations/new";
+
 /// What fails a pull request.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Gate {
